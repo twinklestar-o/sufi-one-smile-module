@@ -16,6 +16,7 @@ class PromoView extends GetView<HomepageCustController> {
       'res/images/suzuki_iklan4.jpg',
       'res/images/suzuki_iklan3.jpg',
       'res/images/suzuki_iklan2.jpg',
+      'res/images/suzuki_iklan1.jpg',
     ];
 
     return Scaffold(
