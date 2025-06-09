@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:sufi_one/app/modules/locationTest/location_routes.dart';
 import 'package:sufi_one/app/modules/mobcol/mobcol_routes.dart';
+import 'package:sufi_one/app/modules/smile/smile_route.dart';
 import 'package:sufi_one/app/modules/survey/survey_routes.dart';
 import 'package:sufi_one/app/modules/zeus/feature/zeushome/views/zeus_view.dart';
 import 'package:sufi_one/app/modules/zeus/feature/zeushome/bindings/zeus_binding.dart';
@@ -35,10 +36,13 @@ class AppRoutes {
   static const processSurvey = '/public/mobile_survey/process';
   static const zeus = '/public/zeus';
   static const zeusDetail = '/public/zeus_detail_view';
+  static const smile = '/public/smile';
+  static const smileDetail = '/public/smile_detail_view';
 
   static final pages = [
     GetPage(name: zeus, page: () => ZeusView(), binding: ZeusBinding()),
     ...SurveyRoutes.routes,
+    ...SmileRoutes.routes,
     ...HomeRoutes.routes,
     ...MobcolRoutes.routes,
     ...LocationRoutes.routes,

@@ -89,6 +89,13 @@ final List<SidebarItemData> _sidebarItems = [
     },
   ),
   SidebarItemData(
+    icon: const Icon(Icons.insert_emoticon_rounded, color: Colors.white),
+    title: 'Smile',
+    onTap: () {
+      Get.toNamed(AppRoutes.smile);
+    },
+  ),
+  SidebarItemData(
     icon: const Icon(Icons.location_on, color: Colors.white),
     title: 'Track Location',
     onTap: () {
