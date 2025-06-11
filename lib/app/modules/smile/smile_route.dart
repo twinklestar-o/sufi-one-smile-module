@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/login.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
@@ -17,6 +18,7 @@ class SmileRoutes {
   static const historyVisit = '/public/smile/history_visit';
   static const dataMaster = '/public/smile/data_master';
   static const profile = '/public/smile/profile';
+  static const login = '/public/smile/login';
   static final routes = [
     GetPage(
       name: smile,
@@ -48,5 +50,6 @@ class SmileRoutes {
       transition: Transition.zoom,
       page: () => ProfilePage(),
     ),
+    GetPage(name: login, transition: Transition.zoom, page: () => LoginPage()),
   ];
 }
