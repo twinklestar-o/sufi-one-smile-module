@@ -1,9 +1,12 @@
 // direct_visit_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl_phone_field/intl_phone_field.dart' show IntlPhoneField;
 import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import 'package:intl_phone_field/country_picker_dialog.dart' show Country;
+
 
 class _DirectVisitState extends State<DirectVisit> {
   // sample dropdown values
@@ -24,6 +27,11 @@ class _DirectVisitState extends State<DirectVisit> {
     'PRESENTASI',
   ]; //belum semua
 
+  final TextEditingController _namaPicController = TextEditingController();
+  final TextEditingController _telpPicController = TextEditingController();
+  List<Map<String,String>> mainPersons = []; // setiap item: {'jabatan':…, 'nama':…, 'telp':…}
+  final _formKey = GlobalKey<FormState>();
+
   // selected values
   String? selectedJabatan;
   String? selectedArea;
@@ -41,11 +49,17 @@ class _DirectVisitState extends State<DirectVisit> {
   int namaPICLength = 0;
   int temaDiskusiLength = 0;
 
+  String? selectedMainJabatan;
+  String? selectedMainTelp;
+
+
+
   // CHANGE: define custom colors
   static const Color headerBlue = Color(0xFF1521A4);
   static const Color dropdownLight = Color(0xFF272728);
   static const Color dropdownLightNF = Color(0xFFCCCCCC);
   static const Color dropdownLightF = Color(0xFFAFA1CF);
+  static const Color textButton = Color(0xFF8BADCA);
 
   Future<void> _selectDate(
     BuildContext context,
@@ -108,6 +122,7 @@ class _DirectVisitState extends State<DirectVisit> {
   @override
   void initState() {
     super.initState();
+    selectedMainJabatan = null; // agar pakai hint “--pilih--”
     // initialize default selections
     selectedJabatan = jabatanList.first;
     selectedArea = areaList.first;
@@ -116,6 +131,7 @@ class _DirectVisitState extends State<DirectVisit> {
     selectedDealer = dealerList.first;
     selectedVisitType = visitTypeList.first;
     selectedTujuanVisit = tujuanVisitList.first;
+    // selectedMainJabatan = jabatanList.first;
     selectedTanggalMulai =
         DateTime.now(); //set time jika belum dipilih ke tanggal saat akses
     selectedTanggalBerakhir = DateTime.now();
@@ -124,6 +140,28 @@ class _DirectVisitState extends State<DirectVisit> {
     temaDiskusi = '';
     namaPICLength = selectedNamaPIC!.length; // Initialize counter
     temaDiskusiLength = temaDiskusi!.length;
+  }
+
+  // fungsi untuk menambah PIC ke daftar
+  void _addMainPerson() {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      mainPersons.add({
+        'jabatan': selectedMainJabatan!,
+        'nama'   : _namaPicController.text,
+        'telp'   : selectedMainTelp!,      // ← pakai variabel ini
+      });
+      // reset field:
+      selectedMainJabatan = null;
+      selectedMainTelp = null;
+      _namaPicController.clear();
+    });
+  }
+
+
+  // fungsi untuk menghapus
+  void _removeMainPerson(int index) {
+    setState(() => mainPersons.removeAt(index));
   }
 
   @override
@@ -146,6 +184,9 @@ class _DirectVisitState extends State<DirectVisit> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
+    child: Form(
+    key: _formKey,
+    autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -678,6 +719,145 @@ class _DirectVisitState extends State<DirectVisit> {
                   ),
                 ),
               ),
+              // ─── Card Main Person ─────────────────────────────
+              Card(
+                color: const Color(0xFFFDFDFF),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Text(
+                          'Main Person',
+                          style: TextStyle(fontSize: 22, color: headerBlue),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Dropdown Jabatan
+                      _buildFieldLabel('Jabatan'),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: selectedMainJabatan,
+                        hint: Text('--pilih--', style: TextStyle(color: dropdownLight)),
+                        icon: const Icon(Icons.expand_more),
+                        iconEnabledColor: dropdownLight,
+                        style: TextStyle(color: dropdownLight),
+                        decoration: const InputDecoration(
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFFCCCCCC), width: 0.5),
+                          ),
+                        ),
+                        items: jabatanList.map((j) => DropdownMenuItem(
+                          value: j,
+                          child: Text(j, style: TextStyle(color: dropdownLight)),
+                        )).toList(),
+                        onChanged: (v) => setState(() => selectedMainJabatan = v),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Text Nama PIC
+                      _buildFieldLabel('Nama PIC'),
+                      TextFormField(
+                        controller: _namaPicController,
+                        maxLength: 50,
+                        decoration: const InputDecoration(
+                          hintText: 'Masukkan nama PIC',
+                          counterText: null, // pakai default counter
+                          enabledBorder: UnderlineInputBorder(),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Nama wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Text No Telpon PIC
+                      _buildFieldLabel('No Telpon PIC'),
+                      IntlPhoneField(
+                        decoration: const InputDecoration(
+                          hintText: 'Masukkan no. telepon',
+                          enabledBorder: UnderlineInputBorder(),
+                        ),
+                        initialCountryCode: 'ID',
+                        onChanged: (phone) {
+                          setState(() {
+                            selectedMainTelp = phone.completeNumber;  // ← simpan di sini
+                          });
+                        },
+                        validator: (phone) {
+                          if (phone == null || phone.number.isEmpty) return 'No. telepon wajib diisi';
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Tombol Tambahkan
+                      // Tombol Tambahkan (contoh trigger validasi)
+                      Align(
+                        alignment: Alignment.center,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              _addMainPerson();
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: textButton, width: 2),       // warna & tebal border
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(13),            // radius sudut
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 20,
+                            ),                                                     // spasi tombol
+                          ),
+                          child: Text(
+                            'tambahkan',
+                            style: TextStyle(
+                              color: textButton,                                  // warna teks
+                              fontSize: 16,                                       // ukuran teks
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Daftar PIC yang sudah ditambahkan
+                      if (mainPersons.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 12, runSpacing: 12,
+                          children: List.generate(mainPersons.length, (i) {
+                            final pic = mainPersons[i];
+                            return Card(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              // side: const BorderSide(color: Color(0xFF90CAF9)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  children: [
+                                    Text(pic['jabatan']!, style: TextStyle(color: headerBlue)),
+                                    Text(pic['nama']!, style: TextStyle(color: headerBlue)),
+                                    Text(pic['telp']!, style: TextStyle(color: headerBlue)),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () => _removeMainPerson(i),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // … lanjut Card Data Visit, Upload Foto, dst.
 
               // const SizedBox(height: 24),
               // // tombol Submit
@@ -691,6 +871,7 @@ class _DirectVisitState extends State<DirectVisit> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
