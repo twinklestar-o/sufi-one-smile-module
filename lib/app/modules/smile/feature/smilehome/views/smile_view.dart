@@ -102,6 +102,11 @@ class SmileHomePage extends StatelessWidget {
                     label: 'Data Master',
                     onTap: () => Get.toNamed('/public/smile/data_master'),
                   ),
+                  _menuCard(
+                    icon: Icons.storage,
+                    label: 'Test Tampilan User',
+                    onTap: () => Get.toNamed('/public/smile/profile'),
+                  ),
                 ],
               ),
             ),

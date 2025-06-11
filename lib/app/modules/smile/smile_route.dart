@@ -4,6 +4,7 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/data_master.d
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/history_visit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/profile.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -15,7 +16,7 @@ class SmileRoutes {
   static const taskVisit = '/public/smile/task_visit';
   static const historyVisit = '/public/smile/history_visit';
   static const dataMaster = '/public/smile/data_master';
-
+  static const profile = '/public/smile/profile';
   static final routes = [
     GetPage(
       name: smile,
@@ -41,6 +42,11 @@ class SmileRoutes {
       name: dataMaster,
       transition: Transition.zoom,
       page: () => DataMaster(),
+    ),
+    GetPage(
+      name: profile,
+      transition: Transition.zoom,
+      page: () => ProfilePage(),
     ),
   ];
 }
