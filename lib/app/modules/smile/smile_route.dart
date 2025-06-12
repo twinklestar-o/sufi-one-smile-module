@@ -6,6 +6,8 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit.da
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_edit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_detail.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_edit.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -19,6 +21,8 @@ class SmileRoutes {
   static const dataMaster = '/public/smile/data_master';
   static const historyView = '/public/smile/history_view';
   static const historyEdit = '/public/smile/history_edit';
+  static const taskVisitDetail = '/public/smile/task_visit_detail';
+  static const taskVisitEdit = '/public/smile/task_visit_edit';
 
   static final routes = [
     GetPage(
@@ -55,6 +59,22 @@ class SmileRoutes {
       name: historyEdit,
       transition: Transition.zoom,
       page: () => HistoryEdit(),
+    ),
+    GetPage(
+      name: taskVisitDetail,
+      transition: Transition.zoom,
+      page: () {
+        final args = Get.arguments as Visit;
+        return TaskVisitDetail(visit: args);
+      },
+    ),
+    GetPage(
+      name: taskVisitEdit,
+      transition: Transition.zoom,
+      page: () {
+        final args = Get.arguments as Visit;
+        return TaskVisitEdit(visit: args);
+      },
     ),
   ];
 }
