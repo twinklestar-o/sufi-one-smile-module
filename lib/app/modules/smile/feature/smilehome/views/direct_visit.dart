@@ -63,6 +63,17 @@ class _DirectVisitState extends State<DirectVisit> {
   double? selectedLongitude;
   double? locationAccuracy;
 
+  // state untuk foto
+  File? _photo1;
+  File? _photo2;
+
+// picker
+  final ImagePicker _picker = ImagePicker();
+
+// helper untuk PageView
+  late final PageController _pageCtrl;
+
+
 
   // CHANGE: define custom colors
   static const Color headerBlue = Color(0xFF1521A4);
@@ -148,6 +159,79 @@ class _DirectVisitState extends State<DirectVisit> {
     _positionStream?.cancel();
   }
 
+  Future<void> _pickPhoto({
+    required bool first, required ImageSource src
+  }) async {
+    final XFile? f = await _picker.pickImage(
+        source: src,
+        maxWidth: 800,
+        maxHeight: 800);
+    if (f == null) return;
+    setState(() {
+      if (first) _photo1 = File(f.path); else _photo2 = File(f.path);
+    });
+  }
+
+  Widget _photoRow({
+    required bool first,
+    File? file,
+  }) {
+    return Column(
+      children: [
+        if (file == null)
+          Center(child: Text('Tidak ada foto', style: TextStyle(color: dropdownLight))),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Tombol kamera: ikon pink, border biru
+            _iconButton(
+              icon: Icons.camera_alt,
+              onTap: () => _pickPhoto(first: first, src: ImageSource.camera),
+              borderColor: const Color(0xFF8BADCA),  // border biru lembut
+              iconColor:   const Color(0xFFCE3970),  // ikon juga biru lembut
+              bgColor:     Colors.white,
+            ),
+
+            // Tombol folder: ikon kuning, border hijau, misalnya
+            _iconButton(
+              icon: Icons.folder,
+              onTap: () => _pickPhoto(first: first, src: ImageSource.gallery),
+              borderColor: const Color(0xFF8BADCA),  // border biru lembut
+              iconColor:   const Color(0xFFFDBF12),
+              bgColor: Colors.white,
+            ),
+
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _iconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color borderColor = Colors.lightBlue,   // default border
+    Color iconColor   = Colors.pinkAccent,  // default icon
+    Color bgColor     = Colors.white,       // default background
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: bgColor,                     // atur background
+          border: Border.all(color: borderColor, width: 2),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Icon(icon, size: 32, color: iconColor),
+      ),
+    );
+  }
+
+
 
 
   Widget _buildFieldLabel(String label) {
@@ -194,6 +278,8 @@ class _DirectVisitState extends State<DirectVisit> {
   void initState() {
     super.initState();
     _checkLocationPermission();
+    _pageCtrl = PageController();
+    _checkLocationPermission();
     selectedMainJabatan = null; // agar pakai hint “--pilih--”
     // initialize default selections
     selectedJabatan = jabatanList.first;
@@ -213,6 +299,13 @@ class _DirectVisitState extends State<DirectVisit> {
     namaPICLength = selectedNamaPIC!.length; // Initialize counter
     temaDiskusiLength = temaDiskusi!.length;
   }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
 
   void _addMainPerson() {
     // 1. Validasi form field
@@ -1005,6 +1098,76 @@ class _DirectVisitState extends State<DirectVisit> {
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // ─── Card Upload Foto ─────────────────────────────
+                Card(
+                  color: const Color(0xFFFDFDFF),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    // tambah vertical padding lebih besar, misal 24
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    child: Column(
+                      children: [
+                        Center(
+                          child: Text(
+                            'Upload Foto',
+                            style: TextStyle(fontSize: 22, color: headerBlue),
+                          ),
+                        ),
+
+                        // beri jarak lebih lega sebelum row pertama
+                        const SizedBox(height: 20),
+
+                        _photoRow(first: true, file: _photo1),
+
+                        // beri jarak ekstra sebelum row kedua
+                        const SizedBox(height: 24),
+
+                        _photoRow(first: false, file: _photo2),
+
+                        // beri jarak sebelum tepi bawah card
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+
+                // ─── Card Slideshow Foto ─────────────────────────────
+                if (_photo1 != null && _photo2 != null) ...[
+                  Card(
+                    color: const Color(0xFFFDFDFF),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Center(child: Text('Preview Foto', style: TextStyle(fontSize: 22, color: headerBlue))),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 200,
+                            child: PageView(
+                              controller: _pageCtrl,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(_photo1!, fit: BoxFit.cover),
+                                ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(_photo2!, fit: BoxFit.cover),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // ─── Card Lokasi Visit ─────────────────────────────
                 Card(
                   color: const Color(0xFFFDFDFF),
