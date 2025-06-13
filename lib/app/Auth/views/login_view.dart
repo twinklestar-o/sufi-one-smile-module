@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:sufi_one/app/Auth/controllers/login_controller.dart';
 import 'package:sufi_one/app/modules/public/widgets/appbarWObutton.dart';
 import 'package:sufi_one/app/modules/public/widgets/buttonStyle.dart';
+import 'package:sufi_one/app/modules/smile/controllers/AuthController.dart';
+import 'package:sufi_one/app/modules/smile/smile_route.dart';
 import 'package:sufi_one/app/theme/fontstyle.dart';
 
 class LoginPage extends GetView<LoginController> {
@@ -86,7 +88,7 @@ class LoginPage extends GetView<LoginController> {
                       height: 30,
                       child: TextButton(
                         onPressed: () {
-                          Get.toNamed('/public/register');
+                          Get.toNamed(SmileRoutes.register);
                         },
                         child: RichText(
                           text: TextSpan(

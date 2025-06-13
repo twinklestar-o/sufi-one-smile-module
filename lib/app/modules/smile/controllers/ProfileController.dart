@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
+import 'package:get/route_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/modules/smile/constants/constants.dart';
 import '../models/user.dart';
 
@@ -13,7 +15,7 @@ class ProfileController {
     final token = prefs.getString('token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token tidak ditemukan. Silakan login kembali.');
+      Get.offAll(() => LoginPage());
     }
 
     // Lakukan request ke endpoint profile dengan token

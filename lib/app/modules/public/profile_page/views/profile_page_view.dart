@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sufi_one/app/modules/public/profile_page/controllers/profile_page_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sufi_one/app/Auth/controllers/logout_controller.dart';
+import 'package:sufi_one/app/modules/smile/controllers/ProfileController.dart';
+import 'package:sufi_one/app/modules/smile/models/user.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
 import 'package:sufi_one/app/modules/public/widgets/appbarWsidebar.dart';
 import 'package:sufi_one/app/modules/public/widgets/sidebar.dart';
@@ -8,33 +11,60 @@ import 'package:sufi_one/app/modules/public/widgets/bottomnavbar.dart';
 import 'package:sufi_one/app/theme/color_constant.dart';
 import 'package:sufi_one/app/theme/fontstyle.dart';
 
-class ProfilePageView extends StatelessWidget {
+class ProfilePageView extends StatefulWidget {
   const ProfilePageView({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final ProfilePageController controller = Get.find();
+  State<ProfilePageView> createState() => _ProfilePageViewState();
+}
 
+class _ProfilePageViewState extends State<ProfilePageView> {
+  final ProfileController _controller = ProfileController();
+  final LogoutController _logoutController = LogoutController();
+  late Future<User> futureUser;
+
+  @override
+  void initState() {
+    super.initState();
+    futureUser = _controller.fetchUser();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg1,
       appBar: const SuzukiFinanceAppBarWsidebar(),
       drawer: const Drawer(child: AppSidebar()),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            _buildHeader(controller),
-            const SizedBox(height: 16),
-            _buildMenuSection(),
-            const SizedBox(height: 32),
-          ],
+        child: FutureBuilder<User>(
+          future: futureUser,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (snapshot.hasData) {
+              final userData = snapshot.data!.data;
+              return Column(
+                children: [
+                  const SizedBox(height: 16),
+                  _buildHeader(userData.name, userData.email),
+                  const SizedBox(height: 16),
+                  _buildMenuSection(),
+                  const SizedBox(height: 32),
+                ],
+              );
+            } else {
+              return const Center(child: Text('No user data available'));
+            }
+          },
         ),
       ),
       bottomNavigationBar: const BottomNavbar(selectedIndex: 3),
     );
   }
 
-  Widget _buildHeader(ProfilePageController controller) {
+  Widget _buildHeader(String name, String email) {
     return Column(
       children: [
         const CircleAvatar(
@@ -43,18 +73,8 @@ class ProfilePageView extends StatelessWidget {
           child: Icon(Icons.person, size: 48, color: Colors.white),
         ),
         const SizedBox(height: 8),
-        Obx(
-          () => Text(
-            controller.user.value?.username ?? 'No Username',
-            style: AppTextStyles.bigBody,
-          ),
-        ),
-        Obx(
-          () => Text(
-            controller.user.value?.email ?? 'No Email',
-            style: AppTextStyles.smallBody,
-          ),
-        ),
+        Text(name, style: AppTextStyles.bigBody),
+        Text(email, style: AppTextStyles.smallBody),
         const SizedBox(height: 12),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -108,9 +128,7 @@ class ProfilePageView extends StatelessWidget {
   Widget _buildMenuSection() {
     return Column(
       children: [
-        _buildMenuItem('Pengajuan kendaraan saya', Icons.directions_car, () {
-          // TODO: Implementasi navigasi jika ada
-        }),
+        _buildMenuItem('Pengajuan kendaraan saya', Icons.directions_car, () {}),
         _buildMenuItem('Riwayat Transaksi Point', Icons.history, () {
           Get.toNamed(HomeRoutes.transaksiPoint);
         }),
@@ -121,8 +139,7 @@ class ProfilePageView extends StatelessWidget {
           Get.toNamed(HomeRoutes.ubahPassword);
         }),
         _buildMenuItem('Keluar', Icons.logout, () {
-          // TODO: Implementasi logout atau navigasi keluar
-          Get.back();
+          _logoutController.logout();
         }),
       ],
     );
