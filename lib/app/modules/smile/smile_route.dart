@@ -1,4 +1,7 @@
 import 'package:get/get.dart';
+import 'package:sufi_one/app/Auth/views/login_view.dart';
+import 'package:sufi_one/app/Auth/views/profile.dart';
+import 'package:sufi_one/app/Auth/views/register_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
@@ -15,6 +18,9 @@ class SmileRoutes {
   // route: pertama_kedua
 
   static const smile = '/public/smile';
+  static const login = '/public/smile/login';
+  static const register = '/public/smile/register';
+  static const profile = '/public/smile/profile';
   static const directVisit = '/public/smile/direct_visit';
   static const taskVisit = '/public/smile/task_visit';
   static const historyVisit = '/public/smile/history_visit';
@@ -25,6 +31,17 @@ class SmileRoutes {
   static const taskVisitEdit = '/public/smile/task_visit_edit';
 
   static final routes = [
+    GetPage(
+      name: register,
+      transition: Transition.zoom,
+      page: () => RegisterPage(),
+    ),
+    GetPage(name: login, transition: Transition.zoom, page: () => LoginPage()),
+    GetPage(
+      name: profile,
+      transition: Transition.zoom,
+      page: () => ProfilePage(),
+    ),
     GetPage(
       name: smile,
       transition: Transition.zoom,

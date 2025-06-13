@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:sufi_one/app/modules/public/profile_page/controllers/register_controller.dart';
+import 'package:sufi_one/app/Auth/controllers/register_controller.dart';
 
 class RegisterBinding extends Bindings {
   @override

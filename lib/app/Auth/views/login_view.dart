@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:sufi_one/app/modules/public/profile_page/controllers/login_controller.dart';
 import 'package:get/get.dart';
+import 'package:sufi_one/app/Auth/controllers/login_controller.dart';
 import 'package:sufi_one/app/modules/public/widgets/appbarWObutton.dart';
 import 'package:sufi_one/app/modules/public/widgets/buttonStyle.dart';
 import 'package:sufi_one/app/theme/fontstyle.dart';
 
 class LoginPage extends GetView<LoginController> {
+  final controller = Get.put(LoginController());
+
   // Use GetView<LoginController>
   @override
   Widget build(BuildContext context) {

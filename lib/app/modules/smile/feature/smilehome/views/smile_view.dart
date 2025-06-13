@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/smile/smile_route.dart';
+import 'package:sufi_one/app/modules/smile/widgets/smile_appbarWsidebar.dart';
+import 'package:sufi_one/app/modules/smile/widgets/smile_sidebar.dart';
 import 'package:sufi_one/app/routes/app_routes.dart';
+import 'package:sufi_one/app/modules/public/widgets/appbarWObutton.dart';
 
 class SmileHomePage extends StatelessWidget {
   const SmileHomePage({super.key});
@@ -8,29 +12,17 @@ class SmileHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
+      //backgroundColor: Color(0xFFF5F5F5),
+      appBar: SmileAppBarWsidebar(),
+      drawer: const Drawer(child: SmileSidebar()),
       body: Column(
         children: [
           Container(
             color: Colors.blue[900],
-            padding: const EdgeInsets.only(
-              top: 40,
-              left: 20,
-              right: 20,
-              bottom: 20,
-            ),
+            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Mobile Smile",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
                 Row(
                   children: [
                     CircleAvatar(
@@ -85,32 +77,37 @@ class SmileHomePage extends StatelessWidget {
                   _menuCard(
                     icon: Icons.directions_walk,
                     label: 'Direct Visit',
-                    onTap: () => Get.toNamed('/public/smile/direct_visit'),
+                    onTap: () => Get.toNamed(SmileRoutes.directVisit),
                   ),
                   _menuCard(
                     icon: Icons.assignment,
                     label: 'Task Visit',
-                    onTap: () => Get.toNamed('/public/smile/task_visit'),
+                    onTap: () => Get.toNamed(SmileRoutes.taskVisit),
                   ),
                   _menuCard(
                     icon: Icons.history,
                     label: 'History Visit',
-                    onTap: () => Get.toNamed('/public/smile/history_visit'),
+                    onTap: () => Get.toNamed(SmileRoutes.historyVisit),
                   ),
                   _menuCard(
                     icon: Icons.storage,
                     label: 'Data Master',
-                    onTap: () => Get.toNamed('/public/smile/data_master'),
+                    onTap: () => Get.toNamed(SmileRoutes.dataMaster),
                   ),
                   _menuCard(
                     icon: Icons.person,
                     label: 'Test Tampilan User',
-                    onTap: () => Get.toNamed('/public/smile/profile'),
+                    onTap: () => Get.toNamed(SmileRoutes.profile),
                   ),
                   _menuCard(
                     icon: Icons.login,
                     label: 'Test Login',
-                    onTap: () => Get.toNamed('/public/smile/login'),
+                    onTap: () => Get.toNamed(SmileRoutes.login),
+                  ),
+                  _menuCard(
+                    icon: Icons.login,
+                    label: 'Test Register',
+                    onTap: () => Get.toNamed(SmileRoutes.register),
                   ),
                 ],
               ),

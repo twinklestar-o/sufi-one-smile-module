@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:sufi_one/app/modules/public/profile_page/controllers/login_controller.dart';
+import 'package:sufi_one/app/Auth/controllers/login_controller.dart';
 
 class LoginBinding extends Bindings {
   @override
