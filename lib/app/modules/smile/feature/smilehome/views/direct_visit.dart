@@ -1,4 +1,6 @@
 // direct_visit_screen.dart
+import 'dart:async' show StreamSubscription;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart' show IntlPhoneField;
@@ -6,6 +8,11 @@ import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart' show Country;
+import 'package:geolocator/geolocator.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
+
 
 
 class _DirectVisitState extends State<DirectVisit> {
@@ -52,6 +59,9 @@ class _DirectVisitState extends State<DirectVisit> {
   String? selectedMainJabatan;
   String? selectedMainTelp;
 
+  double? selectedLatitude;
+  double? selectedLongitude;
+  double? locationAccuracy;
 
 
   // CHANGE: define custom colors
@@ -78,6 +88,67 @@ class _DirectVisitState extends State<DirectVisit> {
       });
     }
   }
+
+  Future<void> _checkLocationPermission() async {
+    LocationPermission perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('GPS/device location mati. Hidupkan dulu.'))
+      );
+      return;
+    }
+
+    if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
+      // Anda bisa tampilkan dialog agar user enable location di settings
+      return;
+    }
+  }
+
+  Future<void> _updateLocation() async {
+    await _checkLocationPermission();
+    try {
+      Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.bestForNavigation,
+        timeLimit: const Duration(seconds: 10),
+      );
+      setState(() {
+        selectedLatitude  = pos.latitude;
+        selectedLongitude = pos.longitude;
+      });
+    } catch (e) {
+      debugPrint('Location error: $e');
+      // Jika gagal, tampilkan SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil lokasi: $e'))
+      );
+    }
+  }
+  StreamSubscription<Position>? _positionStream;
+
+  void _startListeningLocation() {
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 5,      // update kalau pergeseran > 5 meter
+      ),
+    ).listen((pos) {
+      setState(() {
+        selectedLatitude  = pos.latitude;
+        selectedLongitude = pos.longitude;
+        locationAccuracy  = pos.accuracy;
+      });
+    });
+  }
+
+
+  void _stopListeningLocation() {
+    _positionStream?.cancel();
+  }
+
+
 
   Widget _buildFieldLabel(String label) {
     return Text(
@@ -122,6 +193,7 @@ class _DirectVisitState extends State<DirectVisit> {
   @override
   void initState() {
     super.initState();
+    _checkLocationPermission();
     selectedMainJabatan = null; // agar pakai hint “--pilih--”
     // initialize default selections
     selectedJabatan = jabatanList.first;
@@ -142,19 +214,42 @@ class _DirectVisitState extends State<DirectVisit> {
     temaDiskusiLength = temaDiskusi!.length;
   }
 
-  // fungsi untuk menambah PIC ke daftar
   void _addMainPerson() {
+    // 1. Validasi form field
     if (!_formKey.currentState!.validate()) return;
+
+    // 2. Cek nomor duplikat
+    if (mainPersons.any((e) => e['telp'] == selectedMainTelp)) {
+      // langsung tampilkan SnackBar, lalu return tanpa setState
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nomor telepon sudah pernah digunakan')),
+      );
+      return;
+    }
+
+    // 3. Cek duplikat keseluruhan
+    if (mainPersons.any((e) =>
+    e['jabatan'] == selectedMainJabatan &&
+        e['nama']   == _namaPicController.text &&
+        e['telp']   == selectedMainTelp)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data PIC ini sudah ada')),
+      );
+      return;
+    }
+
+    // 4. Kalau lolos semua cek, barulah di-setState
     setState(() {
       mainPersons.add({
         'jabatan': selectedMainJabatan!,
         'nama'   : _namaPicController.text,
-        'telp'   : selectedMainTelp!,      // ← pakai variabel ini
+        'telp'   : selectedMainTelp!,
       });
-      // reset field:
+      // reset input
       selectedMainJabatan = null;
-      selectedMainTelp = null;
+      selectedMainTelp    = null;
       _namaPicController.clear();
+      _telpPicController.clear();
     });
   }
 
@@ -245,7 +340,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               return DropdownMenuItem(
                                 value: j,
                                 child: Text(
-                                  j,
+                                  j.toUpperCase(),                // tampilkan uppercase
                                   style: const TextStyle(
                                     color: dropdownLight,
                                   ), // CHANGE: teks item dropdown
@@ -752,9 +847,12 @@ class _DirectVisitState extends State<DirectVisit> {
                         ),
                         items: jabatanList.map((j) => DropdownMenuItem(
                           value: j,
-                          child: Text(j, style: TextStyle(color: dropdownLight)),
+                          child: Text(j.toUpperCase(), style: TextStyle(color: dropdownLight)),
                         )).toList(),
-                        onChanged: (v) => setState(() => selectedMainJabatan = v),
+                        onChanged: (v) => setState(() {
+                          selectedMainJabatan = v;            // selalu salah satu dari jabatanList
+                        }),
+                        validator: (v) => v == null ? 'Harap pilih jabatan' : null,
                       ),
                       const SizedBox(height: 12),
 
@@ -777,16 +875,20 @@ class _DirectVisitState extends State<DirectVisit> {
                       // Text No Telpon PIC
                       _buildFieldLabel('No Telpon PIC'),
                       IntlPhoneField(
+                        controller: _telpPicController,
                         decoration: const InputDecoration(
                           hintText: 'Masukkan no. telepon',
                           enabledBorder: UnderlineInputBorder(),
                         ),
                         initialCountryCode: 'ID',
                         onChanged: (phone) {
-                          setState(() {
-                            selectedMainTelp = phone.completeNumber;  // ← simpan di sini
-                          });
+                          // optional, bisa juga kosong
                         },
+                        onSaved: (phone) {                         // ← tambahkan ini
+                          selectedMainTelp = phone?.completeNumber;
+                          debugPrint('>> onSaved telp: $selectedMainTelp');
+                        },
+
                         validator: (phone) {
                           if (phone == null || phone.number.isEmpty) return 'No. telepon wajib diisi';
                           return null;
@@ -796,68 +898,177 @@ class _DirectVisitState extends State<DirectVisit> {
                       const SizedBox(height: 16),
 
                       // Tombol Tambahkan
-                      // Tombol Tambahkan (contoh trigger validasi)
                       Align(
                         alignment: Alignment.center,
                         child: OutlinedButton(
                           onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              _addMainPerson();
+                            // **Debug print**: pastikan nomor sudah tersimpan
+                            debugPrint('DEBUG: selectedMainTelp = $selectedMainTelp');
+
+                            // 1. Validasi form
+                            if (!_formKey.currentState!.validate()) return;
+
+                            // 2. Simpan semua field via onSaved
+                            _formKey.currentState!.save();
+
+                            // Debug setelah save
+                            debugPrint('>> after save, selectedMainTelp = $selectedMainTelp');
+
+                            // 2. Cek duplikat keseluruhan (jabatan+nama+telp)
+                            if (mainPersons.any((e) =>
+                            e['jabatan'] == selectedMainJabatan &&
+                                e['nama']   == _namaPicController.text &&
+                                e['telp']   == selectedMainTelp)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Data PIC ini sudah ada')),
+                              );
+                              return;
                             }
+
+                            // 3. Cek duplikat nomor
+                            if (mainPersons.any((e) => e['telp'] == selectedMainTelp)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Nomor telepon sudah pernah digunakan')),
+                              );
+                              return;
+                            }
+
+                            // 4. Kalau semua oke, tambahkan ke list
+                            setState(() {
+                              mainPersons.add({
+                                'jabatan': selectedMainJabatan!,
+                                'nama'   : _namaPicController.text,
+                                'telp'   : selectedMainTelp!,
+                              });
+                              // reset input
+                              selectedMainJabatan = null;
+                              selectedMainTelp    = null;
+                              _namaPicController.clear();
+                            });
                           },
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: textButton, width: 2),       // warna & tebal border
+                            side: BorderSide(color: textButton, width: 2),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(13),            // radius sudut
+                              borderRadius: BorderRadius.circular(13),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 20,
-                            ),                                                     // spasi tombol
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                           ),
                           child: Text(
                             'tambahkan',
-                            style: TextStyle(
-                              color: textButton,                                  // warna teks
-                              fontSize: 16,                                       // ukuran teks
-                            ),
+                            style: TextStyle(color: textButton, fontSize: 16),
                           ),
                         ),
                       ),
 
+
                       // Daftar PIC yang sudah ditambahkan
-                      if (mainPersons.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 12, runSpacing: 12,
-                          children: List.generate(mainPersons.length, (i) {
-                            final pic = mainPersons[i];
-                            return Card(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              // side: const BorderSide(color: Color(0xFF90CAF9)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  children: [
-                                    Text(pic['jabatan']!, style: TextStyle(color: headerBlue)),
-                                    Text(pic['nama']!, style: TextStyle(color: headerBlue)),
-                                    Text(pic['telp']!, style: TextStyle(color: headerBlue)),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => _removeMainPerson(i),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      ],
+                  if (mainPersons.isNotEmpty) ...[
+            const SizedBox(height: 16),
+        GridView.builder(
+            shrinkWrap: true,                     // penting biar nggak ambil seluruh layar
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: mainPersons.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,                  // 2 kartu per baris
+              crossAxisSpacing: 12,               // jarak horisontal
+              mainAxisSpacing: 12,                // jarak vertikal
+              childAspectRatio: 3/3,              // sesuaikan lebar:tinggi
+            ),
+            itemBuilder: (context, i) {
+              final pic = mainPersons[i];
+              return Card(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: textButton, width: 2),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Text(pic['jabatan']!, style: TextStyle(color: textButton)),
+                      Text(pic['nama']!,    style: TextStyle(color: textButton)),
+                      Text(pic['telp']!,    style: TextStyle(color: textButton)),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _removeMainPerson(i),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+        ),
+                  ],
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              // … lanjut Card Data Visit, Upload Foto, dst.
+              // ─── Card Lokasi Visit ─────────────────────────────
+              Card(
+                color: const Color(0xFFFDFDFF),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          'Lokasi Visit',
+                          style: TextStyle(fontSize: 22, color: headerBlue),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Latitude
+                      Text(
+                        'Latitude',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: dropdownLight),
+                      ),
+                      Text(
+                        selectedLatitude != null
+                            ? selectedLatitude!.toStringAsFixed(6)
+                            : '-',
+                        style: TextStyle(color: dropdownLight),
+                      ),
+                      const Divider(color: Colors.grey),
+
+                      // Longitude
+                      Text(
+                        'Longitude',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: dropdownLight),
+                      ),
+                      Text(
+                        selectedLongitude?.toStringAsFixed(6) ?? '-',
+                        style: TextStyle(color: dropdownLight),
+                      ),
+                      const Divider(color: Colors.grey),
+
+                      // Tombol cek lokasi
+                      Align(
+                        alignment: Alignment.center,
+                        child: OutlinedButton(
+                          onPressed: _updateLocation,  // nanti Anda implementasi method ini
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: textButton, width: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                          ),
+                          child: Text(
+                            'cek lokasi',
+                            style: TextStyle(color: textButton, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               // const SizedBox(height: 24),
               // // tombol Submit
