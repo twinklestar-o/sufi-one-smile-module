@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/login.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/history_visit.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/profile.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_visit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_view.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_edit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_detail.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_edit.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -17,8 +19,11 @@ class SmileRoutes {
   static const taskVisit = '/public/smile/task_visit';
   static const historyVisit = '/public/smile/history_visit';
   static const dataMaster = '/public/smile/data_master';
-  static const profile = '/public/smile/profile';
-  static const login = '/public/smile/login';
+  static const historyView = '/public/smile/history_view';
+  static const historyEdit = '/public/smile/history_edit';
+  static const taskVisitDetail = '/public/smile/task_visit_detail';
+  static const taskVisitEdit = '/public/smile/task_visit_edit';
+
   static final routes = [
     GetPage(
       name: smile,
@@ -46,10 +51,30 @@ class SmileRoutes {
       page: () => DataMaster(),
     ),
     GetPage(
-      name: profile,
+      name: historyView,
       transition: Transition.zoom,
-      page: () => ProfilePage(),
+      page: () => HistoryView(),
     ),
-    GetPage(name: login, transition: Transition.zoom, page: () => LoginPage()),
+    GetPage(
+      name: historyEdit,
+      transition: Transition.zoom,
+      page: () => HistoryEdit(),
+    ),
+    GetPage(
+      name: taskVisitDetail,
+      transition: Transition.zoom,
+      page: () {
+        final args = Get.arguments as Visit;
+        return TaskVisitDetail(visit: args);
+      },
+    ),
+    GetPage(
+      name: taskVisitEdit,
+      transition: Transition.zoom,
+      page: () {
+        final args = Get.arguments as Visit;
+        return TaskVisitEdit(visit: args);
+      },
+    ),
   ];
 }
