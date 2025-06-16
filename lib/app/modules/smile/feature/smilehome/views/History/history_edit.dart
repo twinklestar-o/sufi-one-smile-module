@@ -1,116 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/history_edit_controller.dart';
 
-class HistoryEdit extends StatelessWidget {
+class HistoryEdit extends GetView<HistoryEditController> {
   const HistoryEdit({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Data dummy berdasarkan gambar
-    final data = Get.arguments ?? {
-      'jabatan': 'BM',
-      'area': '01.JABODETABEKSER',
-      'cabang': '1507',
-      'produk': 'MBBR',
-      'type': 'Direct Visit Dealer',
-      'activity': 'KORDINASI RUTIN',
-      'date_start': '2025-05-30',
-      'date_finish': '2025-05-30',
-      'pic': 'Herman,rukiyanti,all sh',
-      'discussion': 'Koordinasi rutin',
-      'problem': '-',
-      'location': 'Kecamatan Pondok Jaya, Kecamatan Pondok Aren, Kota Tangerang Selatan, Banten',
-      'timestamp': '30 May 2025 14:28:55',
-    };
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('View visit dealer'),
+        title: const Text('Edit visit dealer'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save, color: Colors.white),
+            onPressed: controller.saveEditedData,
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Gambar dan informasi lokasi
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('res/images/baleno.jpg'), // Path disesuaikan dengan struktur proyek
-                  fit: BoxFit.cover,
+      body: Form(
+        key: controller.formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Obx(() {
+            final data = controller.editedData;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('res/images/baleno.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      child: Icon(Icons.location_on, color: Colors.white),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Text(
-                      data['timestamp'] ?? '-',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Text(
-                      data['location'] ?? '-',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Data Dealer
-            Text('Data Dealer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
-            _buildField('Jabatan Saya', data['jabatan'] ?? '-'),
-            _buildField('Area', data['area'] ?? '-'),
-            _buildField('Cabang', data['cabang'] ?? '-'),
-            _buildField('Produk', data['produk'] ?? '-'),
-            const SizedBox(height: 16),
-            // Data Visit
-            Text('Data Visit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
-            _buildField('Tipe visit', data['type'] ?? '-'),
-            _buildField('Tujuan visit', data['activity'] ?? '-'),
-            _buildField('Dari tanggal', data['date_start'] ?? '-'),
-            _buildField('Sampai tanggal', data['date_finish'] ?? '-'),
-            _buildField('Tanggal selesai', data['date_finish'] ?? '-'),
-            _buildField('Nama PIC', data['pic'] ?? '-'),
-            _buildField('Theme discussion', data['discussion'] ?? '-'),
-            _buildField('Problem', data['problem'] ?? '-'),
-            _buildField('Keterangan Pelaksanaan', data['pelaksanaan'] ?? '-'),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Logika simpan bisa ditambahkan di sini
-                Get.back();
-              },
-              child: Text('Save'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            ),
-          ],
+                const SizedBox(height: 16),
+                Text('Data Dealer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                _buildTextField('Jabatan Saya', 'jabatan', data),
+                _buildTextField('Area', 'area', data),
+                _buildTextField('Cabang', 'cabang', data),
+                _buildTextField('Produk', 'produk', data),
+                const SizedBox(height: 16),
+                Text('Data Visit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                _buildTextField('Tipe visit', 'type', data),
+                _buildTextField('Tujuan visit', 'activity', data),
+                _buildTextField('Dari tanggal', 'date_start', data),
+                _buildTextField('Sampai tanggal', 'date_finish', data),
+                _buildTextField('Tanggal selesai', 'date_finish', data),
+                _buildTextField('Nama PIC', 'pic', data),
+                _buildTextField('Theme discussion', 'discussion', data),
+                _buildTextField('Problem', 'problem', data),
+                _buildTextField('Keterangan Pelaksanaan', 'pelakasanaan', data),
+              ],
+            );
+          }),
         ),
       ),
     );
   }
 
-  Widget _buildField(String label, String value) {
+  Widget _buildTextField(String label, String key, RxMap<String, dynamic> data) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -118,26 +75,15 @@ class HistoryEdit extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(color: Colors.black54, fontSize: 14)),
           const SizedBox(height: 4),
-          TextField(
-            controller: TextEditingController(text: value),
+          TextFormField(
+            initialValue: data[key] ?? '',
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.grey[100],
-              contentPadding: const EdgeInsets.all(12),
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
-                borderRadius: BorderRadius.circular(8),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            style: const TextStyle(fontSize: 16),
+            onChanged: (value) => data[key] = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Field cannot be empty' : null,
           ),
         ],
       ),

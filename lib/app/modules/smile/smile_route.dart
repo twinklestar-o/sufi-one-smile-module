@@ -9,8 +9,14 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit.da
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_edit.dart';
+
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_detail.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_edit.dart';
+
+import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_visit_binding.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_view_binding.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
+
 
 class SmileRoutes {
   //Penamaan
@@ -61,6 +67,7 @@ class SmileRoutes {
       name: historyVisit,
       transition: Transition.zoom,
       page: () => HistoryVisit(),
+      binding: HistoryVisitBinding(), // Tambahkan binding untuk HistoryVisit
     ),
     GetPage(
       name: dataMaster,
@@ -71,11 +78,13 @@ class SmileRoutes {
       name: historyView,
       transition: Transition.zoom,
       page: () => HistoryView(),
+      binding: HistoryViewBinding(), // Tambahkan binding untuk HistoryView
     ),
     GetPage(
       name: historyEdit,
       transition: Transition.zoom,
       page: () => HistoryEdit(),
+      binding: HistoryEditBinding(), // Tambahkan binding untuk HistoryEdit
     ),
     GetPage(
       name: taskVisitDetail,

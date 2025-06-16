@@ -1,103 +1,91 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/history_view_controller.dart';
 
-class HistoryView extends StatelessWidget {
+class HistoryView extends GetView<HistoryViewController> {
   const HistoryView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Data dummy berdasarkan gambar
-    final data = Get.arguments ?? {
-      'jabatan': 'BM',
-      'area': '01.JABODETABEKSER',
-      'cabang': '1507',
-      'produk': 'MBBR',
-      'type': 'Direct Visit Dealer',
-      'activity': 'KORDINASI RUTIN',
-      'date_start': '2025-05-30',
-      'date_finish': '2025-05-30',
-      'pic': 'Herman,rukiyanti,all sh',
-      'discussion': 'Koordinasi rutin',
-      'problem': '-',
-      'location': 'Kecamatan Pondok Jaya, Kecamatan Pondok Aren, Kota Tangerang Selatan, Banten',
-      'timestamp': '30 May 2025 14:28:55',
-    };
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: Colors.blue,
         title: const Text('View visit dealer'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Gambar dan informasi lokasi
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('res/images/baleno.jpg'), // Path disesuaikan dengan struktur proyek
-                  fit: BoxFit.cover,
+      body: Obx(() {
+        if (controller.historyData.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final data = Get.arguments as Map<String, dynamic>? ?? {};
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('res/images/baleno.jpg'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: CircleAvatar(
+                        backgroundColor: Colors.blue,
+                        child: Icon(Icons.location_on, color: Colors.white),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Text(
+                        data['timestamp'] ?? '-',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Text(
+                        data['location'] ?? '-',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      child: Icon(Icons.location_on, color: Colors.white),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Text(
-                      data['timestamp'] ?? '-',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Text(
-                      data['location'] ?? '-',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Data Dealer
-            Text('Data Dealer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
-            _buildField('Jabatan Saya', data['jabatan'] ?? '-'),
-            _buildField('Area', data['area'] ?? '-'),
-            _buildField('Cabang', data['cabang'] ?? '-'),
-            _buildField('Produk', data['produk'] ?? '-'),
-            const SizedBox(height: 16),
-            // Data Visit
-            Text('Data Visit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
-            _buildField('Tipe visit', data['type'] ?? '-'),
-            _buildField('Tujuan visit', data['activity'] ?? '-'),
-            _buildField('Dari tanggal', data['date_start'] ?? '-'),
-            _buildField('Sampai tanggal', data['date_finish'] ?? '-'),
-            _buildField('Tanggal selesai', data['date_finish'] ?? '-'),
-            _buildField('Nama PIC', data['pic'] ?? '-'),
-            _buildField('Theme discussion', data['discussion'] ?? '-'),
-            _buildField('Problem', data['problem'] ?? '-'),
-            _buildField('Keterangan Pelaksanaan', data['pelakasanaan'] ?? '-'),
-          ],
-        ),
-      ),
+              const SizedBox(height: 16),
+              Text('Data Dealer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+              _buildField('Jabatan Saya', data['jabatan'] ?? '-'),
+              _buildField('Area', data['area'] ?? '-'),
+              _buildField('Cabang', data['cabang'] ?? '-'),
+              _buildField('Produk', data['produk'] ?? '-'),
+              const SizedBox(height: 16),
+              Text('Data Visit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+              _buildField('Tipe visit', data['type'] ?? '-'),
+              _buildField('Tujuan visit', data['activity'] ?? '-'),
+              _buildField('Dari tanggal', data['date_start'] ?? '-'),
+              _buildField('Sampai tanggal', data['date_finish'] ?? '-'),
+              _buildField('Tanggal selesai', data['date_finish'] ?? '-'),
+              _buildField('Nama PIC', data['pic'] ?? '-'),
+              _buildField('Theme discussion', data['discussion'] ?? '-'),
+              _buildField('Problem', data['problem'] ?? '-'),
+              _buildField('Keterangan Pelaksanaan', data['pelakasanaan'] ?? '-'),
+            ],
+          ),
+        );
+      }),
     );
   }
 
