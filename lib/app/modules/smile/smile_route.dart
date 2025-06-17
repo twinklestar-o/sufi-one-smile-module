@@ -15,6 +15,7 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/tas
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_visit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_view_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
+import 'package:sufi_one/src/screens/jabatan_screen.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -33,7 +34,7 @@ class SmileRoutes {
   static const historyEdit = '/public/smile/history_edit';
   static const taskVisitDetail = '/public/smile/task_visit_detail';
   static const taskVisitEdit = '/public/smile/task_visit_edit';
-
+  static const jabatan = '/public/smile/list_master/jabatan';
   static final routes = [
     GetPage(
       name: register,
@@ -41,6 +42,11 @@ class SmileRoutes {
       page: () => RegisterPage(),
     ),
     GetPage(name: login, transition: Transition.zoom, page: () => LoginPage()),
+    GetPage(
+      name: jabatan,
+      transition: Transition.zoom,
+      page: () => JabatanScreen(),
+    ),
     GetPage(
       name: profile,
       transition: Transition.zoom,

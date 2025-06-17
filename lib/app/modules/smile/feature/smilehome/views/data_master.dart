@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/smile/smile_route.dart';
 
 class DataMaster extends StatefulWidget {
   const DataMaster({super.key});
@@ -12,41 +13,48 @@ class _DataMasterState extends State<DataMaster> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollToTop = false;
 
-  final List<String> masterItems = const [
-    'AREA',
-    'CABANG',
-    'DEALER',
-    'JABATAN',
-    'JABATAN SFI',
-    'MAIN DEALER',
-    'PRODUK',
-    'TIPE VISIT',
-    'TUJUAN VISIT',
-    'Tanggal Mulai',
-    'Sampai Tanggal'
-    'Tanggal Selesai',
-    'Nama PIC',
-    'Theme Discussion',
-    'Problem',
+  final List<Map<String, dynamic>> masterItems = const [
+    {'title': 'AREA', 'route': '/master/area'},
+    {'title': 'CABANG', 'route': '/master/cabang'},
+    {'title': 'DEALER', 'route': '/master/dealer'},
+    {'title': 'JABATAN', 'route': SmileRoutes.jabatan},
+    {'title': 'JABATAN SFI', 'route': '/master/jabatan-sfi'},
+    {'title': 'MAIN DEALER', 'route': '/master/main-dealer'},
+    {'title': 'PRODUK', 'route': '/master/produk'},
+    {'title': 'TIPE VISIT', 'route': '/master/tipe-visit'},
+    {'title': 'TUJUAN VISIT', 'route': '/master/tujuan-visit'},
+    {'title': 'Tanggal Mulai', 'route': '/master/tanggal-mulai'},
+    {'title': 'Sampai Tanggal', 'route': '/master/sampai-tanggal'},
+    {'title': 'Tanggal Selesai', 'route': '/master/tanggal-selesai'},
+    {'title': 'Nama PIC', 'route': '/master/nama-pic'},
+    {'title': 'Theme Discussion', 'route': '/master/theme-discussion'},
+    {'title': 'Problem', 'route': '/master/problem'},
   ];
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(() {
-      // Tampilkan tombol scroll jika scroll melewati 200px
-      if (_scrollController.offset > 200 && !_showScrollToTop) {
-        setState(() => _showScrollToTop = true);
-      } else if (_scrollController.offset <= 200 && _showScrollToTop) {
-        setState(() => _showScrollToTop = false);
-      }
-    });
+    _scrollController.addListener(_scrollListener);
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset > 200 && !_showScrollToTop) {
+      setState(() => _showScrollToTop = true);
+    } else if (_scrollController.offset <= 200 && _showScrollToTop) {
+      setState(() => _showScrollToTop = false);
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _navigateToMaster(String route) {
+    // Anda bisa menambahkan logika tambahan sebelum navigasi di sini
+    Get.toNamed(route);
   }
 
   @override
@@ -55,18 +63,12 @@ class _DataMasterState extends State<DataMaster> {
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E47A1),
-        title: const Text(
-          'List Master',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('List Master', style: TextStyle(color: Colors.white)),
         actions: [
           Padding(
-
             padding: const EdgeInsets.only(right: 12.0),
             child: ElevatedButton(
-              onPressed: () {
-                // Tambahkan logika download di sini
-              },
+              onPressed: _downloadMasterData,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF0E47A1),
@@ -88,53 +90,64 @@ class _DataMasterState extends State<DataMaster> {
         padding: const EdgeInsets.all(16),
         itemCount: masterItems.length,
         itemBuilder: (context, index) {
+          final item = masterItems[index];
           return Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
             elevation: 2,
             margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16), // buat lebih tinggi
-              visualDensity: const VisualDensity(vertical: 2), // tambah tinggi jarak dalam tile
-              title: Text(
-                masterItems[index],
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _navigateToMaster(item['route']),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 16,
                 ),
+                visualDensity: const VisualDensity(vertical: 2),
+                title: Text(
+                  item['title'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                // Tambahkan navigasi ke detail master di sini
-              },
             ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_showScrollToTop) {
+      floatingActionButton: AnimatedOpacity(
+        opacity: _showScrollToTop ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 300),
+        child: FloatingActionButton(
+          onPressed: () {
             _scrollController.animateTo(
-              0,
+              _showScrollToTop ? 0 : _scrollController.position.maxScrollExtent,
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeInOut,
             );
-          } else {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-            );
-          }
-        },
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.redAccent,
-        shape: const CircleBorder(),
-        child: Icon(
-          _showScrollToTop ? Icons.arrow_upward : Icons.arrow_downward,
+          },
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF0E47A1),
+          shape: const CircleBorder(),
+          child: Icon(
+            _showScrollToTop ? Icons.arrow_upward : Icons.arrow_downward,
+          ),
         ),
       ),
+    );
+  }
+
+  void _downloadMasterData() {
+    // Implementasi download master data
+    Get.snackbar(
+      'Download',
+      'Memulai download data master...',
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
     );
   }
 }
