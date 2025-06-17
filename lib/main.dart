@@ -5,11 +5,13 @@ import 'app/routes/app_routes.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized(); // penting untuk shared_preferences
-  runApp(MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi OneSignal
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("INI KODE DARI ONESIGNAL");
   OneSignal.Notifications.requestPermission(true);
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

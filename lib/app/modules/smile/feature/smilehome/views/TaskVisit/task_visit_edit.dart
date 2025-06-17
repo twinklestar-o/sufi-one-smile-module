@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit.dart';
 
 class TaskVisitEdit extends StatefulWidget {
   final Visit visit;
@@ -19,12 +19,11 @@ class _TaskVisitEditState extends State<TaskVisitEdit> {
   late TextEditingController _themeDiscussionController;
   late TextEditingController _problemController;
 
-  String? _status; // Variable to store the selected status
+  String? _status;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the controllers with empty strings
     _tipeVisitController = TextEditingController(text: "");
     _tujuanVisitController = TextEditingController(text: "");
     _dariTanggalController = TextEditingController(text: "");
@@ -32,7 +31,7 @@ class _TaskVisitEditState extends State<TaskVisitEdit> {
     _namaPicController = TextEditingController(text: "");
     _themeDiscussionController = TextEditingController(text: "");
     _problemController = TextEditingController(text: "");
-    _status = null; // Set the initial status to null
+    _status = null;
   }
 
   @override
@@ -63,8 +62,11 @@ class _TaskVisitEditState extends State<TaskVisitEdit> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Task Visit'),
-        backgroundColor: const Color(0xFF1628B0),
+        title: const Text(
+          'Edit Task Visit',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF0048A7),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -91,8 +93,6 @@ class _TaskVisitEditState extends State<TaskVisitEdit> {
                   const SizedBox(height: 16),
                   _buildTextField('Problem', _problemController),
                   const SizedBox(height: 16),
-
-                  // Adding the Dropdown for STATUS
                   DropdownButtonFormField<String>(
                     value: _status,
                     onChanged: (String? newValue) {
@@ -102,7 +102,9 @@ class _TaskVisitEditState extends State<TaskVisitEdit> {
                     },
                     decoration: InputDecoration(
                       labelText: 'STATUS',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: <String>['Terlaksana', 'Dibatalkan']
@@ -119,23 +121,48 @@ class _TaskVisitEditState extends State<TaskVisitEdit> {
             ),
           ),
 
-          // Save Button at the bottom with styling for blue background and white text
+          // Save Button (Gradient)
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SizedBox(
-              width: double.infinity, // Make the button take the full width
+              width: double.infinity,
+              height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  // Handle save/update logic here
-                  // Update visit details and pop the screen
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lightBlue, // Blue background color
-                  foregroundColor: Colors.white, // White text color
-                  padding: const EdgeInsets.symmetric(vertical: 16), // Vertical padding for larger button
+                  padding: EdgeInsets.zero,
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: const Text('Save'),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFEAF6FF),
+                        Color(0xFFB0DAFF),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -149,7 +176,9 @@ class _TaskVisitEditState extends State<TaskVisitEdit> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );

@@ -5,18 +5,16 @@ import 'package:sufi_one/app/Auth/views/register_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_edit.dart';
-
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_detail.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/task_visit_edit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit_detail.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit_edit.dart';
 
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_visit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_view_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
-
 
 class SmileRoutes {
   //Penamaan

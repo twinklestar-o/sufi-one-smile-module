@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../smile_route.dart';
+import '../../../../smile_route.dart';
 
 /// Model untuk merepresentasikan satu tugas kunjungan.
 class Visit {
@@ -27,10 +27,10 @@ class VisitSearchDelegate extends SearchDelegate<Visit?> {
   final List<Visit> visits;
 
   VisitSearchDelegate(this.visits)
-    : super(
-        searchFieldLabel: 'Cari kode cabang...',
-        keyboardType: TextInputType.text,
-      );
+      : super(
+    searchFieldLabel: 'Cari kode cabang...',
+    keyboardType: TextInputType.text,
+  );
 
   @override
   TextStyle? get searchFieldStyle => const TextStyle(fontSize: 16);
@@ -40,7 +40,7 @@ class VisitSearchDelegate extends SearchDelegate<Visit?> {
     final base = Theme.of(context);
     return base.copyWith(
       appBarTheme: base.appBarTheme.copyWith(
-        backgroundColor: const Color(0xFF1724B1),
+        backgroundColor: const Color(0xFF0048A7),
         iconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: const TextStyle(
           color: Colors.white,
@@ -72,12 +72,10 @@ class VisitSearchDelegate extends SearchDelegate<Visit?> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final results =
-        visits
-            .where(
-              (v) => v.kodeCabang.toLowerCase().contains(query.toLowerCase()),
-            )
-            .toList();
+    final results = visits
+        .where((v) =>
+        v.kodeCabang.toLowerCase().contains(query.toLowerCase()))
+        .toList();
 
     if (results.isEmpty) {
       return const Center(child: Text('Tidak ada hasil.'));
@@ -98,12 +96,10 @@ class VisitSearchDelegate extends SearchDelegate<Visit?> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions =
-        visits
-            .where(
-              (v) => v.kodeCabang.toLowerCase().contains(query.toLowerCase()),
-            )
-            .toList();
+    final suggestions = visits
+        .where((v) =>
+        v.kodeCabang.toLowerCase().contains(query.toLowerCase()))
+        .toList();
 
     return ListView.builder(
       itemCount: suggestions.length,
@@ -164,7 +160,7 @@ class TaskVisit extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1724B1),
+        backgroundColor: const Color(0xFF0048A7),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -198,7 +194,8 @@ class TaskVisit extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Center(
-                  child: Icon(Icons.search, color: Color(0xFF4E90E5), size: 28),
+                  child: Icon(Icons.search,
+                      color: Color(0xFF4E90E5), size: 28),
                 ),
               ),
             ),
@@ -217,7 +214,8 @@ class TaskVisit extends StatelessWidget {
             ),
             elevation: 2,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -232,65 +230,72 @@ class TaskVisit extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     v.noPlan,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    style:
+                    TextStyle(fontSize: 14, color: Colors.grey[700]),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     v.jenisVisit,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    style:
+                    TextStyle(fontSize: 14, color: Colors.grey[700]),
                   ),
                   if (v.subJenis.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       v.subJenis,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      style: TextStyle(
+                          fontSize: 14, color: Colors.grey[700]),
                     ),
                   ],
                   const SizedBox(height: 4),
                   Text(
                     '${v.tanggal.toLocal()}'.split('.').first,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                        fontSize: 12, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      OutlinedButton(
+                      OutlinedButton.icon(
                         onPressed: () {
-                          // Langsung mengarah ke halaman detail
                           Get.toNamed(
                             SmileRoutes.taskVisitDetail,
                             arguments: v,
                           );
                         },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _buttonColor,
-                          side: const BorderSide(color: _buttonColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          minimumSize: const Size(64, 36),
+                        icon: const Icon(Icons.remove_red_eye, size: 18, color: Color(0xFF4E90E5)),
+                        label: const Text(
+                          'View',
+                          style: TextStyle(color: Color(0xFF4E90E5), fontWeight: FontWeight.w500),
                         ),
-                        child: const Text('View'),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF4E90E5)),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      OutlinedButton(
+                      OutlinedButton.icon(
                         onPressed: () {
-                          // Navigasi ke halaman edit Task
-                          Get.toNamed(SmileRoutes.taskVisitEdit, arguments: v);
+                          Get.toNamed(
+                            SmileRoutes.taskVisitEdit,
+                            arguments: v,
+                          );
                         },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _buttonColor,
-                          side: const BorderSide(color: _buttonColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          minimumSize: const Size(64, 36),
+                        icon: const Icon(Icons.edit, size: 18, color: Color(0xFF4E90E5)),
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(color: Color(0xFF4E90E5), fontWeight: FontWeight.w500),
                         ),
-                        child: const Text('Edit'),
-                      )
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF4E90E5)),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        ),
+                      ),
                     ],
-                  ),
+                  )
                 ],
               ),
             ),
