@@ -1,6 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sufi_one/app/Auth/views/login_view.dart';
+import 'package:sufi_one/app/modules/public/home_routes.dart';
 import 'package:sufi_one/app/modules/public/profile_page/models/user_profile_model.dart';
+import 'package:sufi_one/app/modules/smile/constants/constants.dart';
+import 'package:sufi_one/app/modules/smile/models/user.dart';
 
 class ProfilePageController extends GetxController {
   final user = Rx<UserProfile?>(null);
@@ -24,6 +33,9 @@ class ProfilePageController extends GetxController {
   final currentPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
+  // Add loading state for password change
+  final isLoading = false.obs;
 
   @override
   void onInit() {
@@ -49,7 +61,7 @@ class ProfilePageController extends GetxController {
   }
 
   void loadUserFromJsonAsset() async {
-    final profile = await loadUserProfileFromJsonAsset(); // method di model
+    final profile = await loadUserProfileFromJsonAsset();
     user.value = profile;
 
     nameController.text = profile.name;
@@ -96,6 +108,7 @@ class ProfilePageController extends GetxController {
 
   String? validateNewPassword(String? value) {
     if (value == null || value.isEmpty) return 'Please enter your new password';
+    if (value.length < 8) return 'Password must be at least 8 characters';
     if (value == currentPasswordController.text) {
       return 'New password must be different from current password';
     }
@@ -144,12 +157,8 @@ class ProfilePageController extends GetxController {
     );
   }
 
-  void changePassword() {
-    final currentPassword = currentPasswordController.text;
-    final newPassword = newPasswordController.text;
-    final confirmPassword = confirmPasswordController.text;
-
-    if (newPassword != confirmPassword) {
+  Future<void> changePassword() async {
+    if (newPasswordController.text != confirmPasswordController.text) {
       Get.snackbar(
         'Error',
         'New password and confirmation do not match',
@@ -158,7 +167,7 @@ class ProfilePageController extends GetxController {
       return;
     }
 
-    if (currentPassword == newPassword) {
+    if (currentPasswordController.text == newPasswordController.text) {
       Get.snackbar(
         'Error',
         'New password must be different from current password',
@@ -167,10 +176,71 @@ class ProfilePageController extends GetxController {
       return;
     }
 
-    Get.snackbar(
-      'Success',
-      'Password updated successfully',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    try {
+      isLoading.value = true;
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null || token.isEmpty) {
+        Get.offAll(() => LoginPage());
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse(Url + 'change-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'passwordLama': currentPasswordController.text,
+          'passwordBaru': newPasswordController.text,
+          'passwordBaru_confirmation': confirmPasswordController.text,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Update token baru jika ada
+        if (responseData['token'] != null) {
+          await prefs.setString('token', responseData['token']);
+        }
+
+        Get.snackbar(
+          'Sukses',
+          'Password berhasil diubah',
+          snackPosition: SnackPosition.TOP,
+        );
+
+        // Clear fields
+        currentPasswordController.clear();
+        newPasswordController.clear();
+        confirmPasswordController.clear();
+
+        // Tidak perlu navigasi, biarkan user tetap di halaman
+      } else {
+        final errorMessage =
+            responseData['message'] ??
+            'Gagal mengubah password. Status code: ${response.statusCode}';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      String errorMessage = 'Terjadi kesalahan';
+
+      if (e is SocketException) {
+        errorMessage = 'Tidak ada koneksi internet';
+      } else if (e.toString().contains('401')) {
+        errorMessage = 'Sesi telah berakhir, silakan login kembali';
+        Get.offAll(() => LoginPage());
+      } else {
+        errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
+
+      Get.snackbar('Error', errorMessage, snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isLoading.value = false;
+    }
   }
 }
