@@ -1,5 +1,5 @@
 import 'package:sufi_one/src/services/api_services.dart';
-import '../database/database_helper.dart';
+import '../../../../src/database/database_helper.dart';
 import '../models/jabatan.dart';
 
 class JabatanRepository {

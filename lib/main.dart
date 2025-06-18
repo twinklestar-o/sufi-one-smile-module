@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
 import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
-import 'package:sufi_one/src/repositories/jabatan_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/jabatan_repository.dart';
 import 'package:sufi_one/src/services/api_services.dart';
 
 void main() async {

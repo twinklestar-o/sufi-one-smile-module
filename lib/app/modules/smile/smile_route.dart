@@ -3,7 +3,7 @@ import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/Auth/views/profile.dart';
 import 'package:sufi_one/app/Auth/views/register_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/data_master.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_visit.dart';
@@ -15,7 +15,7 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/tas
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_visit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_view_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
-import 'package:sufi_one/src/screens/jabatan_screen.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/jabatan_screen.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -43,11 +43,6 @@ class SmileRoutes {
     ),
     GetPage(name: login, transition: Transition.zoom, page: () => LoginPage()),
     GetPage(
-      name: jabatan,
-      transition: Transition.zoom,
-      page: () => JabatanScreen(),
-    ),
-    GetPage(
       name: profile,
       transition: Transition.zoom,
       page: () => ProfilePage(),
@@ -62,33 +57,12 @@ class SmileRoutes {
       transition: Transition.zoom,
       page: () => DirectVisit(),
     ),
+
+    //Route untuk fitur Task Visit Dealer
     GetPage(
       name: taskVisit,
       transition: Transition.zoom,
       page: () => TaskVisit(),
-    ),
-    GetPage(
-      name: historyVisit,
-      transition: Transition.zoom,
-      page: () => HistoryVisit(),
-      binding: HistoryVisitBinding(), // Tambahkan binding untuk HistoryVisit
-    ),
-    GetPage(
-      name: dataMaster,
-      transition: Transition.zoom,
-      page: () => DataMaster(),
-    ),
-    GetPage(
-      name: historyView,
-      transition: Transition.zoom,
-      page: () => HistoryView(),
-      binding: HistoryViewBinding(), // Tambahkan binding untuk HistoryView
-    ),
-    GetPage(
-      name: historyEdit,
-      transition: Transition.zoom,
-      page: () => HistoryEdit(),
-      binding: HistoryEditBinding(), // Tambahkan binding untuk HistoryEdit
     ),
     GetPage(
       name: taskVisitDetail,
@@ -105,6 +79,37 @@ class SmileRoutes {
         final args = Get.arguments as Visit;
         return TaskVisitEdit(visit: args);
       },
+    ),
+    //Route untuk fitur History Visit Dealer
+    GetPage(
+      name: historyVisit,
+      transition: Transition.zoom,
+      page: () => HistoryVisit(),
+      binding: HistoryVisitBinding(), // Tambahkan binding untuk HistoryVisit
+    ),
+    GetPage(
+      name: historyView,
+      transition: Transition.zoom,
+      page: () => HistoryView(),
+      binding: HistoryViewBinding(), // Tambahkan binding untuk HistoryView
+    ),
+    GetPage(
+      name: historyEdit,
+      transition: Transition.zoom,
+      page: () => HistoryEdit(),
+      binding: HistoryEditBinding(), // Tambahkan binding untuk HistoryEdit
+    ),
+
+    //Route untuk fitur Data Master
+    GetPage(
+      name: dataMaster,
+      transition: Transition.zoom,
+      page: () => DataMaster(),
+    ),
+    GetPage(
+      name: jabatan,
+      transition: Transition.zoom,
+      page: () => JabatanScreen(),
     ),
   ];
 }

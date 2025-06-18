@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/jabatan.dart';
+import '../../app/modules/smile/models/jabatan.dart';
 
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';

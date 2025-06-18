@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../repositories/jabatan_repository.dart';
-import '../models/jabatan.dart';
+import '../../../../repositories/jabatan_repository.dart';
+import '../../../../models/jabatan.dart';
 
 class JabatanScreen extends StatefulWidget {
   @override
