@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/DAMS/dams_route.dart';
 import 'package:sufi_one/app/modules/locationTest/location_routes.dart';
 import 'package:sufi_one/app/modules/mobcol/mobcol_routes.dart';
 import 'package:sufi_one/app/modules/smile/smile_route.dart';
@@ -46,5 +47,6 @@ class AppRoutes {
     ...HomeRoutes.routes,
     ...MobcolRoutes.routes,
     ...LocationRoutes.routes,
+    ...DamsRoute.routes,
   ];
 }

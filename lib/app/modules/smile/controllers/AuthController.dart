@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:sufi_one/app/modules/smile/constants/constants.dart';
+import 'package:sufi_one/src/constants/constants.dart';
 
 class AuthController {
   Future<void> login(String email, String password) async {

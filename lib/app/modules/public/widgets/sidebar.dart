@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sufi_one/app/modules/DAMS/dams_route.dart';
 import 'package:sufi_one/app/modules/locationTest/location_routes.dart';
 import 'package:sufi_one/app/modules/mobcol/mobcol_routes.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
+import 'package:sufi_one/app/modules/smile/smile_route.dart';
 import 'package:sufi_one/app/modules/survey/survey_routes.dart';
 import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/app/theme/color_constant.dart';
@@ -78,6 +80,13 @@ final List<SidebarItemData> _sidebarItems = [
     onTap: () {
       CheckingInstalledAppService().checkInstalledApps(); // Scan aplikasi
       Get.toNamed(AppRoutes.survey);
+    },
+  ),
+  SidebarItemData(
+    icon: const Icon(Icons.qr_code, color: Colors.white),
+    title: 'DAMS',
+    onTap: () {
+      Get.toNamed(DamsRoute.scanCode);
     },
   ),
   SidebarItemData(
