@@ -6,16 +6,19 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.da
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_edit.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_view.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/task_visit_binding.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/task_edit_binding.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/task_view_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/History/history_edit.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit_detail.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit_edit.dart';
-
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_visit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_view_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/jabatan_screen.dart';
+
 
 class SmileRoutes {
   //Penamaan
@@ -28,6 +31,11 @@ class SmileRoutes {
   static const profile = '/public/smile/profile';
   static const directVisit = '/public/smile/direct_visit';
   static const taskVisit = '/public/smile/task_visit';
+  static const taskView =
+      '/public/smile/task_view'; // Ubah dari taskVisitDetail ke taskView
+  static const taskEdit =
+      '/public/smile/task_edit'; // Ubah dari taskVisitEdit ke taskEdit
+
   static const historyVisit = '/public/smile/history_visit';
   static const dataMaster = '/public/smile/data_master';
   static const historyView = '/public/smile/history_view';
@@ -35,6 +43,9 @@ class SmileRoutes {
   static const taskVisitDetail = '/public/smile/task_visit_detail';
   static const taskVisitEdit = '/public/smile/task_visit_edit';
   static const jabatan = '/public/smile/list_master/jabatan';
+  static const historyVisitDetail = '/public/smile/history_visit_detail';
+  static const historyVisitEdit = '/public/smile/history_visit_edit';
+
   static final routes = [
     GetPage(
       name: register,
@@ -63,41 +74,38 @@ class SmileRoutes {
       name: taskVisit,
       transition: Transition.zoom,
       page: () => TaskVisit(),
+      binding: TaskVisitBinding(),
     ),
     GetPage(
-      name: taskVisitDetail,
+      name: taskView,
       transition: Transition.zoom,
-      page: () {
-        final args = Get.arguments as Visit;
-        return TaskVisitDetail(visit: args);
-      },
+      page: () => TaskView(),
+      binding: TaskViewBinding(),
     ),
     GetPage(
-      name: taskVisitEdit,
+      name: taskEdit, // Ubah dari taskVisitEdit ke taskEdit
       transition: Transition.zoom,
-      page: () {
-        final args = Get.arguments as Visit;
-        return TaskVisitEdit(visit: args);
-      },
+      page: () => TaskEdit(),
+      binding: TaskEditBinding(),
     ),
     //Route untuk fitur History Visit Dealer
     GetPage(
       name: historyVisit,
       transition: Transition.zoom,
       page: () => HistoryVisit(),
-      binding: HistoryVisitBinding(), // Tambahkan binding untuk HistoryVisit
+      binding: HistoryVisitBinding(),
     ),
     GetPage(
       name: historyView,
       transition: Transition.zoom,
       page: () => HistoryView(),
-      binding: HistoryViewBinding(), // Tambahkan binding untuk HistoryView
+      binding: HistoryViewBinding(),
     ),
     GetPage(
       name: historyEdit,
       transition: Transition.zoom,
       page: () => HistoryEdit(),
-      binding: HistoryEditBinding(), // Tambahkan binding untuk HistoryEdit
+      binding: HistoryEditBinding(),
     ),
 
     //Route untuk fitur Data Master
