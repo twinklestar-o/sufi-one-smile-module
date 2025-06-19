@@ -11,38 +11,55 @@ class ScanCodePage extends StatefulWidget {
 }
 
 class _ScanCodePageState extends State<ScanCodePage> {
+  Barcode? _barcode;
+
+  Widget _barcodePreview(Barcode? value) {
+    if (value == null) {
+      return const Text(
+        'Scan something!',
+        overflow: TextOverflow.fade,
+        style: TextStyle(color: Colors.white),
+      );
+    }
+
+    return Text(
+      value.displayValue ?? 'No display value.',
+      overflow: TextOverflow.fade,
+      style: const TextStyle(color: Colors.white),
+    );
+  }
+
+  void _handleBarcode(BarcodeCapture barcodes) {
+    if (mounted) {
+      setState(() {
+        _barcode = barcodes.barcodes.firstOrNull;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan QR Code'),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.qr_code)),
+      appBar: AppBar(title: const Text('Scan QR Code')),
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          MobileScanner(onDetect: _handleBarcode),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              alignment: Alignment.bottomCenter,
+              height: 100,
+              color: const Color.fromRGBO(0, 0, 0, 0.4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(child: Center(child: _barcodePreview(_barcode))),
+                ],
+              ),
+            ),
+          ),
         ],
-      ),
-      body: MobileScanner(
-        controller: MobileScannerController(
-          detectionSpeed: DetectionSpeed.noDuplicates,
-          returnImage: true,
-        ),
-        onDetect: (capture) {
-          final List<Barcode> barcodes = capture.barcodes;
-          final Uint8List? image = capture.image;
-          for (final barcode in barcodes) {
-            print('Barcode found! ${barcode.rawValue}');
-          }
-          if (image != null) {
-            showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text(barcodes.first.rawValue ?? ""),
-                  content: Image(image: MemoryImage(image)),
-                );
-              },
-            );
-          }
-        },
       ),
     );
   }
