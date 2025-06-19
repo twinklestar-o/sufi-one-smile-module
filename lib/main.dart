@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
+import 'package:sufi_one/app/modules/smile/repositories/area_repository.dart';
 import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatan_repository.dart';
@@ -18,7 +19,10 @@ void main() async {
     dbHelper: dbHelper,
     apiService: apiService,
   );
-
+  final areaRepository = AreaRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
   // Inisialisasi OneSignal
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("INI KODE DARI ONESIGNAL");
@@ -30,6 +34,7 @@ void main() async {
         Provider<DatabaseHelper>(create: (_) => dbHelper),
         Provider<ApiService>(create: (_) => apiService),
         Provider<JabatanRepository>(create: (_) => jabatanRepository),
+        Provider<AreaRepository>(create: (_) => areaRepository),
       ],
       child: const MyApp(),
     ),

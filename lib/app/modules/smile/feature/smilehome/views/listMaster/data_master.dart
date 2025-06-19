@@ -14,7 +14,7 @@ class _DataMasterState extends State<DataMaster> {
   bool _showScrollToTop = false;
 
   final List<Map<String, dynamic>> masterItems = const [
-    {'title': 'AREA', 'route': '/master/area'},
+    {'title': 'AREA', 'route': SmileRoutes.area},
     {'title': 'CABANG', 'route': '/master/cabang'},
     {'title': 'DEALER', 'route': '/master/dealer'},
     {'title': 'JABATAN', 'route': SmileRoutes.jabatan},

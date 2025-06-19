@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sufi_one/app/modules/smile/models/area.dart';
 import '../../app/modules/smile/models/jabatan.dart';
 
 class DatabaseHelper {
@@ -9,6 +10,7 @@ class DatabaseHelper {
   // Table names
   static const tableJabatan = 'jabatan';
   static const tableMetadata = 'metadata';
+  static const tableArea = 'area';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -43,6 +45,14 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
+      CREATE TABLE $tableArea (
+        code TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
       CREATE TABLE $tableMetadata (
         key TEXT PRIMARY KEY,
         value TEXT
@@ -63,6 +73,24 @@ class DatabaseHelper {
         id: maps[i]['id'],
         name: maps[i]['name'],
         kode: maps[i]['kode'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
+  Future<int> insertArea(Area area) async {
+    final db = await database;
+    return await db.insert(tableArea, area.toJson());
+  }
+
+  Future<List<Area>> getAllArea() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableArea);
+    return List.generate(maps.length, (i) {
+      return Area(
+        code: maps[i]['code'],
+        name: maps[i]['name'],
         createdAt: maps[i]['created_at'],
         updatedAt: maps[i]['updated_at'],
       );

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/Auth/views/profile.dart';
 import 'package:sufi_one/app/Auth/views/register_view.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/area_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
@@ -18,7 +19,6 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_vi
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_view_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/jabatan_screen.dart';
-
 
 class SmileRoutes {
   //Penamaan
@@ -43,6 +43,7 @@ class SmileRoutes {
   static const taskVisitDetail = '/public/smile/task_visit_detail';
   static const taskVisitEdit = '/public/smile/task_visit_edit';
   static const jabatan = '/public/smile/list_master/jabatan';
+  static const area = '/public/smile/list_master/area';
   static const historyVisitDetail = '/public/smile/history_visit_detail';
   static const historyVisitEdit = '/public/smile/history_visit_edit';
 
@@ -119,5 +120,6 @@ class SmileRoutes {
       transition: Transition.zoom,
       page: () => JabatanScreen(),
     ),
+    GetPage(name: area, transition: Transition.zoom, page: () => AreaScreen()),
   ];
 }
