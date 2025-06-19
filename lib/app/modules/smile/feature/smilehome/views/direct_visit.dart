@@ -35,7 +35,8 @@ class _DirectVisitState extends State<DirectVisit> {
   final TextEditingController _telpPicController = TextEditingController();
   List<Map<String, String>> mainPersons =
   []; // setiap item: {'jabatan':…, 'nama':…, 'telp':…}
-  final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>(); // Untuk seluruh formulir
+  final _mainPersonFormKey = GlobalKey<FormState>(); // Khusus untuk Main Person
   final ImagePicker _picker = ImagePicker();
   // helper untuk PageView
   late final PageController _pageCtrl;
@@ -87,7 +88,7 @@ class _DirectVisitState extends State<DirectVisit> {
   File? _photo1;
   File? _photo2;
 
-  // CHANGE: define custom colors
+  // define custom colors
   static const Color headerBlue = Color(0xFF1521A4);
   static const Color dropdownLight = Color(0xFF272728);
   static const Color dropdownLightNF = Color(0xFFCCCCCC);
@@ -97,20 +98,71 @@ class _DirectVisitState extends State<DirectVisit> {
   Future<void> _selectDate(
       BuildContext context,
       Function(DateTime?) setDate,
+      String fieldType,
       ) async {
-    //fungsi selectDate untuk memilih tanggal
+    DateTime initialDate = DateTime.now();
+    DateTime firstDate = DateTime(2000);
+    DateTime lastDate = DateTime(2100);
+
+    // Tentukan rentang tanggal berdasarkan fieldType
+    switch (fieldType) {
+      case 'dariTanggal':
+        initialDate = selectedTanggalMulai ?? DateTime.now();
+        lastDate = DateTime.now();
+        break;
+      case 'sampaiTanggal':
+        initialDate = selectedTanggalBerakhir ?? (selectedTanggalMulai ?? DateTime.now());
+        firstDate = selectedTanggalMulai ?? DateTime(2000);
+        break;
+      case 'tanggalSelesai':
+        initialDate = selectedTanggalPenyelesaian ?? (selectedTanggalMulai ?? DateTime.now());
+        firstDate = selectedTanggalMulai ?? DateTime(2000);
+        lastDate = selectedTanggalBerakhir ?? DateTime(2100);
+        break;
+    }
+
+    // Tampilkan dialog pemilih tanggal
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      helpText: 'Pilih $fieldType',
     );
+
+    // Proses tanggal yang dipilih
     if (picked != null) {
-      setState(() {
-        setDate(picked);
-      });
+      bool isValid = true;
+      String? errorMessage;
+
+      // Validasi berdasarkan fieldType
+      if (fieldType == 'dariTanggal' && picked.isAfter(DateTime.now())) {
+        isValid = false;
+        errorMessage = 'Dari Tanggal tidak boleh melebihi hari ini';
+      } else if (fieldType == 'sampaiTanggal' && selectedTanggalMulai != null && picked.isBefore(selectedTanggalMulai!)) {
+        isValid = false;
+        errorMessage = 'Sampai Tanggal harus setelah atau sama dengan Dari Tanggal';
+      } else if (fieldType == 'tanggalSelesai') {
+        if (selectedTanggalMulai != null && picked.isBefore(selectedTanggalMulai!)) {
+          isValid = false;
+          errorMessage = 'Tanggal Selesai harus setelah atau sama dengan Dari Tanggal';
+        } else if (selectedTanggalBerakhir != null && picked.isAfter(selectedTanggalBerakhir!)) {
+          isValid = false;
+          errorMessage = 'Tanggal Selesai harus sebelum atau sama dengan Sampai Tanggal';
+        }
+      }
+
+      if (isValid) {
+        setState(() {
+          setDate(picked);
+        });
+      } else {
+        // Jika validasi gagal, reset semua tanggal
+        _resetAllDates();
+      }
     }
   }
+
 
   Future<void> _checkLocationPermission() async {
     LocationPermission perm = await Geolocator.checkPermission();
@@ -154,6 +206,20 @@ class _DirectVisitState extends State<DirectVisit> {
   }
 
   StreamSubscription<Position>? _positionStream;
+
+  //reset semua tanggal ke null
+  void _resetAllDates() {
+    setState(() {
+      selectedTanggalMulai = null;
+      selectedTanggalBerakhir = null;
+      selectedTanggalPenyelesaian = null;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Input tanggal tidak valid. Semua tanggal direset. Silakan masukkan ulang.'),
+      ),
+    );
+  }
 
   void _startListeningLocation() {
     _positionStream = Geolocator.getPositionStream(
@@ -227,6 +293,7 @@ class _DirectVisitState extends State<DirectVisit> {
     }
   }
 
+  //untuk tampilan upload foto
   Widget _photoRow({required bool first, File? file}) {
     return Column(
       children: [
@@ -299,38 +366,87 @@ class _DirectVisitState extends State<DirectVisit> {
         color: dropdownLight,
         fontSize: 16,
       ),
+      textAlign: TextAlign.start,
     );
   }
 
-  Widget _buildDateField(DateTime? date, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: dropdownLightNF, width: 1.0),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: dropdownLightF, width: 2.0),
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              date != null
-                  ? DateFormat('yyyy-MM-dd').format(date)
-                  : 'Pilih tanggal',
-              style: TextStyle(color: dropdownLight, fontSize: 16),
+  Widget _buildDateField(DateTime? date, VoidCallback onTap, String fieldType) {
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () {
+              print('Field $fieldType tapped at ${DateTime.now()}'); // Debug tap
+              onTap();
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: dropdownLightNF, width: 1.0),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                errorText: _validateDateField(fieldType),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    date != null ? DateFormat('yyyy-MM-dd').format(date) : 'Pilih tanggal',
+                    style: TextStyle(color: dropdownLight, fontSize: 16),
+                  ),
+                  const Icon(Icons.calendar_today, color: Colors.blue, size: 20),
+                ],
+              ),
             ),
-            const Icon(Icons.calendar_today, color: Colors.blue, size: 20),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
+
+  String? _validateDateField(String fieldType) {
+    // Jika semua tanggal direset, tidak perlu menampilkan error
+    if (selectedTanggalMulai == null && selectedTanggalBerakhir == null && selectedTanggalPenyelesaian == null) {
+      return null;
+    }
+
+    switch (fieldType) {
+      case 'dariTanggal':
+        if (selectedTanggalMulai == null) {
+          return 'Dari Tanggal wajib diisi';
+        } else if (selectedTanggalMulai!.isAfter(DateTime.now())) {
+          _resetAllDates();
+          return null;
+        }
+        break;
+      case 'sampaiTanggal':
+        if (selectedTanggalBerakhir == null) {
+          return 'Sampai Tanggal wajib diisi';
+        } else if (selectedTanggalMulai != null && selectedTanggalBerakhir!.isBefore(selectedTanggalMulai!)) {
+          _resetAllDates();
+          return null;
+        }
+        break;
+      case 'tanggalSelesai':
+        if (selectedTanggalPenyelesaian == null) {
+          return 'Tanggal Selesai wajib diisi';
+        } else if (selectedTanggalMulai != null && selectedTanggalPenyelesaian!.isBefore(selectedTanggalMulai!)) {
+          _resetAllDates();
+          return null;
+        } else if (selectedTanggalBerakhir != null && selectedTanggalPenyelesaian!.isAfter(selectedTanggalBerakhir!)) {
+          _resetAllDates();
+          return null;
+        }
+        break;
+    }
+    return null;
+  }
+
+//tampilan preview photo yang diupload
   Widget _photoPreview({required File? file}) {
     return Visibility(
       visible: file != null,
@@ -407,7 +523,7 @@ class _DirectVisitState extends State<DirectVisit> {
                   ElevatedButton.icon(
                     onPressed: () => _pickPhoto(first: true, src: ImageSource.camera),
                     icon: const Icon(Icons.camera_alt, color: Colors.white),
-                    label: const Text("Retake"),
+                    label: const Text("Ambil Ulang"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: headerBlue,
                       foregroundColor: Colors.white,
@@ -416,7 +532,7 @@ class _DirectVisitState extends State<DirectVisit> {
                   ElevatedButton.icon(
                     onPressed: () => _pickPhoto(first: true, src: ImageSource.gallery),
                     icon: const Icon(Icons.photo, color: Colors.white),
-                    label: const Text("Browse"),
+                    label: const Text("Browse Ulang"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: headerBlue,
                       foregroundColor: Colors.white,
@@ -631,10 +747,10 @@ class _DirectVisitState extends State<DirectVisit> {
     selectedVisitType = null; // agar pakai hint “--pilih--”
     selectedTujuanVisit = null; // agar pakai hint “--pilih--”
     // selectedMainJabatan = jabatanList = null; // agar pakai hint “--pilih--”
-    selectedTanggalMulai =
-        DateTime.now(); //set time jika belum dipilih ke tanggal saat akses
-    selectedTanggalBerakhir = DateTime.now();
-    selectedTanggalPenyelesaian = DateTime.now();
+    // Inisialisasi tanggal ke null agar menampilkan hint
+    selectedTanggalMulai = null;
+    selectedTanggalBerakhir = null;
+    selectedTanggalPenyelesaian = null;
     selectedNamaPIC = ''; //pengguna harus input
     temaDiskusi = '';
     problem = '';
@@ -654,43 +770,45 @@ class _DirectVisitState extends State<DirectVisit> {
   }
 
   void _addMainPerson() {
-    // 1. Validasi form field
-    if (!_formKey.currentState!.validate()) return;
+    // Validasi hanya untuk form Main Person
+    if (!_mainPersonFormKey.currentState!.validate()) return;
 
-    // 2. Cek nomor duplikat
+    // Simpan data dari form Main Person
+    _mainPersonFormKey.currentState!.save();
+
+    // Cek nomor telepon duplikat
     if (mainPersons.any((e) => e['telp'] == selectedMainTelp)) {
-      // langsung tampilkan SnackBar, lalu return tanpa setState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nomor telepon sudah pernah digunakan')),
       );
       return;
     }
 
-    // 3. Cek duplikat keseluruhan
+    // Cek duplikat keseluruhan
     if (mainPersons.any(
           (e) =>
       e['jabatan'] == selectedMainJabatan &&
           e['nama'] == _namaPicController.text &&
           e['telp'] == selectedMainTelp,
     )) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Data PIC ini sudah ada')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data PIC ini sudah ada')),
+      );
       return;
     }
 
-    // 4. Kalau lolos semua cek, barulah di-setState
+    // Tambahkan data ke mainPersons
     setState(() {
       mainPersons.add({
         'jabatan': selectedMainJabatan!,
         'nama': _namaPicController.text,
         'telp': selectedMainTelp!,
       });
-      // reset input
+      // Reset input
       selectedMainJabatan = null;
       selectedMainTelp = null;
       _namaPicController.clear();
-      _telpPicController.clear();
+      _telpPicController.text = '';
     });
   }
 
@@ -1133,182 +1251,107 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Tipe Visit',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Tipe Visit'),
                         DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: selectedVisitType,
-                          hint: Text(
-                            '-- Pilih Tipe Visit --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
+                          hint: Text('-- Pilih Tipe Visit --', style: TextStyle(color: dropdownLight)),
                           icon: const Icon(Icons.expand_more),
                           iconEnabledColor: dropdownLight,
                           style: const TextStyle(color: dropdownLight),
                           decoration: const InputDecoration(
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightNF,
-                                width: 0.5,
-                              ),
+                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 2.0,
-                              ),
+                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
                             ),
                           ),
-                          items:
-                          visitTypeList
-                              .map(
-                                (v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(
-                                v,
-                                style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
+                          items: visitTypeList
+                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: TextStyle(color: dropdownLight))))
                               .toList(),
-                          onChanged:
-                              (val) => setState(() {
-                            selectedVisitType = val;
-                            _hasInteractWithVisitType = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithVisitType = true;
-                            });
-                          },
-                          validator:
-                              (v) =>
-                          _hasInteractWithVisitType && v == null
-                              ? 'Harap Pilih Tipe Visit'
-                              : null,
+                          onChanged: (val) => setState(() => selectedVisitType = val),
+                          validator: (v) => v == null ? 'Harap Pilih Tipe Visit' : null,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Tujuan visit',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Tujuan Visit'),
                         DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: selectedTujuanVisit,
-                          hint: Text(
-                            '-- Pilih Tujuan Visit --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
+                          hint: Text('-- Pilih Tujuan Visit --', style: TextStyle(color: dropdownLight)),
                           icon: const Icon(Icons.expand_more),
                           iconEnabledColor: dropdownLight,
                           style: const TextStyle(color: dropdownLight),
                           decoration: const InputDecoration(
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightNF,
-                                width: 0.5,
-                              ),
+                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 2.0,
-                              ),
+                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
                             ),
                           ),
-                          items:
-                          tujuanVisitList
-                              .map(
-                                (v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(
-                                v,
-                                style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
+                          items: tujuanVisitList
+                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: TextStyle(color: dropdownLight))))
                               .toList(),
-                          onChanged:
-                              (val) => setState(() {
-                            selectedTujuanVisit = val;
-                            _hasInteractWithTujuanVisit = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithTujuanVisit = true;
-                            });
-                          },
-                          validator:
-                              (v) =>
-                          _hasInteractWithTujuanVisit && v == null
-                              ? 'Harap Pilih Tujuan Visit'
-                              : null,
+                          onChanged: (val) => setState(() => selectedTujuanVisit = val),
+                          validator: (v) => v == null ? 'Harap Pilih Tujuan Visit' : null,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Dari tanggal',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Dari Tanggal'),
                         _buildDateField(
                           selectedTanggalMulai,
                               () => _selectDate(
                             context,
-                                (date) =>
-                                setState(() => selectedTanggalMulai = date),
+                                (date) {
+                              setState(() {
+                                selectedTanggalMulai = date;
+                                // Reset Sampai Tanggal dan Tanggal Selesai jika Dari Tanggal berubah
+                                if (date != null) {
+                                  if (selectedTanggalBerakhir != null && selectedTanggalBerakhir!.isBefore(date)) {
+                                    selectedTanggalBerakhir = null;
+                                  }
+                                  if (selectedTanggalPenyelesaian != null && selectedTanggalPenyelesaian!.isBefore(date)) {
+                                    selectedTanggalPenyelesaian = null;
+                                  }
+                                }
+                              });
+                            },
+                            'dariTanggal',
                           ),
+                          'dariTanggal',
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Sampai tanggal',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Sampai Tanggal'),
                         _buildDateField(
                           selectedTanggalBerakhir,
                               () => _selectDate(
                             context,
-                                (date) =>
-                                setState(() => selectedTanggalBerakhir = date),
+                                (date) {
+                              setState(() {
+                                selectedTanggalBerakhir = date;
+                                // Reset Tanggal Selesai jika Sampai Tanggal berubah dan Tanggal Selesai tidak valid
+                                if (date != null && selectedTanggalPenyelesaian != null && selectedTanggalPenyelesaian!.isAfter(date)) {
+                                  selectedTanggalPenyelesaian = null;
+                                }
+                              });
+                            },
+                            'sampaiTanggal',
                           ),
+                          'sampaiTanggal',
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Tanggal selesai',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Tanggal Selesai'),
                         _buildDateField(
                           selectedTanggalPenyelesaian,
                               () => _selectDate(
                             context,
-                                (date) => setState(
-                                  () => selectedTanggalPenyelesaian = date,
-                            ),
+                                (date) => setState(() => selectedTanggalPenyelesaian = date),
+                            'tanggalSelesai',
                           ),
+                          'tanggalSelesai',
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Nama PIC',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Nama PIC'),
                         TextFormField(
                           initialValue: selectedNamaPIC ?? '',
                           style: TextStyle(color: dropdownLight, fontSize: 16),
@@ -1318,266 +1361,128 @@ class _DirectVisitState extends State<DirectVisit> {
                             hintText: 'Masukkan nama PIC',
                             hintStyle: TextStyle(color: dropdownLightNF),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 1.5,
-                              ),
+                              borderSide: BorderSide(color: dropdownLightF, width: 1.5),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 3.0,
-                              ),
+                              borderSide: BorderSide(color: dropdownLightF, width: 3.0),
                             ),
                             counterText: '$namaPICLength/50',
-                            counterStyle: TextStyle(
-                              color: dropdownLight,
-                              fontSize: 12,
-                            ),
-                            contentPadding: EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
+                            counterStyle: TextStyle(color: dropdownLight, fontSize: 12),
+                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                           ),
                           keyboardType: TextInputType.text,
                           inputFormatters: [
                             FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
                           ],
-                          onChanged:
-                              (val) => setState(() {
+                          onChanged: (val) => setState(() {
                             selectedNamaPIC = val;
                             namaPICLength = val.length;
                           }),
-                          validator:
-                              (v) =>
-                          v == null || v.isEmpty
-                              ? 'Nama PIC wajib diisi'
-                              : null,
-                        ),
-
-                        const SizedBox(height: 12),
-                        Text(
-                          'Theme of discussion',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                initialValue: temaDiskusi ?? '',
-                                style: TextStyle(
-                                  color: dropdownLight,
-                                  fontSize: 16,
-                                ),
-                                maxLength: 1000,
-                                maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
-                                minLines: 3,
-                                maxLines: 5,
-                                decoration: InputDecoration(
-                                  hintText: 'Masukkan tema diskusi',
-                                  hintStyle: TextStyle(color: dropdownLightNF),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightNF,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightF,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: 16,
-                                    horizontal: 8,
-                                  ),
-                                ),
-                                onChanged:
-                                    (val) => setState(() {
-                                  temaDiskusi = val;
-                                  temaDiskusiLength = val.length;
-                                }),
-                                validator:
-                                    (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Tema diskusi wajib diisi'
-                                    : null,
-                              ),
-                            ),
-                          ],
+                          validator: (v) => v == null || v.isEmpty ? 'Nama PIC wajib diisi' : null,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Problem',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                initialValue: problem ?? '',
-                                style: TextStyle(
-                                  color: dropdownLight,
-                                  fontSize: 16,
-                                ),
-                                maxLength: 1000,
-                                maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
-                                minLines: 3,
-                                maxLines: 5,
-                                decoration: InputDecoration(
-                                  hintText: 'Masukkan Problem',
-                                  hintStyle: TextStyle(color: dropdownLightNF),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightNF,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightF,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: 16,
-                                    horizontal: 8,
-                                  ),
-                                ),
-                                onChanged:
-                                    (val) => setState(() {
-                                  problem = val;
-                                  problemLength = val.length;
-                                }),
-                                validator:
-                                    (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Problem wajib diisi'
-                                    : null,
-                              ),
+                        _buildFieldLabel('Theme of Discussion'),
+                        TextFormField(
+                          initialValue: temaDiskusi ?? '',
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan tema diskusi',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
                             ),
-                          ],
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          ),
+                          onChanged: (val) => setState(() {
+                            temaDiskusi = val;
+                            temaDiskusiLength = val.length;
+                          }),
+                          validator: (v) => v == null || v.isEmpty ? 'Tema diskusi wajib diisi' : null,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Follow-Up',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                initialValue: followUp ?? '',
-                                style: TextStyle(
-                                  color: dropdownLight,
-                                  fontSize: 16,
-                                ),
-                                maxLength: 1000,
-                                maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
-                                minLines: 3,
-                                maxLines: 5,
-                                decoration: InputDecoration(
-                                  hintText: 'Masukkan Follow-Up',
-                                  hintStyle: TextStyle(color: dropdownLightNF),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightNF,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightF,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: 16,
-                                    horizontal: 8,
-                                  ),
-                                ),
-                                onChanged:
-                                    (val) => setState(() {
-                                  followUp = val;
-                                  followUpLength = val.length;
-                                }),
-                                validator:
-                                    (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Follow-Up wajib diisi'
-                                    : null,
-                              ),
+                        _buildFieldLabel('Problem'),
+                        TextFormField(
+                          initialValue: problem ?? '',
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan Problem',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
                             ),
-                          ],
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          ),
+                          onChanged: (val) => setState(() {
+                            problem = val;
+                            problemLength = val.length;
+                          }),
+                          validator: (v) => v == null || v.isEmpty ? 'Problem wajib diisi' : null,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Description',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                initialValue: description ?? '',
-                                style: TextStyle(
-                                  color: dropdownLight,
-                                  fontSize: 16,
-                                ),
-                                maxLength: 1000,
-                                maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
-                                minLines: 3,
-                                maxLines: 5,
-                                decoration: InputDecoration(
-                                  hintText: 'Masukkan deskripsi',
-                                  hintStyle: TextStyle(color: dropdownLightNF),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightNF,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: dropdownLightF,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: 16,
-                                    horizontal: 8,
-                                  ),
-                                ),
-                                onChanged:
-                                    (val) => setState(() {
-                                  description = val;
-                                  descriptionLength = val.length;
-                                }),
-                                validator:
-                                    (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Deskripsi wajib diisi'
-                                    : null,
-                              ),
+                        _buildFieldLabel('Follow-Up'),
+                        TextFormField(
+                          initialValue: followUp ?? '',
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan Follow-Up',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
                             ),
-                          ],
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          ),
+                          onChanged: (val) => setState(() {
+                            followUp = val;
+                            followUpLength = val.length;
+                          }),
+                          validator: (v) => v == null || v.isEmpty ? 'Follow-Up wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Description'),
+                        TextFormField(
+                          initialValue: description ?? '',
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan deskripsi',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          ),
+                          onChanged: (val) => setState(() {
+                            description = val;
+                            descriptionLength = val.length;
+                          }),
+                          validator: (v) => v == null || v.isEmpty ? 'Deskripsi wajib diisi' : null,
                         ),
                       ],
                     ),
@@ -1592,7 +1497,7 @@ class _DirectVisitState extends State<DirectVisit> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
                           child: Text(
@@ -1601,210 +1506,128 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
-                        // Dropdown Jabatan
-                        _buildFieldLabel('Jabatan'),
-                        DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedMainJabatan,
-                          hint: Text(
-                            '-- Pilih Jabatan --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Color(0xFFCCCCCC),
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                          items:
-                          jabatanList
-                              .map(
-                                (j) => DropdownMenuItem(
-                              value: j,
-                              child: Text(
-                                j.toUpperCase(),
+                        Form(
+                          key: _mainPersonFormKey,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Dropdown Jabatan
+                              _buildFieldLabel('Jabatan'),
+                              DropdownButtonFormField<String>(
+                                isExpanded: true,
+                                value: selectedMainJabatan,
+                                hint: Text(
+                                  '-- Pilih Jabatan --',
+                                  style: TextStyle(color: dropdownLight),
+                                ),
+                                icon: const Icon(Icons.expand_more),
+                                iconEnabledColor: dropdownLight,
                                 style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
-                              .toList(),
-                          onChanged:
-                              (v) => setState(() {
-                            selectedMainJabatan =
-                                v; // selalu salah satu dari jabatanList
-                          }),
-                          validator:
-                              (v) => v == null ? 'Harap Pilih Jabatan' : null,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Text Nama PIC
-                        _buildFieldLabel('Nama PIC'),
-                        TextFormField(
-                          controller: _namaPicController,
-                          maxLength: 50,
-                          decoration: const InputDecoration(
-                            hintText: 'Masukkan nama PIC',
-                            counterText: null, // pakai default counter
-                            enabledBorder: UnderlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.text,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
-                          ],
-                          onChanged: (_) => setState(() {}),
-                          validator:
-                              (v) =>
-                          (v == null || v.isEmpty)
-                              ? 'Nama wajib diisi'
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Text No Telpon PIC
-                        _buildFieldLabel('No Telpon PIC'),
-                        IntlPhoneField(
-                          controller: _telpPicController,
-                          decoration: const InputDecoration(
-                            hintText: 'Masukkan no. telepon',
-                            enabledBorder: UnderlineInputBorder(),
-                          ),
-                          initialCountryCode: 'ID',
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ], // hanya format angka
-                          onChanged: (phone) {
-                            // optional, bisa juga kosong
-                          },
-                          onSaved: (phone) {
-                            // ← tambahkan ini
-                            // selectedMainTelp = phone?.completeNumber;
-                            // debugPrint('>> onSaved telp: $selectedMainTelp');
-                            if (phone != null &&
-                                phone.number.isNotEmpty &&
-                                phone.number.length >= 6) {
-                              selectedMainTelp = phone.completeNumber;
-                            } else {
-                              selectedMainTelp = null;
-                            }
-                          },
-
-                          validator: (phone) {
-                            if (phone == null || phone.number.isEmpty)
-                              return 'Nomor telepon wajib diisi';
-                            final number = phone.number;
-                            if (number.length < 6) {
-                              return 'Nomor telepon tidak valid';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Tombol Tambahkan
-                        Align(
-                          alignment: Alignment.center,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // **Debug print**: pastikan nomor sudah tersimpan
-                              debugPrint(
-                                'DEBUG: selectedMainTelp = $selectedMainTelp',
-                              );
-
-                              // 1. Validasi form
-                              if (!_formKey.currentState!.validate()) return;
-
-                              // 2. Simpan semua field via onSaved
-                              _formKey.currentState!.save();
-
-                              // Debug setelah save
-                              debugPrint(
-                                '>> after save, selectedMainTelp = $selectedMainTelp',
-                              );
-
-                              // 2. Cek duplikat keseluruhan (jabatan+nama+telp)
-                              if (mainPersons.any(
-                                    (e) =>
-                                e['jabatan'] == selectedMainJabatan &&
-                                    e['nama'] == _namaPicController.text &&
-                                    e['telp'] == selectedMainTelp,
-                              )) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Data PIC ini sudah ada'),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              // 3. Cek duplikat nomor
-                              if (mainPersons.any(
-                                    (e) => e['telp'] == selectedMainTelp,
-                              )) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Nomor telepon sudah pernah digunakan',
+                                decoration: const InputDecoration(
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: Color(0xFFCCCCCC),
+                                      width: 0.5,
                                     ),
                                   ),
-                                );
-                                return;
-                              }
-
-                              // 4. Kalau semua oke, tambahkan ke list
-                              setState(() {
-                                mainPersons.add({
-                                  'jabatan': selectedMainJabatan!,
-                                  'nama': _namaPicController.text,
-                                  'telp': selectedMainTelp!,
-                                });
-                                // reset input
-                                selectedMainJabatan = null;
-                                selectedMainTelp = null;
-                                _namaPicController.clear();
-                                _telpPicController.clear();
-                              });
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: textButton, width: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(13),
+                                ),
+                                items: jabatanList
+                                    .map(
+                                      (j) => DropdownMenuItem(
+                                    value: j,
+                                    child: Text(
+                                      j.toUpperCase(),
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                  ),
+                                )
+                                    .toList(),
+                                onChanged: (v) => setState(() {
+                                  selectedMainJabatan = v;
+                                }),
+                                validator: (v) => v == null ? 'Harap Pilih Jabatan' : null,
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 20,
+                              const SizedBox(height: 12),
+                              // Text Nama PIC
+                              _buildFieldLabel('Nama PIC'),
+                              TextFormField(
+                                controller: _namaPicController,
+                                maxLength: 50,
+                                decoration: const InputDecoration(
+                                  hintText: 'Masukkan nama PIC',
+                                  counterText: null,
+                                  enabledBorder: UnderlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.text,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                                ],
+                                onChanged: (_) => setState(() {}),
+                                validator: (v) => (v == null || v.isEmpty) ? 'Nama wajib diisi' : null,
                               ),
-                            ),
-                            child: Text(
-                              'Tambahkan',
-                              style: TextStyle(color: textButton, fontSize: 16),
-                            ),
+                              const SizedBox(height: 12),
+                              // Text No Telpon PIC
+                              _buildFieldLabel('No Telpon PIC'),
+                              IntlPhoneField(
+                                controller: _telpPicController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Masukkan no. telepon',
+                                  enabledBorder: UnderlineInputBorder(),
+                                ),
+                                initialCountryCode: 'ID',
+                                keyboardType: TextInputType.phone,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onChanged: (phone) {},
+                                onSaved: (phone) {
+                                  if (phone != null && phone.number.isNotEmpty && phone.number.length >= 6) {
+                                    selectedMainTelp = phone.completeNumber;
+                                  } else {
+                                    selectedMainTelp = null;
+                                  }
+                                },
+                                validator: (phone) {
+                                  if (phone == null || phone.number.isEmpty) return 'Nomor telepon wajib diisi';
+                                  final number = phone.number;
+                                  if (number.length < 6) return 'Nomor telepon tidak valid';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              // Tombol Tambahkan
+                              Align(
+                                alignment: Alignment.center,
+                                child: OutlinedButton(
+                                  onPressed: _addMainPerson,
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: textButton),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Tambahkan',
+                                    style: TextStyle(color: textButton, fontSize: 16),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-
                         // Daftar PIC yang sudah ditambahkan
                         if (mainPersons.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           GridView.builder(
-                            shrinkWrap:
-                            true, // penting biar nggak ambil seluruh layar
+                            shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: mainPersons.length,
-                            gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, // 2 kartu per baris
-                              crossAxisSpacing: 12, // jarak horisontal
-                              mainAxisSpacing: 12, // jarak vertikal
-                              childAspectRatio:
-                              3 / 3, // sesuaikan lebar:tinggi
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 3 / 3,
                             ),
                             itemBuilder: (context, i) {
                               final pic = mainPersons[i];
@@ -1815,27 +1638,94 @@ class _DirectVisitState extends State<DirectVisit> {
                                   side: BorderSide(color: textButton, width: 2),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(8),
                                   child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        pic['jabatan']!,
-                                        style: TextStyle(color: textButton),
-                                      ),
-                                      Text(
-                                        pic['nama']!,
-                                        style: TextStyle(color: textButton),
-                                      ),
-                                      Text(
-                                        pic['telp']!,
-                                        style: TextStyle(color: textButton),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          physics: const BouncingScrollPhysics(),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                pic['jabatan']!,
+                                                style: const TextStyle(
+                                                  color: textButton,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                pic['nama']!,
+                                                style: const TextStyle(
+                                                  color: textButton,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                pic['telp']!,
+                                                style: const TextStyle(
+                                                  color: textButton,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        onPressed: () => _removeMainPerson(i),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.center,
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                            size: 24,
+                                          ),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                title: Text(
+                                                  'Konfirmasi Hapus',
+                                                  style: TextStyle(
+                                                    color: headerBlue,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                content: Text(
+                                                  'Apakah Anda yakin ingin menghapus ${pic['nama']} dari daftar PIC?',
+                                                  style: const TextStyle(color: textButton),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.pop(context),
+                                                    child: Text(
+                                                      'Batal',
+                                                      style: TextStyle(color: textButton),
+                                                    ),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      _removeMainPerson(i);
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: const Text(
+                                                      'Hapus',
+                                                      style: TextStyle(color: Colors.red),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                          tooltip: 'Hapus PIC',
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1878,9 +1768,6 @@ class _DirectVisitState extends State<DirectVisit> {
 
                         const SizedBox(height: 24),
 
-                        // Preview foto (menggunakan if-else if dalam widget tree)
-                        // if (isPhoto1Uploaded && isPhoto2Uploaded)
-                        //   _photoCarouselWithControls(),
 
                         const SizedBox(height: 20),
                       ],
@@ -1889,53 +1776,8 @@ class _DirectVisitState extends State<DirectVisit> {
                 ),
                 const SizedBox(height: 24),
 
-                // ─── Card Slideshow Foto ─────────────────────────────
-                // if (_photo1 != null && _photo2 != null) ...[
-                // Card(
-                //   color: const Color(0xFFFDFDFF),
-                //   shape: RoundedRectangleBorder(
-                //     borderRadius: BorderRadius.circular(12),
-                //   ),
-                //   child: Padding(
-                //     padding: const EdgeInsets.all(16),
-                //     child: Column(
-                //       children: [
-                //         Center(
-                //           child: Text(
-                //             'Preview Foto',
-                //             style: TextStyle(fontSize: 22, color: headerBlue),
-                //           ),
-                //         ),
-                //         const SizedBox(height: 12),
-                //         SizedBox(
-                //           height: 200,
-                //           child: PageView(
-                //             controller: _pageCtrl,
-                //             children: [
-                //               ClipRRect(
-                //                 borderRadius: BorderRadius.circular(8),
-                //                 child: Image.file(
-                //                   _photo1!,
-                //                   fit: BoxFit.cover,
-                //                 ),
-                //               ),
-                //               ClipRRect(
-                //                 borderRadius: BorderRadius.circular(8),
-                //                 child: Image.file(
-                //                   _photo2!,
-                //                   fit: BoxFit.cover,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
                 const SizedBox(height: 16),
                 _photoPreviewSection(),
-                // ],
 
                 // ─── Card Lokasi Visit ─────────────────────────────
                 Card(
@@ -2043,7 +1885,6 @@ class _DirectVisitState extends State<DirectVisit> {
 
 class DirectVisit extends StatefulWidget {
   const DirectVisit({Key? key}) : super(key: key);
-
   @override
   _DirectVisitState createState() => _DirectVisitState();
 }
