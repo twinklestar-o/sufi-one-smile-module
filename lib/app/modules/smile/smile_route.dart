@@ -19,6 +19,7 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_vi
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_view_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/jabatan_screen.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/type_screen.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -31,11 +32,8 @@ class SmileRoutes {
   static const profile = '/public/smile/profile';
   static const directVisit = '/public/smile/direct_visit';
   static const taskVisit = '/public/smile/task_visit';
-  static const taskView =
-      '/public/smile/task_view'; // Ubah dari taskVisitDetail ke taskView
-  static const taskEdit =
-      '/public/smile/task_edit'; // Ubah dari taskVisitEdit ke taskEdit
-
+  static const taskView = '/public/smile/task_view';
+  static const taskEdit = '/public/smile/task_edit';
   static const historyVisit = '/public/smile/history_visit';
   static const dataMaster = '/public/smile/data_master';
   static const historyView = '/public/smile/history_view';
@@ -46,6 +44,7 @@ class SmileRoutes {
   static const area = '/public/smile/list_master/area';
   static const historyVisitDetail = '/public/smile/history_visit_detail';
   static const historyVisitEdit = '/public/smile/history_visit_edit';
+  static const type = '/public/smile/list_master/type';
 
   static final routes = [
     GetPage(
@@ -108,13 +107,13 @@ class SmileRoutes {
       page: () => HistoryEdit(),
       binding: HistoryEditBinding(),
     ),
-
     //Route untuk fitur Data Master
     GetPage(
       name: dataMaster,
       transition: Transition.zoom,
       page: () => DataMaster(),
     ),
+    GetPage(name: type, transition: Transition.zoom, page: () => TypeScreen()),
     GetPage(
       name: jabatan,
       transition: Transition.zoom,

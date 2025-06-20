@@ -21,7 +21,7 @@ class _DataMasterState extends State<DataMaster> {
     {'title': 'JABATAN SFI', 'route': '/master/jabatan-sfi'},
     {'title': 'MAIN DEALER', 'route': '/master/main-dealer'},
     {'title': 'PRODUK', 'route': '/master/produk'},
-    {'title': 'TIPE VISIT', 'route': '/master/tipe-visit'},
+    {'title': 'TIPE VISIT', 'route': SmileRoutes.type},
     {'title': 'TUJUAN VISIT', 'route': '/master/tujuan-visit'},
     {'title': 'Tanggal Mulai', 'route': '/master/tanggal-mulai'},
     {'title': 'Sampai Tanggal', 'route': '/master/sampai-tanggal'},

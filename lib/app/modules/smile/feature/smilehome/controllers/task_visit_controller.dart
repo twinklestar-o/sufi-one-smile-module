@@ -20,10 +20,9 @@ class TaskVisitController extends GetxController {
     loadTaskVisitData();
 
     // Debounce: filter data setelah pengguna berhenti mengetik selama 300ms.
-    // Ini mencegah error "called during build" dan membuat pencarian lebih efisien.
     debounce(
       searchQuery,
-      (_) => _filterData(),
+          (_) => _filterData(),
       time: const Duration(milliseconds: 300),
     );
 
@@ -80,5 +79,15 @@ class TaskVisitController extends GetxController {
   // Perubahan ini akan memicu `debounce` yang kemudian akan memanggil `_filterData`.
   void updateSearchQuery(String query) {
     searchQuery.value = query;
+  }
+
+  // Fungsi untuk memperbarui data yang sudah ada setelah diedit
+  void updateTaskVisit(Map<String, dynamic> updatedData) {
+    final index = taskVisitData.indexWhere((item) => item['id'] == updatedData['id']);
+    if (index != -1) {
+      // Update data di list asli
+      taskVisitData[index] = updatedData;
+      filteredTaskVisitData.refresh(); // Mengupdate filtered data
+    }
   }
 }

@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:sufi_one/app/modules/smile/models/area.dart';
 import '../../app/modules/smile/models/jabatan.dart';
+import '../../app/modules/smile/models/type.dart';
 
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
@@ -11,6 +12,7 @@ class DatabaseHelper {
   static const tableJabatan = 'jabatan';
   static const tableMetadata = 'metadata';
   static const tableArea = 'area';
+  static const tableType = 'types';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -52,6 +54,16 @@ class DatabaseHelper {
         updated_at TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE $tableType (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )''');
+
     await db.execute('''
       CREATE TABLE $tableMetadata (
         key TEXT PRIMARY KEY,
@@ -111,6 +123,53 @@ class DatabaseHelper {
       tableMetadata,
       where: 'key = ?',
       whereArgs: ['jabatan_last_update'],
+      limit: 1,
+    );
+
+    if (maps.isNotEmpty) {
+      return DateTime.parse(maps.first['value']);
+    }
+    return null;
+  }
+
+  Future<int> insertType(Type type) async {
+    final db = await database;
+    return await db.insert(
+      tableType,
+      type.toJson(), // <<< Asumsi model Type memiliki toJson()
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Type>> getAllType() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableType);
+    return List.generate(maps.length, (i) {
+      return Type.fromJson(
+        maps[i],
+      ); // <<< Asumsi model Type memiliki fromJson()
+    });
+  }
+
+  Future<void> clearAllType() async {
+    final db = await database;
+    await db.delete(tableType);
+  }
+
+  Future<void> updateLastTypeUpdateTime() async {
+    final db = await database;
+    await db.insert(tableMetadata, {
+      'key': 'type_last_update', // Kunci unik untuk timestamp Type
+      'value': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<DateTime?> getLastTypeUpdateTime() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableMetadata,
+      where: 'key = ?',
+      whereArgs: ['type_last_update'], // Kunci unik untuk timestamp Type
       limit: 1,
     );
 

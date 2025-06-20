@@ -8,6 +8,7 @@ import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatan_repository.dart';
 import 'package:sufi_one/src/services/api_services.dart';
+import 'package:sufi_one/app/modules/smile/repositories/type_repository.dart'; //
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +17,11 @@ void main() async {
   final dbHelper = DatabaseHelper.instance;
   final apiService = ApiService(); // Tambahkan token di sini
   final jabatanRepository = JabatanRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+  final typeRepository = TypeRepository(
+    //
     dbHelper: dbHelper,
     apiService: apiService,
   );
@@ -35,6 +41,7 @@ void main() async {
         Provider<ApiService>(create: (_) => apiService),
         Provider<JabatanRepository>(create: (_) => jabatanRepository),
         Provider<AreaRepository>(create: (_) => areaRepository),
+        Provider<TypeRepository>(create: (_) => typeRepository), //
       ],
       child: const MyApp(),
     ),

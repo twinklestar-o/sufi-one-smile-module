@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/task_edit_controller.dart';
-import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:intl/intl.dart';
+import '../../controllers/task_visit_controller.dart'; // Import for date formatting
 
 class TaskEdit extends GetView<TaskEditController> {
   const TaskEdit({super.key});
@@ -20,7 +21,16 @@ class TaskEdit extends GetView<TaskEditController> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white), // Ikon putih
-          onPressed: () => Get.back(),
+            onPressed: () {
+              // Ambil data yang sudah diedit dari controller
+              final updatedData = controller.editedData;
+
+              // Panggil fungsi updateTaskVisit di TaskVisitController untuk memperbarui data di halaman utama
+              Get.find<TaskVisitController>().updateTaskVisit(updatedData);
+
+              // Setelah data disimpan, kembali ke halaman sebelumnya (TaskVisit)
+              Get.back();
+            }
         ),
         actions: [
           IconButton(
