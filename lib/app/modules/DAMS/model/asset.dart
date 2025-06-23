@@ -66,21 +66,16 @@ class Asset {
   });
 
   factory Asset.fromJson(Map<String, dynamic> json) {
-    // Helper function untuk parsing tanggal dengan aman
     DateTime? parseDate(dynamic dateValue) {
       if (dateValue == null) return null;
 
       try {
-        // Coba parse sebagai DateTime langsung (jika sudah dalam format Dart)
         if (dateValue is DateTime) return dateValue;
 
-        // Coba parse sebagai String
         if (dateValue is String) {
-          // Coba format ISO8601 dulu
           try {
             return DateTime.parse(dateValue);
           } catch (_) {
-            // Coba format lain yang mungkin digunakan
             final formats = [
               DateFormat('yyyy-MM-dd HH:mm:ss'),
               DateFormat('yyyy-MM-dd'),
@@ -96,7 +91,6 @@ class Asset {
           }
         }
 
-        // Jika dalam format timestamp (int)
         if (dateValue is int) {
           return DateTime.fromMillisecondsSinceEpoch(dateValue);
         }
@@ -108,75 +102,76 @@ class Asset {
       }
     }
 
-    // Tanggal wajib dengan fallback ke DateTime.now() jika parsing gagal
-    final createDate = parseDate(json['CREATE_DATE']) ?? DateTime.now();
+    final createDate =
+        parseDate(json['CREATE_DATE'] ?? json['create_date']) ?? DateTime.now();
 
     return Asset(
-      msAssetBranchId: json['MS_ASSET_BRANCH_ID'] as int? ?? 0,
-      kodeAset: json['KODE_ASET'] as String? ?? '',
-      branchId: json['BRANCH_ID'] as String? ?? '',
-      lokasi: json['LOKASI'] as String? ?? '',
-      isActive: json['IS_ACTIVE'] as int? ?? 0,
-      userCreate: json['USER_CREATE'] as String? ?? '',
+      msAssetBranchId:
+          json['MS_ASSET_BRANCH_ID'] ?? json['ms_asset_branch_id'] as int? ?? 0,
+      kodeAset: json['KODE_ASET'] ?? json['kode_aset'] as String? ?? '',
+      branchId: json['BRANCH_ID'] ?? json['branch_id'] as String? ?? '',
+      lokasi: json['LOKASI'] ?? json['lokasi'] as String? ?? '',
+      isActive: json['IS_ACTIVE'] ?? json['is_active'] as int? ?? 0,
+      userCreate: json['USER_CREATE'] ?? json['user_create'] as String? ?? '',
       createDate: createDate,
-      division: json['DIVISION'] as String? ?? '',
-      personalLoc: json['PERSONAL_LOC'] as String? ?? '',
-      dept: json['DEPT'] as String? ?? '',
-      room: json['ROOM'] as String? ?? '',
-      floor: json['FLOOR'] as String? ?? '',
-      latitude: json['LATITUDE'] as String? ?? '',
-      longitude: json['LONGITUDE'] as String? ?? '',
-      location: json['LOCATION'] as String? ?? '',
-      lelang: int.tryParse(json['lelang']?.toString() ?? '0') ?? 0,
-      writeoff: json['WRITEOFF'] as int? ?? 0,
-      mutation: json['MUTATION'] as int? ?? 0,
-      borrow: int.tryParse(json['borrow']?.toString() ?? '0') ?? 0,
-      return_: int.tryParse(json['return']?.toString() ?? '0') ?? 0,
-      move: json['MOVE'] as int? ?? 0,
-      maintain: json['MANTAIN'] as int? ?? 0,
-      klasifikasiWo: json['KLASIFIKASI_WO'] as String? ?? '',
-      remarkWo: json['REMARK_WO'] as String? ?? '',
-      userUpdateWo: json['USER_UPDATE_WO'] as String?,
-      dateUpdateWo: parseDate(json['DATE_UPDATE_WO']),
-      lastUpdate: parseDate(json['LAST_UPDATE']),
-      userUpdate: json['USER_UPDATE'] as String? ?? '',
-      branchType: json['BRANCH_TYPE'] as String? ?? '',
-      branchName: json['BRANCH_NAME'] as String? ?? '',
+      division: json['DIVISION'] ?? json['division'],
+      personalLoc: json['PERSONAL_LOC'] ?? json['personal_loc'],
+      dept: json['DEPT'] ?? json['dept'],
+      room: json['ROOM'] ?? json['room'],
+      floor: json['FLOOR'] ?? json['floor'],
+      latitude: json['LATITUDE'] ?? json['latitude'],
+      longitude: json['LONGITUDE'] ?? json['longitude'],
+      location: json['LOCATION'] ?? json['location'],
+      lelang: json['lelang'] as int? ?? 0,
+      writeoff: json['WRITEOFF'] ?? json['writeoff'] as int? ?? 0,
+      mutation: json['MUTATION'] ?? json['mutation'] as int? ?? 0,
+      borrow: json['borrow'] as int? ?? 0,
+      return_: json['return'] as int? ?? 0,
+      move: json['MOVE'] ?? json['move'] as int? ?? 0,
+      maintain: json['MANTAIN'] ?? json['maintan'] as int? ?? 0,
+      klasifikasiWo: json['KLASIFIKASI_WO'] ?? json['klasifikasi_wo'],
+      remarkWo: json['REMARK_WO'] ?? json['remark_wo'],
+      userUpdateWo: json['USER_UPDATE_WO'] ?? json['user_update_wo'],
+      dateUpdateWo: parseDate(json['DATE_UPDATE_WO'] ?? json['date_update_wo']),
+      lastUpdate: parseDate(json['LAST_UPDATE'] ?? json['last_update']),
+      userUpdate: json['USER_UPDATE'] ?? json['user_update'],
+      branchType: json['BRANCH_TYPE'] ?? json['branch_type'],
+      branchName: json['BRANCH_NAME'] ?? json['branch_name'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'MS_ASSET_BRANCH_ID': msAssetBranchId,
-      'KODE_ASET': kodeAset,
-      'BRANCH_ID': branchId,
-      'LOKASI': lokasi,
-      'IS_ACTIVE': isActive,
-      'USER_CREATE': userCreate,
-      'CREATE_DATE': createDate.toIso8601String(),
-      'DIVISION': division,
-      'PERSONAL_LOC': personalLoc,
-      'DEPT': dept,
-      'ROOM': room,
-      'FLOOR': floor,
-      'LATITUDE': latitude,
-      'LONGITUDE': longitude,
-      'LOCATION': location,
-      'LELANG': lelang,
-      'WRITEOFF': writeoff,
-      'MUTATION': mutation,
-      'BORROW': borrow,
-      'RETURN': return_,
-      'MOVE': move,
-      'MANTAIN': maintain,
-      'KLASIFIKASI_WO': klasifikasiWo,
-      'REMARK_WO': remarkWo,
-      'USER_UPDATE_WO': userUpdateWo,
-      'DATE_UPDATE_WO': dateUpdateWo?.toIso8601String(),
-      'LAST_UPDATE': lastUpdate?.toIso8601String(),
-      'USER_UPDATE': userUpdate,
-      'BRANCH_TYPE': branchType,
-      'BRANCH_NAME': branchName,
+      'ms_asset_branch_id': msAssetBranchId,
+      'kode_aset': kodeAset,
+      'branch_id': branchId,
+      'lokasi': lokasi,
+      'is_active': isActive,
+      'user_create': userCreate,
+      'create_date': createDate.toIso8601String(),
+      'division': division,
+      'personal_loc': personalLoc,
+      'dept': dept,
+      'room': room,
+      'floor': floor,
+      'latitude': latitude,
+      'longitude': longitude,
+      'location': location,
+      'lelang': lelang,
+      'writeoff': writeoff,
+      'mutation': mutation,
+      'borrow': borrow,
+      'return': return_,
+      'move': move,
+      'maintan': maintain,
+      'klasifikasi_wo': klasifikasiWo,
+      'remark_wo': remarkWo,
+      'user_update_wo': userUpdateWo,
+      'date_update_wo': dateUpdateWo?.toIso8601String(),
+      'last_update': lastUpdate?.toIso8601String(),
+      'user_update': userUpdate,
+      'branch_type': branchType,
+      'branch_name': branchName,
     };
   }
 

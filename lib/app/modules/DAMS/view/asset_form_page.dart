@@ -5,7 +5,9 @@ import 'package:sufi_one/app/modules/DAMS/model/asset.dart';
 
 class AssetFormPage extends StatefulWidget {
   final String kodeAset;
-  const AssetFormPage({super.key, required this.kodeAset});
+  final Asset? initialAsset;
+
+  const AssetFormPage({super.key, required this.kodeAset, this.initialAsset});
 
   @override
   State<AssetFormPage> createState() => _AssetFormPageState();
@@ -16,6 +18,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
   late Future<Asset> _futureAsset;
   Asset? _editedAsset;
   bool _isLoading = false;
+  bool _isSaving = false;
 
   final _formKey = GlobalKey<FormState>();
   final _lokasiController = TextEditingController();
@@ -29,7 +32,14 @@ class _AssetFormPageState extends State<AssetFormPage> {
   @override
   void initState() {
     super.initState();
-    _futureAsset = _fetchAssetData();
+    // Jika ada initialAsset, gunakan langsung tanpa fetch
+    if (widget.initialAsset != null) {
+      _editedAsset = widget.initialAsset;
+      _initializeControllers(widget.initialAsset!);
+      _futureAsset = Future.value(widget.initialAsset);
+    } else {
+      _futureAsset = _fetchAssetData();
+    }
   }
 
   Future<Asset> _fetchAssetData() async {
@@ -60,25 +70,12 @@ class _AssetFormPageState extends State<AssetFormPage> {
     });
   }
 
-  @override
-  void dispose() {
-    _lokasiController.dispose();
-    _branchIdController.dispose();
-    _divisionController.dispose();
-    _personalLocController.dispose();
-    _deptController.dispose();
-    _roomController.dispose();
-    _floorController.dispose();
-    super.dispose();
-  }
-
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate() || _editedAsset == null) return;
 
-    setState(() => _isLoading = true);
+    setState(() => _isSaving = true);
 
     try {
-      // Update the asset object with form values
       final updatedAsset = _editedAsset!.copyWith(
         lokasi: _lokasiController.text,
         branchId: _branchIdController.text,
@@ -119,7 +116,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -131,8 +128,11 @@ class _AssetFormPageState extends State<AssetFormPage> {
         title: Text('Edit Asset: ${widget.kodeAset}'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _isLoading || _editedAsset == null ? null : _saveChanges,
+            icon:
+                _isSaving
+                    ? const CircularProgressIndicator()
+                    : const Icon(Icons.save),
+            onPressed: _isSaving || _editedAsset == null ? null : _saveChanges,
           ),
         ],
       ),
@@ -184,113 +184,115 @@ class _AssetFormPageState extends State<AssetFormPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Basic Information',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _branchIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'Branch ID',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter branch ID';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _divisionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Division',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildBasicInfoSection(),
             const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Location Information',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _lokasiController,
-                      decoration: const InputDecoration(
-                        labelText: 'Lokasi',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter location';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _personalLocController,
-                      decoration: const InputDecoration(
-                        labelText: 'Personal Location',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _deptController,
-                      decoration: const InputDecoration(
-                        labelText: 'Department',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _roomController,
-                      decoration: const InputDecoration(
-                        labelText: 'Room',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _floorController,
-                      decoration: const InputDecoration(
-                        labelText: 'Floor',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildLocationInfoSection(),
             const SizedBox(height: 16),
             if (_editedAsset != null) _buildStatusSwitch(),
             const SizedBox(height: 16),
             if (_editedAsset != null) _buildAssetInfoSection(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBasicInfoSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Basic Information',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _branchIdController,
+              decoration: const InputDecoration(
+                labelText: 'Branch ID',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter branch ID';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _divisionController,
+              decoration: const InputDecoration(
+                labelText: 'Division',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationInfoSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Location Information',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _lokasiController,
+              decoration: const InputDecoration(
+                labelText: 'Lokasi',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter location';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _personalLocController,
+              decoration: const InputDecoration(
+                labelText: 'Personal Location',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _deptController,
+              decoration: const InputDecoration(
+                labelText: 'Department',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _roomController,
+              decoration: const InputDecoration(
+                labelText: 'Room',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _floorController,
+              decoration: const InputDecoration(
+                labelText: 'Floor',
+                border: OutlineInputBorder(),
+              ),
+            ),
           ],
         ),
       ),

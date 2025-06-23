@@ -29,10 +29,13 @@ class ScanController extends GetxController {
         final responseData = jsonDecode(response.body);
 
         if (responseData['data'] == null) {
-          throw Exception('Asset not found or data is missing');
+          throw Exception('No asset data found');
         }
 
-        return Asset.fromJson(responseData['data']);
+        // Handle both response formats
+        final assetData =
+            responseData['data']['ms_asset_branch'] ?? responseData['data'];
+        return Asset.fromJson(assetData);
       } else if (response.statusCode == 404) {
         throw Exception('Asset with code $kodeAset not found');
       } else {
@@ -55,12 +58,12 @@ class ScanController extends GetxController {
       }
 
       final response = await http.put(
-        Uri.parse('${Url}asset/${asset.kodeAset}'),
+        Uri.parse(Url + 'asset-branches/asset'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(asset.toJson()),
+        body: jsonEncode({'KODE_ASET': asset.kodeAset, 'data': asset.toJson()}),
       );
 
       if (response.statusCode == 200) {
