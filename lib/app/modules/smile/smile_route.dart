@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/Auth/views/register_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/area_screen.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/purpose_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
@@ -43,6 +44,7 @@ class SmileRoutes {
   static const historyVisitDetail = '/public/smile/history_visit_detail';
   static const historyVisitEdit = '/public/smile/history_visit_edit';
   static const type = '/public/smile/list_master/type';
+  static const purpose = '/public/smile/list_master/purpose';
 
   static final routes = [
     GetPage(
@@ -113,5 +115,11 @@ class SmileRoutes {
       page: () => JabatanScreen(),
     ),
     GetPage(name: area, transition: Transition.zoom, page: () => AreaScreen()),
+    GetPage(
+      name: purpose,
+      transition: Transition.zoom,
+      page: () => PurposeScreen(),
+    ),
   ];
 }
+

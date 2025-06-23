@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sufi_one/app/modules/smile/models/area.dart';
 import '../../app/modules/smile/models/jabatan.dart';
 import '../../app/modules/smile/models/type.dart';
+import 'package:sufi_one/app/modules/smile/models/purpose.dart';
 
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
@@ -13,6 +14,7 @@ class DatabaseHelper {
   static const tableMetadata = 'metadata';
   static const tableArea = 'area';
   static const tableType = 'types';
+  static const tablePurpose = 'purpose';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -70,7 +72,20 @@ class DatabaseHelper {
         value TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE $tablePurpose (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
   }
+
+
+
+
 
   Future<int> insertJabatan(Jabatan jabatan) async {
     final db = await database;
@@ -95,6 +110,11 @@ class DatabaseHelper {
     final db = await database;
     return await db.insert(tableArea, area.toJson());
   }
+  Future<int> insertPurpose(Purpose purpose) async {
+  final db = await database;
+  return await db.insert(tablePurpose, purpose.toJson());
+  }
+
 
   Future<List<Area>> getAllArea() async {
     final db = await database;
@@ -131,6 +151,22 @@ class DatabaseHelper {
     }
     return null;
   }
+
+  Future<List<Purpose>> getAllPurpose() async {
+  final db = await database;
+  final List<Map<String, dynamic>> maps = await db.query(tablePurpose);
+  return List.generate(maps.length, (i) {
+  return Purpose(
+  id: maps[i]['id'],
+  name: maps[i]['name'],
+  kode: maps[i]['kode'],
+  createdAt: maps[i]['created_at'],
+  updatedAt: maps[i]['updated_at'],
+  );
+  });
+  }
+
+
 
   Future<int> insertType(Type type) async {
     final db = await database;

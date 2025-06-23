@@ -7,3 +7,4 @@ class HistoryEditBinding extends Bindings {
     Get.lazyPut<HistoryEditController>(() => HistoryEditController());
   }
 }
+

@@ -22,7 +22,7 @@ class _DataMasterState extends State<DataMaster> {
     {'title': 'MAIN DEALER', 'route': '/master/main-dealer'},
     {'title': 'PRODUK', 'route': '/master/produk'},
     {'title': 'TIPE VISIT', 'route': SmileRoutes.type},
-    {'title': 'TUJUAN VISIT', 'route': '/master/tujuan-visit'},
+    {'title': 'TUJUAN VISIT', 'route': SmileRoutes.purpose},
   ];
 
   @override
