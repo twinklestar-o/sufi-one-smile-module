@@ -20,6 +20,7 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_vi
 import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_edit_binding.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/jabatan_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/type_screen.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/branch_screen.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -45,6 +46,10 @@ class SmileRoutes {
   static const historyVisitEdit = '/public/smile/history_visit_edit';
   static const type = '/public/smile/list_master/type';
   static const purpose = '/public/smile/list_master/purpose';
+  static const branch = '/public/smile/list_master/branch';
+
+
+
 
   static final routes = [
     GetPage(
@@ -119,6 +124,11 @@ class SmileRoutes {
       name: purpose,
       transition: Transition.zoom,
       page: () => PurposeScreen(),
+    ),
+    GetPage(
+      name: branch,
+      transition: Transition.zoom,
+      page: () => BranchScreen(),
     ),
   ];
 }

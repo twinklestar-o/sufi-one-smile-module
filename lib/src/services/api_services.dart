@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/modules/smile/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../app/modules/smile/models/type.dart';
 
 class ApiService {
   final String baseUrl;
@@ -26,6 +25,24 @@ class ApiService {
       throw Exception('Sesi telah berakhir, silakan login kembali');
     } else {
       throw Exception('Gagal memuat data purpose');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchBranches() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse(Url + 'branches',),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 401) {
+      // Token expired, redirect to login
+      Get.offAll(() => LoginPage());
+      throw Exception('Sesi telah berakhir, silakan login kembali');
+    } else {
+      throw Exception('Gagal memuat data Branches: ${response.statusCode}');
     }
   }
 

@@ -4,6 +4,9 @@ import 'package:sufi_one/app/modules/smile/models/area.dart';
 import '../../app/modules/smile/models/jabatan.dart';
 import '../../app/modules/smile/models/type.dart';
 import 'package:sufi_one/app/modules/smile/models/purpose.dart';
+import 'package:sufi_one/app//modules/smile/models/branch.dart';
+
+
 
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
@@ -15,6 +18,7 @@ class DatabaseHelper {
   static const tableArea = 'area';
   static const tableType = 'types';
   static const tablePurpose = 'purpose';
+  static const tableBranch = 'Branches';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -67,18 +71,30 @@ class DatabaseHelper {
       )''');
 
     await db.execute('''
-      CREATE TABLE $tableMetadata (
-        key TEXT PRIMARY KEY,
-        value TEXT
-      )
-    ''');
-    await db.execute('''
       CREATE TABLE $tablePurpose (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
         kode TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+  CREATE TABLE $tableBranch (
+    code TEXT PRIMARY KEY,
+    area_code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (area_code) REFERENCES $tableArea (code)
+  )
+''');
+
+    await db.execute('''
+      CREATE TABLE $tableMetadata (
+        key TEXT PRIMARY KEY,
+        value TEXT
       )
     ''');
   }
@@ -105,6 +121,25 @@ class DatabaseHelper {
       );
     });
   }
+
+  Future<void> insertBranch(Branch branch) async {
+    final db = await database;
+    await db.insert(
+      tableBranch,
+      branch.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Branch>> getAllBranches() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableBranch);
+
+    return List.generate(maps.length, (i) {
+      return Branch.fromJson(maps[i]);
+    });
+  }
+
 
   Future<int> insertArea(Area area) async {
     final db = await database;

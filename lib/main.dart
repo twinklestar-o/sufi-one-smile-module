@@ -9,7 +9,9 @@ import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatan_repository.dart';
 import 'package:sufi_one/src/services/api_services.dart';
 import 'package:sufi_one/app/modules/smile/repositories/type_repository.dart';
-import 'package:sufi_one/app/modules/smile/repositories/purpose_repository.dart'; //
+import 'package:sufi_one/app/modules/smile/repositories/purpose_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/branch_repository.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +36,10 @@ void main() async {
     dbHelper: dbHelper,
     apiService: apiService,
   );
+  final branchRepository = BranchRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
 
   // Inisialisasi OneSignal
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
@@ -49,6 +55,7 @@ void main() async {
         Provider<AreaRepository>(create: (_) => areaRepository),
         Provider<TypeRepository>(create: (_) => typeRepository),
         Provider<PurposeRepository>(create: (_) => purposeRepository),
+        Provider<BranchRepository>(create: (_) => branchRepository),
 //
       ],
       child: const MyApp(),
