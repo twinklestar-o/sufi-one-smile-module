@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/smile/models/area.dart';
 import 'package:sufi_one/app/modules/smile/repositories/area_repository.dart';
@@ -83,14 +85,27 @@ class _AreaScreenState extends State<AreaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Area'),
+        backgroundColor: const Color(0xFF0E47A1),
+        title: const Text(
+          'Daftar Area',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refreshData,
             tooltip: 'Refresh Data',
+            color: Colors.white,
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: _buildBody(),
     );

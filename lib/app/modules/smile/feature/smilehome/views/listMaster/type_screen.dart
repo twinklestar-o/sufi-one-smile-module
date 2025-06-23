@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../repositories/type_repository.dart';
 import '../../../../models/type.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class TypeScreen extends StatefulWidget {
   @override
@@ -99,14 +101,27 @@ class _TypeScreenState extends State<TypeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daftar Type'), // Judul AppBar
+        backgroundColor: const Color(0xFF0E47A1),
+        title: const Text(
+          'Daftar Tipe Visit',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh), // Ikon refresh
             onPressed: _refreshData, // Panggil _refreshData saat ditekan
-            tooltip: 'Refresh Data Type', // Tooltip untuk ikon
+            tooltip: 'Refresh Data', // Tooltip untuk ikon
+            color: Colors.white,
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: _buildBody(), // Membangun body screen
     );
@@ -115,7 +130,9 @@ class _TypeScreenState extends State<TypeScreen> {
   // Widget pembangun body screen berdasarkan state loading/error/data
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator()); // Tampilkan indikator loading
+      return const Center(
+        child: CircularProgressIndicator(),
+      ); // Tampilkan indikator loading
     }
 
     if (_errorMessage != null) {
@@ -124,15 +141,16 @@ class _TypeScreenState extends State<TypeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
-
             Text(
               _errorMessage!,
               style: const TextStyle(color: Colors.red, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _loadData, child: const Text('Coba Lagi')),
+            ElevatedButton(
+              onPressed: _loadData,
+              child: const Text('Coba Lagi'),
+            ),
           ],
         ),
       );
@@ -155,7 +173,8 @@ class _TypeScreenState extends State<TypeScreen> {
         // Jika data tersedia, tampilkan dalam ListView
         final typeList = snapshot.data!;
         return RefreshIndicator(
-          onRefresh: _refreshData, // Panggil _refreshData saat user melakukan pull-to-refresh
+          onRefresh:
+              _refreshData, // Panggil _refreshData saat user melakukan pull-to-refresh
           child: ListView.builder(
             itemCount: typeList.length,
             itemBuilder: (context, index) {
@@ -163,8 +182,12 @@ class _TypeScreenState extends State<TypeScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 child: ListTile(
-                  title: Text(type.name ?? 'No Name'), // Asumsi model Type memiliki properti 'name'
-                  subtitle: Text('ID: ${type.id ?? 'N/A'}'), // Asumsi model Type memiliki properti 'id'
+                  title: Text(
+                    type.name ?? 'No Name',
+                  ), // Asumsi model Type memiliki properti 'name'
+                  subtitle: Text(
+                    'ID: ${type.id ?? 'N/A'}',
+                  ), // Asumsi model Type memiliki properti 'id'
                   // Anda bisa menambahkan detail lain dari model Type di sini
                   // Contoh: subtitle: Text('Deskripsi: ${type.description ?? ''}'),
                   trailing: const Icon(Icons.chevron_right),

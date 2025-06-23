@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../repositories/jabatan_repository.dart';
 import '../../../../models/jabatan.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class JabatanScreen extends StatefulWidget {
   @override
@@ -83,14 +85,27 @@ class _JabatanScreenState extends State<JabatanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Jabatan'),
+        backgroundColor: const Color(0xFF0E47A1),
+        title: const Text(
+          'Daftar Jabatan',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refreshData,
             tooltip: 'Refresh Data',
+            color: Colors.white,
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: _buildBody(),
     );

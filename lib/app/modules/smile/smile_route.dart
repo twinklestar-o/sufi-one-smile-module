@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
-import 'package:sufi_one/app/Auth/views/profile.dart';
 import 'package:sufi_one/app/Auth/views/register_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/area_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
@@ -29,7 +28,6 @@ class SmileRoutes {
   static const smile = '/public/smile';
   static const login = '/public/smile/login';
   static const register = '/public/smile/register';
-  static const profile = '/public/smile/profile';
   static const directVisit = '/public/smile/direct_visit';
   static const taskVisit = '/public/smile/task_visit';
   static const taskView = '/public/smile/task_view';
@@ -53,11 +51,6 @@ class SmileRoutes {
       page: () => RegisterPage(),
     ),
     GetPage(name: login, transition: Transition.zoom, page: () => LoginPage()),
-    GetPage(
-      name: profile,
-      transition: Transition.zoom,
-      page: () => ProfilePage(),
-    ),
     GetPage(
       name: smile,
       transition: Transition.zoom,

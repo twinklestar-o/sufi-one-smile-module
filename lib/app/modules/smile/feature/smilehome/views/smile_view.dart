@@ -94,21 +94,6 @@ class SmileHomePage extends StatelessWidget {
                     label: 'Data Master',
                     onTap: () => Get.toNamed(SmileRoutes.dataMaster),
                   ),
-                  _menuCard(
-                    icon: Icons.person,
-                    label: 'Test Tampilan User',
-                    onTap: () => Get.toNamed(SmileRoutes.profile),
-                  ),
-                  _menuCard(
-                    icon: Icons.login,
-                    label: 'Test Login',
-                    onTap: () => Get.toNamed(SmileRoutes.login),
-                  ),
-                  _menuCard(
-                    icon: Icons.login,
-                    label: 'Test Register',
-                    onTap: () => Get.toNamed(SmileRoutes.register),
-                  ),
                 ],
               ),
             ),
