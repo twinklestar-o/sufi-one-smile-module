@@ -1,8 +1,8 @@
-import 'dart:typed_data';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/DAMS/controller/scan_controller.dart';
+import 'asset_form_page.dart';
 
 class ScanCodePage extends StatefulWidget {
   const ScanCodePage({super.key});
@@ -11,54 +11,58 @@ class ScanCodePage extends StatefulWidget {
 }
 
 class _ScanCodePageState extends State<ScanCodePage> {
-  Barcode? _barcode;
+  final ScanController _scanController = Get.put(ScanController());
+  bool _isLoading = false;
 
-  Widget _barcodePreview(Barcode? value) {
-    if (value == null) {
-      return const Text(
-        'Scan something!',
-        overflow: TextOverflow.fade,
-        style: TextStyle(color: Colors.white),
-      );
-    }
+  void _handleBarcode(BarcodeCapture barcodes) async {
+    if (barcodes.barcodes.isEmpty || _isLoading) return;
 
-    return Text(
-      value.displayValue ?? 'No display value.',
-      overflow: TextOverflow.fade,
-      style: const TextStyle(color: Colors.white),
-    );
-  }
+    final barcode = barcodes.barcodes.first;
+    if (barcode.rawValue == null) return;
 
-  void _handleBarcode(BarcodeCapture barcodes) {
-    if (mounted) {
-      setState(() {
-        _barcode = barcodes.barcodes.firstOrNull;
-      });
+    setState(() => _isLoading = true);
+
+    try {
+      // First verify the asset exists by fetching it
+      await _scanController.getAssetByKodeAset(barcode.rawValue!);
+
+      // If successful, navigate to form page with the kodeAset
+      if (mounted) {
+        Get.to(() => AssetFormPage(kodeAset: barcode.rawValue!));
+      }
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          e.toString(),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan QR Code')),
+      appBar: AppBar(title: const Text('Scan QR Code Asset')),
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          MobileScanner(onDetect: _handleBarcode),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              alignment: Alignment.bottomCenter,
-              height: 100,
-              color: const Color.fromRGBO(0, 0, 0, 0.4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(child: Center(child: _barcodePreview(_barcode))),
-                ],
-              ),
+          MobileScanner(
+            onDetect: _handleBarcode,
+            controller: MobileScannerController(
+              detectionSpeed: DetectionSpeed.normal,
+              facing: CameraFacing.back,
+              torchEnabled: false,
             ),
           ),
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
         ],
       ),
     );
