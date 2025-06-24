@@ -17,6 +17,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
   final ScanController _scanController = Get.find();
   late Future<Asset> _futureAsset;
   Asset? _editedAsset;
+  AssetDetail? _editedAssetDetail;
   bool _isLoading = false;
   bool _isSaving = false;
 
@@ -28,6 +29,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
   final _deptController = TextEditingController();
   final _roomController = TextEditingController();
   final _floorController = TextEditingController();
+  final _groupController = TextEditingController();
 
   @override
   void initState() {
@@ -67,6 +69,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
       _deptController.text = asset.dept ?? '';
       _roomController.text = asset.room ?? '';
       _floorController.text = asset.floor ?? '';
+      _groupController.text = asset.detail?.group ?? '';
     });
   }
 
@@ -92,9 +95,17 @@ class _AssetFormPageState extends State<AssetFormPage> {
         userUpdate: "Current User", // Ganti dengan user yang login
       );
 
-      final success = await _scanController.updateAsset(updatedAsset);
+      final updatedDetailAsset = _editedAssetDetail!.copyWith(
+        group: _groupController.text.isEmpty ? null : _groupController.text,
+        lastUpdate: DateTime.now(),
+        userUpdate: "Current User", // Ganti dengan user yang login
+      );
 
-      if (success && mounted) {
+      final success = await _scanController.updateAsset(updatedAsset);
+      final successDetail = await _scanController.updateDetailAsset(
+        updatedDetailAsset,
+      );
+      if (success && mounted && successDetail) {
         Get.back();
         Get.snackbar(
           'Success',
@@ -290,6 +301,14 @@ class _AssetFormPageState extends State<AssetFormPage> {
               controller: _floorController,
               decoration: const InputDecoration(
                 labelText: 'Floor',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _groupController,
+              decoration: const InputDecoration(
+                labelText: 'Group',
                 border: OutlineInputBorder(),
               ),
             ),

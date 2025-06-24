@@ -28,14 +28,12 @@ class ScanController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
 
-        if (responseData['data'] == null) {
-          throw Exception('No asset data found');
+        if (responseData['data']['ms_asset_branch'] == null ||
+            responseData['data']['asset_detail'] == null) {
+          throw Exception('Asset not found or data is missing');
         }
 
-        // Handle both response formats
-        final assetData =
-            responseData['data']['ms_asset_branch'] ?? responseData['data'];
-        return Asset.fromJson(assetData);
+        return Asset.fromJson(responseData['data']);
       } else if (response.statusCode == 404) {
         throw Exception('Asset with code $kodeAset not found');
       } else {
@@ -58,12 +56,40 @@ class ScanController extends GetxController {
       }
 
       final response = await http.put(
-        Uri.parse(Url + 'asset-branches/asset'),
+        Uri.parse('${Url}asset/${asset.kodeAset}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'KODE_ASET': asset.kodeAset, 'data': asset.toJson()}),
+        body: jsonEncode(asset.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Failed to update asset: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error updating asset: ${e.toString()}');
+    }
+  }
+
+  Future<bool> updateDetailAsset(AssetDetail asset) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Session expired, please login again');
+      }
+
+      final response = await http.put(
+        Uri.parse('${Url}asset/${asset.kodeAset}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(asset.toJson()),
       );
 
       if (response.statusCode == 200) {
