@@ -4,7 +4,7 @@ import 'package:sufi_one/app/modules/smile/models/area.dart';
 import '../../app/modules/smile/models/jabatan.dart';
 import '../../app/modules/smile/models/type.dart';
 import 'package:sufi_one/app/modules/smile/models/purpose.dart';
-import 'package:sufi_one/app//modules/smile/models/branch.dart';
+import 'package:sufi_one/app/modules/smile/models/branch.dart';
 
 
 
@@ -99,10 +99,6 @@ class DatabaseHelper {
     ''');
   }
 
-
-
-
-
   Future<int> insertJabatan(Jabatan jabatan) async {
     final db = await database;
     return await db.insert(tableJabatan, jabatan.toJson());
@@ -139,7 +135,6 @@ class DatabaseHelper {
       return Branch.fromJson(maps[i]);
     });
   }
-
 
   Future<int> insertArea(Area area) async {
     final db = await database;

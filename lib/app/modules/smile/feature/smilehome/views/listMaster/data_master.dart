@@ -15,7 +15,7 @@ class _DataMasterState extends State<DataMaster> {
 
   final List<Map<String, dynamic>> masterItems = const [
     {'title': 'AREA', 'route': SmileRoutes.area},
-    {'title': 'CABANG', 'route': '/master/cabang'},
+    {'title': 'CABANG', 'route': SmileRoutes.branch},
     {'title': 'DEALER', 'route': '/master/dealer'},
     {'title': 'JABATAN', 'route': SmileRoutes.jabatan},
     {'title': 'JABATAN SFI', 'route': '/master/jabatan-sfi'},
