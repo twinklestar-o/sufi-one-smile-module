@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:sufi_one/app/modules/DAMS/controller/scan_controller.dart';
 import 'package:sufi_one/app/modules/DAMS/model/asset.dart';
 
@@ -22,6 +23,21 @@ class _AssetFormPageState extends State<AssetFormPage> {
   bool _isSaving = false;
 
   final _formKey = GlobalKey<FormState>();
+  final _namaAssetController = TextEditingController();
+  final _tanggalBeliController = TextEditingController();
+  final _hargaBeliController = TextEditingController();
+  final _nilaiBukuController = TextEditingController();
+  final _namaUserAssetController = TextEditingController();
+  final _keteranganController = TextEditingController();
+  final _statusAssetController = TextEditingController();
+  final _kondisiAssetController = TextEditingController();
+  final _statusUserAssetController = TextEditingController();
+  final _posisiUserController = TextEditingController();
+  final _divisiUserController = TextEditingController();
+  final _lokasiUserController = TextEditingController();
+  final _lantaiUserController = TextEditingController();
+  final _gambarController = TextEditingController();
+
   final _lokasiController = TextEditingController();
   final _branchIdController = TextEditingController();
   final _divisionController = TextEditingController();
@@ -30,6 +46,12 @@ class _AssetFormPageState extends State<AssetFormPage> {
   final _roomController = TextEditingController();
   final _floorController = TextEditingController();
   final _groupController = TextEditingController();
+
+  // Dropdown options
+  final List<String> _statusOptions = ['Exist', 'Lost'];
+  final List<String> _conditionOptions = ['Good', 'Broken'];
+  String? _selectedStatus;
+  String? _selectedCondition;
 
   @override
   void initState() {
@@ -62,6 +84,43 @@ class _AssetFormPageState extends State<AssetFormPage> {
   void _initializeControllers(Asset asset) {
     setState(() {
       _editedAsset = asset;
+      _editedAssetDetail = asset.detail;
+
+      _namaAssetController.text = asset.detail?.item ?? '';
+      // Initialize date picker value
+      if (asset.detail?.tanggalPembelian != null) {
+        _tanggalBeliController.text = DateFormat(
+          'dd/MM/yyyy',
+        ).format(asset.detail!.tanggalPembelian!);
+      }
+      // Initialize price fields with Rupiah format
+      if (asset.detail?.costAc != null && asset.detail!.costAc!.isNotEmpty) {
+        _hargaBeliController.text = _formatCurrency(
+          double.tryParse(asset.detail!.costAc!) ?? 0,
+        );
+      }
+
+      if (asset.detail?.bokVal != null && asset.detail!.bokVal!.isNotEmpty) {
+        _nilaiBukuController.text = _formatCurrency(
+          double.tryParse(asset.detail!.bokVal!) ?? 0,
+        );
+      }
+      _namaUserAssetController.text = asset.detail?.username ?? '';
+      _keteranganController.text = asset.detail?.description ?? '';
+
+      // Initialize dropdown values
+      _selectedStatus = asset.detail?.status;
+      _selectedCondition = asset.detail?.condition;
+
+      _statusAssetController.text = asset.detail?.status ?? '';
+      _kondisiAssetController.text = asset.detail?.condition ?? '';
+      _statusUserAssetController.text = asset.detail?.username ?? '';
+      _posisiUserController.text = asset.detail?.position ?? '';
+      _divisiUserController.text = asset.branchName ?? '';
+      _lokasiUserController.text = asset.detail?.locRoom ?? '';
+      _lantaiUserController.text = asset.floor ?? '';
+      _gambarController.text = asset.lokasi ?? '';
+
       _lokasiController.text = asset.lokasi;
       _branchIdController.text = asset.branchId;
       _divisionController.text = asset.division ?? '';
@@ -71,6 +130,44 @@ class _AssetFormPageState extends State<AssetFormPage> {
       _floorController.text = asset.floor ?? '';
       _groupController.text = asset.detail?.group ?? '';
     });
+  }
+
+  // Format currency to Rupiah
+  String _formatCurrency(double amount) {
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(amount);
+  }
+
+  // Parse Rupiah string to double
+  double? _parseCurrency(String value) {
+    if (value.isEmpty) return null;
+    try {
+      String numStr = value.replaceAll(RegExp(r'[^0-9]'), '');
+      return double.tryParse(numStr);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _editedAssetDetail?.tanggalPembelian ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _tanggalBeliController.text = DateFormat('dd/MM/yyyy').format(picked);
+        _editedAssetDetail = _editedAssetDetail?.copyWith(
+          tanggalPembelian: picked,
+        );
+      });
+    }
   }
 
   Future<void> _saveChanges() async {
@@ -194,21 +291,13 @@ class _AssetFormPageState extends State<AssetFormPage> {
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildBasicInfoSection(),
-            const SizedBox(height: 16),
-            _buildLocationInfoSection(),
-            const SizedBox(height: 16),
-            if (_editedAsset != null) _buildStatusSwitch(),
-            const SizedBox(height: 16),
-            if (_editedAsset != null) _buildAssetInfoSection(),
-          ],
+          children: [_buildDamsSection(), const SizedBox(height: 16)],
         ),
       ),
     );
   }
 
-  Widget _buildBasicInfoSection() {
+  Widget _buildDamsSection() {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -216,156 +305,167 @@ class _AssetFormPageState extends State<AssetFormPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Basic Information',
+              'DAMS',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _branchIdController,
+              controller: _namaAssetController,
               decoration: const InputDecoration(
-                labelText: 'Branch ID',
+                labelText: 'Nama Asset',
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter branch ID';
+                  return 'Masukkan nama asset';
                 }
                 return null;
               },
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _divisionController,
+              controller: _tanggalBeliController,
               decoration: const InputDecoration(
-                labelText: 'Division',
+                labelText: 'Tanggal Beli',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () => _selectDate(context),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _hargaBeliController,
+              decoration: const InputDecoration(
+                labelText: 'Harga Beli',
                 border: OutlineInputBorder(),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _nilaiBukuController,
+              decoration: const InputDecoration(
+                labelText: 'Nilai Buku',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _namaUserAssetController,
+              decoration: const InputDecoration(
+                labelText: 'Nama User Asset',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _keteranganController,
+              decoration: const InputDecoration(
+                labelText: 'Keterangan',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedStatus,
+              items:
+                  _statusOptions.map((status) {
+                    return DropdownMenuItem<String>(
+                      value: status,
+                      child: Text(status),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedStatus = value;
+                });
+              },
+              decoration: const InputDecoration(
+                labelText: 'Status Asset',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || !_statusOptions.contains(value)) {
+                  return 'Pilih status asset yang valid';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedCondition,
+              items:
+                  _conditionOptions.map((condition) {
+                    return DropdownMenuItem<String>(
+                      value: condition,
+                      child: Text(condition),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCondition = value;
+                });
+              },
+              decoration: const InputDecoration(
+                labelText: 'Kondisi Asset',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || !_conditionOptions.contains(value)) {
+                  return 'Pilih kondisi asset yang valid';
+                }
+                return null;
+              },
+            ),
 
-  Widget _buildLocationInfoSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Location Information',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _statusUserAssetController,
+              decoration: const InputDecoration(
+                labelText: 'Status User Asset',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _posisiUserController,
+              decoration: const InputDecoration(
+                labelText: 'Posisi User',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _divisiUserController,
+              decoration: const InputDecoration(
+                labelText: 'Divisi User',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _lokasiController,
               decoration: const InputDecoration(
-                labelText: 'Lokasi',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter location';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _personalLocController,
-              decoration: const InputDecoration(
-                labelText: 'Personal Location',
+                labelText: 'Lokasi User',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _deptController,
+              controller: _lantaiUserController,
               decoration: const InputDecoration(
-                labelText: 'Department',
+                labelText: 'Lantai User',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _roomController,
+              controller: _gambarController,
               decoration: const InputDecoration(
-                labelText: 'Room',
+                labelText: 'Gambar',
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _floorController,
-              decoration: const InputDecoration(
-                labelText: 'Floor',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _groupController,
-              decoration: const InputDecoration(
-                labelText: 'Group',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusSwitch() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            const Text('Status:', style: TextStyle(fontSize: 16)),
-            const SizedBox(width: 16),
-            Switch(
-              value: _editedAsset!.isActive == 1,
-              onChanged: (value) {
-                setState(() {
-                  _editedAsset = _editedAsset!.copyWith(
-                    isActive: value ? 1 : 0,
-                  );
-                });
-              },
-            ),
-            Text(
-              _editedAsset!.isActive == 1 ? 'Active' : 'Inactive',
-              style: const TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAssetInfoSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Asset Details',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow('Asset Code', _editedAsset!.kodeAset),
-            _buildInfoRow('Created by', _editedAsset!.userCreate),
-            _buildInfoRow('Create Date', _formatDate(_editedAsset!.createDate)),
-            if (_editedAsset!.lastUpdate != null)
-              _buildInfoRow(
-                'Last Update',
-                _formatDate(_editedAsset!.lastUpdate!),
-              ),
           ],
         ),
       ),
