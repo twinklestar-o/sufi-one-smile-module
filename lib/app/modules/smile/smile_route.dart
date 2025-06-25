@@ -21,6 +21,7 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/bindings/history_ed
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/jabatan_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/type_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/branch_screen.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/product_screen.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -47,7 +48,7 @@ class SmileRoutes {
   static const type = '/public/smile/list_master/type';
   static const purpose = '/public/smile/list_master/purpose';
   static const branch = '/public/smile/list_master/branch';
-
+  static const product = '/public/smile/list_master/product';
 
 
 
@@ -129,6 +130,12 @@ class SmileRoutes {
       name: branch,
       transition: Transition.zoom,
       page: () => BranchScreen(),
+    ),
+    GetPage(name: type, transition: Transition.zoom, page: () => ProductScreen()),
+    GetPage(
+      name: product,
+      transition: Transition.zoom,
+      page: () => ProductScreen(),
     ),
   ];
 }

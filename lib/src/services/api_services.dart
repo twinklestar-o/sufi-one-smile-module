@@ -28,6 +28,7 @@ class ApiService {
     }
   }
 
+
   Future<Map<String, dynamic>> fetchBranches() async {
     final token = await _getToken();
     final response = await http.get(
@@ -92,6 +93,25 @@ class ApiService {
       throw Exception('Gagal memuat data jabatan');
     }
   }
+
+  Future<Map<String, dynamic>> fetchProduct() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse(Url + 'product'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 401) {
+      // Token expired, redirect to login
+      Get.offAll(() => LoginPage());
+      throw Exception('Sesi telah berakhir, silakan login kembali');
+    } else {
+      throw Exception('Gagal memuat data jabatan');
+    }
+  }
+
 
   Future<Map<String, dynamic>> fetchArea() async {
     final token = await _getToken();

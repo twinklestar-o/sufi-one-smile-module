@@ -20,7 +20,7 @@ class _DataMasterState extends State<DataMaster> {
     {'title': 'JABATAN', 'route': SmileRoutes.jabatan},
     {'title': 'JABATAN SFI', 'route': '/master/jabatan-sfi'},
     {'title': 'MAIN DEALER', 'route': '/master/main-dealer'},
-    {'title': 'PRODUK', 'route': '/master/produk'},
+    {'title': 'PRODUK', 'route': SmileRoutes.product},
     {'title': 'TIPE VISIT', 'route': SmileRoutes.type},
     {'title': 'TUJUAN VISIT', 'route': SmileRoutes.purpose},
   ];

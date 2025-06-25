@@ -5,6 +5,8 @@ import '../../app/modules/smile/models/jabatan.dart';
 import '../../app/modules/smile/models/type.dart';
 import 'package:sufi_one/app/modules/smile/models/purpose.dart';
 import 'package:sufi_one/app/modules/smile/models/branch.dart';
+import 'package:sufi_one/app/modules/smile/models/product.dart';
+
 
 
 
@@ -19,6 +21,7 @@ class DatabaseHelper {
   static const tableType = 'types';
   static const tablePurpose = 'purpose';
   static const tableBranch = 'Branches';
+  static const tableProduct = 'product';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -81,6 +84,17 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
+      CREATE TABLE $tableProduct (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+
+    await db.execute('''
   CREATE TABLE $tableBranch (
     code TEXT PRIMARY KEY,
     area_code TEXT NOT NULL,
@@ -135,6 +149,25 @@ class DatabaseHelper {
       return Branch.fromJson(maps[i]);
     });
   }
+
+   Future<int> insertProduct(Product product) async {
+    final db = await database;
+    return await db.insert(tableProduct, product.toJson());
+  }
+
+  Future<List<Product>> getAllProduct() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableProduct);
+    return List.generate(maps.length, (i) {
+      return Product(
+        name: maps[i]['name'],
+        kode: maps[i]['kode'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
 
   Future<int> insertArea(Area area) async {
     final db = await database;

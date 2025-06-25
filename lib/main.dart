@@ -4,6 +4,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
 import 'package:sufi_one/app/modules/smile/repositories/area_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/product_repository.dart';
 import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatan_repository.dart';
@@ -40,6 +41,10 @@ void main() async {
     dbHelper: dbHelper,
     apiService: apiService,
   );
+  final productRepository = ProductRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
 
   // Inisialisasi OneSignal
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
@@ -56,6 +61,7 @@ void main() async {
         Provider<TypeRepository>(create: (_) => typeRepository),
         Provider<PurposeRepository>(create: (_) => purposeRepository),
         Provider<BranchRepository>(create: (_) => branchRepository),
+        Provider<ProductRepository>(create: (_) => productRepository),
 //
       ],
       child: const MyApp(),
