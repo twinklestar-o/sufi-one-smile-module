@@ -29,17 +29,27 @@ class ApiService {
   }
 
 
-  Future<Map<String, dynamic>> fetchBranches() async {
+  Future<List<dynamic>> fetchBranches() async {
     final token = await _getToken();
     final response = await http.get(
-      Uri.parse(Url + 'branches',),
+      Uri.parse(Url + 'branches'), // Tidak perlu koma trailing di sini
       headers: {'Authorization': 'Bearer $token'},
     );
 
+
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final dynamic decodedResponse = json.decode(response.body);
+      // Logika untuk menangani respons yang bisa langsung List atau Map dengan key 'data'
+      if (decodedResponse is List) {
+        return decodedResponse;
+      } else if (decodedResponse is Map<String, dynamic> && decodedResponse.containsKey('data') && decodedResponse['data'] is List) {
+        return decodedResponse['data'] as List<dynamic>;
+      } else {
+        // Jika format respons tidak sesuai harapan (misalnya bukan List atau Map dengan 'data')
+        throw Exception('Format respons API untuk branches tidak valid atau tidak sesuai harapan: $decodedResponse');
+      }
     } else if (response.statusCode == 401) {
-      // Token expired, redirect to login
+
       Get.offAll(() => LoginPage());
       throw Exception('Sesi telah berakhir, silakan login kembali');
     } else {
