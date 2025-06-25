@@ -28,7 +28,6 @@ class ApiService {
     }
   }
 
-
   Future<List<dynamic>> fetchBranches() async {
     final token = await _getToken();
     final response = await http.get(
@@ -36,20 +35,22 @@ class ApiService {
       headers: {'Authorization': 'Bearer $token'},
     );
 
-
     if (response.statusCode == 200) {
       final dynamic decodedResponse = json.decode(response.body);
       // Logika untuk menangani respons yang bisa langsung List atau Map dengan key 'data'
       if (decodedResponse is List) {
         return decodedResponse;
-      } else if (decodedResponse is Map<String, dynamic> && decodedResponse.containsKey('data') && decodedResponse['data'] is List) {
+      } else if (decodedResponse is Map<String, dynamic> &&
+          decodedResponse.containsKey('data') &&
+          decodedResponse['data'] is List) {
         return decodedResponse['data'] as List<dynamic>;
       } else {
         // Jika format respons tidak sesuai harapan (misalnya bukan List atau Map dengan 'data')
-        throw Exception('Format respons API untuk branches tidak valid atau tidak sesuai harapan: $decodedResponse');
+        throw Exception(
+          'Format respons API untuk branches tidak valid atau tidak sesuai harapan: $decodedResponse',
+        );
       }
     } else if (response.statusCode == 401) {
-
       Get.offAll(() => LoginPage());
       throw Exception('Sesi telah berakhir, silakan login kembali');
     } else {
@@ -122,7 +123,6 @@ class ApiService {
     }
   }
 
-
   Future<Map<String, dynamic>> fetchArea() async {
     final token = await _getToken();
     final response = await http.get(
@@ -132,6 +132,29 @@ class ApiService {
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
+    } else if (response.statusCode == 401) {
+      // Token expired, redirect to login
+      Get.offAll(() => LoginPage());
+      throw Exception('Sesi telah berakhir, silakan login kembali');
+    } else {
+      throw Exception('Gagal memuat data area');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchDealer() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse(Url + 'dealers'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      if (jsonData is Map<String, dynamic>) {
+        return jsonData; // Ini yang diharapkan oleh DealerRepository
+      } else {
+        throw Exception('Unexpected response format');
+      }
     } else if (response.statusCode == 401) {
       // Token expired, redirect to login
       Get.offAll(() => LoginPage());

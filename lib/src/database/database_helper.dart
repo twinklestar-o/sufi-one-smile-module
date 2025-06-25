@@ -1,14 +1,12 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:sufi_one/app/modules/smile/models/area.dart';
+import 'package:sufi_one/app/modules/smile/models/dealer.dart';
 import '../../app/modules/smile/models/jabatan.dart';
 import '../../app/modules/smile/models/type.dart';
 import 'package:sufi_one/app/modules/smile/models/purpose.dart';
 import 'package:sufi_one/app/modules/smile/models/branch.dart';
 import 'package:sufi_one/app/modules/smile/models/product.dart';
-
-
-
 
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
@@ -22,6 +20,7 @@ class DatabaseHelper {
   static const tablePurpose = 'purpose';
   static const tableBranch = 'Branches';
   static const tableProduct = 'product';
+  static const tableDealer = 'dealers';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -84,6 +83,15 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
+      CREATE TABLE $tableDealer (
+        name TEXT NOT NULL,
+        code TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE $tableProduct (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
@@ -92,7 +100,6 @@ class DatabaseHelper {
         updated_at TEXT NOT NULL
       )
     ''');
-
 
     await db.execute('''
   CREATE TABLE $tableBranch (
@@ -132,6 +139,24 @@ class DatabaseHelper {
     });
   }
 
+  Future<int> insertDealer(Dealer dealer) async {
+    final db = await database;
+    return await db.insert(tableDealer, dealer.toJson());
+  }
+
+  Future<List<Dealer>> getAllDealer() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableDealer);
+    return List.generate(maps.length, (i) {
+      return Dealer(
+        name: maps[i]['name'],
+        code: maps[i]['code'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
   Future<void> insertBranch(Branch branch) async {
     final db = await database;
     await db.insert(
@@ -150,7 +175,7 @@ class DatabaseHelper {
     });
   }
 
-   Future<int> insertProduct(Product product) async {
+  Future<int> insertProduct(Product product) async {
     final db = await database;
     return await db.insert(tableProduct, product.toJson());
   }
@@ -168,16 +193,15 @@ class DatabaseHelper {
     });
   }
 
-
   Future<int> insertArea(Area area) async {
     final db = await database;
     return await db.insert(tableArea, area.toJson());
   }
-  Future<int> insertPurpose(Purpose purpose) async {
-  final db = await database;
-  return await db.insert(tablePurpose, purpose.toJson());
-  }
 
+  Future<int> insertPurpose(Purpose purpose) async {
+    final db = await database;
+    return await db.insert(tablePurpose, purpose.toJson());
+  }
 
   Future<List<Area>> getAllArea() async {
     final db = await database;
@@ -216,20 +240,18 @@ class DatabaseHelper {
   }
 
   Future<List<Purpose>> getAllPurpose() async {
-  final db = await database;
-  final List<Map<String, dynamic>> maps = await db.query(tablePurpose);
-  return List.generate(maps.length, (i) {
-  return Purpose(
-  id: maps[i]['id'],
-  name: maps[i]['name'],
-  kode: maps[i]['kode'],
-  createdAt: maps[i]['created_at'],
-  updatedAt: maps[i]['updated_at'],
-  );
-  });
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tablePurpose);
+    return List.generate(maps.length, (i) {
+      return Purpose(
+        id: maps[i]['id'],
+        name: maps[i]['name'],
+        kode: maps[i]['kode'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
   }
-
-
 
   Future<int> insertType(Type type) async {
     final db = await database;

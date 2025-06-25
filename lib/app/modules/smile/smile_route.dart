@@ -22,6 +22,7 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/ja
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/type_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/branch_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/product_screen.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/dealer_screen.dart';
 
 class SmileRoutes {
   //Penamaan
@@ -49,9 +50,7 @@ class SmileRoutes {
   static const purpose = '/public/smile/list_master/purpose';
   static const branch = '/public/smile/list_master/branch';
   static const product = '/public/smile/list_master/product';
-
-
-
+  static const dealer = '/public/smile/list_master/dealer';
   static final routes = [
     GetPage(
       name: register,
@@ -131,12 +130,20 @@ class SmileRoutes {
       transition: Transition.zoom,
       page: () => BranchScreen(),
     ),
-    GetPage(name: type, transition: Transition.zoom, page: () => ProductScreen()),
+    GetPage(
+      name: type,
+      transition: Transition.zoom,
+      page: () => ProductScreen(),
+    ),
     GetPage(
       name: product,
       transition: Transition.zoom,
       page: () => ProductScreen(),
     ),
+    GetPage(
+      name: dealer,
+      transition: Transition.zoom,
+      page: () => DealerScreen(),
+    ),
   ];
 }
-
