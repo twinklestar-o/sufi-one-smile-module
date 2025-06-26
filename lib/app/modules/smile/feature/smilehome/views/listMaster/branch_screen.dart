@@ -83,18 +83,30 @@ class _BranchScreenState extends State<BranchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Branch'),
+        title: Text(
+          'Daftar Branch',
+          style: TextStyle(
+            color: Colors.white, // Mengubah warna teks judul menjadi putih
+          ),
+        ),
+        backgroundColor: Color(0xFF0E47A1), // Mengubah warna background AppBar dengan kode hex
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refreshData,
             tooltip: 'Refresh Data',
+            color: Colors.white, // Mengubah warna icon di AppBar menjadi putih
           ),
         ],
+        iconTheme: IconThemeData(
+          color: Colors.white, // Mengubah warna icon panah kembali menjadi putih
+        ),
       ),
       body: _buildBody(),
     );
   }
+
+
 
   Widget _buildBody() {
     if (_isLoading) {
