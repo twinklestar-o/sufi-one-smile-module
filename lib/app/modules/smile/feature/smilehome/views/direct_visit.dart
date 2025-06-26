@@ -1,4 +1,4 @@
-import 'dart:async' show StreamSubscription;
+import 'dart:async' show StreamSubscription, Timer;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,6 +21,7 @@ class _DirectVisitState extends State<DirectVisit> {
   List<Map<String, dynamic>> cabangList = [];
   List<Map<String, dynamic>> produkList = [];
   List<Map<String, dynamic>> dealerList = [];
+  List<Map<String, dynamic>> filteredDealerList = [];
   List<Map<String, dynamic>> visitTypeList = [];
   List<Map<String, dynamic>> tujuanVisitList = [];
 
@@ -33,6 +34,14 @@ class _DirectVisitState extends State<DirectVisit> {
   bool isLoadingVisitType = true;
   bool isLoadingTujuanVisit = true;
   bool isSubmitting = false;
+  bool isLoadingLocation = false;
+  bool isDealerSearchEnabled = false;
+  bool isDealerSearchExpanded = false;
+
+  // Search controllers and focus
+  final TextEditingController _dealerSearchController = TextEditingController();
+  final FocusNode _dealerSearchFocus = FocusNode();
+  Timer? _searchDebounceTimer;
 
   final TextEditingController _namaPicController = TextEditingController();
   final TextEditingController _telpPicController = TextEditingController();
@@ -48,6 +57,7 @@ class _DirectVisitState extends State<DirectVisit> {
   String? selectedCabang;
   String? selectedProduk;
   String? selectedDealer;
+  String? selectedDealerName;
   String? selectedVisitType;
 
   bool _hasInteractedWithJabatan = false;
@@ -101,6 +111,9 @@ class _DirectVisitState extends State<DirectVisit> {
     _pageCtrl = PageController();
     _initializeData();
 
+    // Initialize search controller listener
+    _dealerSearchController.addListener(_onDealerSearchChanged);
+
     // Initialize default selections
     selectedNamaPIC = '';
     temaDiskusi = '';
@@ -120,7 +133,32 @@ class _DirectVisitState extends State<DirectVisit> {
     _positionStream?.cancel();
     _namaPicController.dispose();
     _telpPicController.dispose();
+    _dealerSearchController.dispose();
+    _dealerSearchFocus.dispose();
+    _searchDebounceTimer?.cancel();
     super.dispose();
+  }
+
+  void _onDealerSearchChanged() {
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _filterDealers(_dealerSearchController.text);
+    });
+  }
+
+  void _filterDealers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        filteredDealerList = List.from(dealerList);
+      } else {
+        filteredDealerList = dealerList.where((dealer) {
+          final name = _getStringValue(dealer['name']).toLowerCase();
+          final code = _getStringValue(dealer['code']).toLowerCase();
+          final searchQuery = query.toLowerCase();
+          return name.contains(searchQuery) || code.contains(searchQuery);
+        }).toList();
+      }
+    });
   }
 
   Future<void> _initializeData() async {
@@ -241,15 +279,16 @@ class _DirectVisitState extends State<DirectVisit> {
   Future<void> _loadDealer({String? query}) async {
     try {
       setState(() => isLoadingDealer = true);
-      final response = await _apiService.fetchDealers(query: query); // Returns List directly
-      print('Dealer Response: $response'); // Debug log
+      final response = await _apiService.fetchDealers(query: query);
+      print('Dealer Response: $response');
 
       setState(() {
         dealerList = List<Map<String, dynamic>>.from(response);
+        filteredDealerList = List.from(dealerList);
         isLoadingDealer = false;
       });
     } catch (e) {
-      print('Error loading dealer: $e'); // Debug log
+      print('Error loading dealer: $e');
       setState(() => isLoadingDealer = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading dealer: $e')),
@@ -281,7 +320,6 @@ class _DirectVisitState extends State<DirectVisit> {
       );
     }
   }
-
 
   Future<void> _loadTujuanVisit() async {
     try {
@@ -329,8 +367,334 @@ class _DirectVisitState extends State<DirectVisit> {
     }).toList();
   }
 
-  // Keep all existing methods for date selection, location, photos, etc.
-  // ... (keeping all the existing methods from the original code)
+  void _activateDealerSearch() {
+    if (selectedProduk == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pilih produk terlebih dahulu'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isDealerSearchEnabled = true;
+      isDealerSearchExpanded = true;
+    });
+
+    _loadDealer().then((_) {
+      // Auto focus search field after data loads
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _dealerSearchFocus.requestFocus();
+      });
+    });
+  }
+
+  void _selectDealer(String code, String name) {
+    setState(() {
+      selectedDealer = code;
+      selectedDealerName = name;
+      _hasInteractWithDealer = true;
+      _dealerSearchController.text = name;
+      isDealerSearchExpanded = false;
+    });
+    _dealerSearchFocus.unfocus();
+  }
+
+  void _clearDealerSelection() {
+    setState(() {
+      selectedDealer = null;
+      selectedDealerName = null;
+      _dealerSearchController.clear();
+      filteredDealerList = List.from(dealerList);
+      isDealerSearchExpanded = true;
+    });
+    _dealerSearchFocus.requestFocus();
+  }
+
+  Widget _buildAdvancedDealerSearch() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header with search activation
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Dealer',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: dropdownLight,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            if (!isDealerSearchEnabled)
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade400, Colors.blue.shade600],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: _activateDealerSearch,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search, color: Colors.white, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Cari Dealer',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Search interface
+        if (!isDealerSearchEnabled)
+        // Inactive state
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.grey.shade600, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Klik tombol "Cari Dealer" untuk memulai pencarian',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+        // Active search interface
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDealerSearchExpanded ? Colors.blue.shade300 : dropdownLightNF,
+                width: isDealerSearchExpanded ? 2 : 1,
+              ),
+              boxShadow: isDealerSearchExpanded ? [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ] : null,
+            ),
+            child: Column(
+              children: [
+                // Search input
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.search,
+                        color: isDealerSearchExpanded ? Colors.blue : Colors.grey,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _dealerSearchController,
+                          focusNode: _dealerSearchFocus,
+                          decoration: InputDecoration(
+                            hintText: selectedDealer == null
+                                ? 'Ketik nama atau kode dealer...'
+                                : 'Dealer terpilih: $selectedDealerName',
+                            hintStyle: TextStyle(
+                              color: selectedDealer == null ? Colors.grey.shade500 : Colors.green.shade600,
+                              fontSize: 14,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          style: TextStyle(
+                            color: dropdownLight,
+                            fontSize: 14,
+                          ),
+                          onTap: () {
+                            if (!isDealerSearchExpanded) {
+                              setState(() {
+                                isDealerSearchExpanded = true;
+                              });
+                            }
+                          },
+                          validator: (v) =>
+                          _hasInteractWithDealer && selectedDealer == null
+                              ? 'Harap Pilih Dealer'
+                              : null,
+                        ),
+                      ),
+                      if (selectedDealer != null)
+                        IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey.shade600, size: 18),
+                          onPressed: _clearDealerSelection,
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                        ),
+                      if (isLoadingDealer)
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Results dropdown
+                if (isDealerSearchExpanded && !isLoadingDealer)
+                  Container(
+                    constraints: BoxConstraints(maxHeight: 200),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: Colors.grey.shade200),
+                      ),
+                    ),
+                    child: filteredDealerList.isEmpty
+                        ? Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.search_off, color: Colors.grey.shade400),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _dealerSearchController.text.isEmpty
+                                  ? 'Mulai mengetik untuk mencari dealer...'
+                                  : 'Tidak ada dealer yang cocok dengan "${_dealerSearchController.text}"',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filteredDealerList.length,
+                      itemBuilder: (context, index) {
+                        final dealer = filteredDealerList[index];
+                        final code = _getStringValue(dealer['code']);
+                        final name = _getStringValue(dealer['name']);
+                        final isSelected = selectedDealer == code;
+
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _selectDealer(code, name),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.blue.shade50
+                                    : Colors.transparent,
+                                border: index < filteredDealerList.length - 1
+                                    ? Border(bottom: BorderSide(color: Colors.grey.shade100))
+                                    : null,
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? Colors.blue : Colors.grey.shade300,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: TextStyle(
+                                            color: isSelected ? Colors.blue.shade700 : dropdownLight,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (code.isNotEmpty)
+                                          Text(
+                                            'Kode: $code',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
 
   Future<void> _selectDate(
       BuildContext context,
@@ -418,15 +782,27 @@ class _DirectVisitState extends State<DirectVisit> {
   Future<void> _updateLocation() async {
     await _checkLocationPermission();
     try {
+      setState(() => isLoadingLocation = true);
+
       Position pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation,
         timeLimit: const Duration(seconds: 10),
       );
+
       setState(() {
         selectedLatitude = pos.latitude;
         selectedLongitude = pos.longitude;
+        isLoadingLocation = false;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lokasi berhasil diperbarui'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
+      setState(() => isLoadingLocation = false);
       debugPrint('Location error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal mengambil lokasi: $e'))
@@ -969,7 +1345,8 @@ class _DirectVisitState extends State<DirectVisit> {
     }
 
     setState(() {
-      mainPersons.add({
+      // Insert at beginning instead of add to end
+      mainPersons.insert(0, {
         'jabatan': selectedMainJabatan!,
         'nama': _namaPicController.text,
         'telp': selectedMainTelp!,
@@ -1190,71 +1567,73 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Area',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
+                        _buildFieldLabel('Area'),
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          value: selectedArea,
+                          hint: Text(
+                            '-- Pilih Area --',
+                            style: TextStyle(color: dropdownLight),
                           ),
+                          icon: const Icon(Icons.expand_more),
+                          iconEnabledColor: dropdownLight,
+                          style: const TextStyle(color: dropdownLight),
+                          decoration: const InputDecoration(
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
+                          items: areaList.isEmpty ? [] : _buildDropdownItems(areaList),
+                          onChanged: areaList.isEmpty ? null : (val) {
+                            print('Area selected: $val');
+                            setState(() {
+                              selectedArea = val;
+                              selectedCabang = null;
+                              cabangList.clear();
+                              _hasInteractWithArea = true;
+                              // Reset dealer search when area changes
+                              isDealerSearchEnabled = false;
+                              isDealerSearchExpanded = false;
+                              selectedDealer = null;
+                              selectedDealerName = null;
+                              dealerList.clear();
+                              filteredDealerList.clear();
+                              _dealerSearchController.clear();
+                            });
+                            if (val != null && val.isNotEmpty) {
+                              _loadCabang(val);
+                            }
+                          },
+                          onTap: () {
+                            if (areaList.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Data area sedang dimuat, mohon tunggu...'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            } else {
+                              setState(() {
+                                _hasInteractWithArea = true;
+                              });
+                            }
+                          },
+                          validator: (v) =>
+                          _hasInteractWithArea && v == null
+                              ? 'Harap Pilih Area'
+                              : null,
                         ),
-                        if (isLoadingArea)
-                          const CircularProgressIndicator()
-                        else
-                          DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            value: selectedArea,
-                            hint: Text(
-                              '-- Pilih Area --',
-                              style: TextStyle(color: dropdownLight),
-                            ),
-                            icon: const Icon(Icons.expand_more),
-                            iconEnabledColor: dropdownLight,
-                            style: const TextStyle(color: dropdownLight),
-                            decoration: const InputDecoration(
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: dropdownLightNF,
-                                  width: 0.5,
-                                ),
-                              ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: dropdownLightF,
-                                  width: 2.0,
-                                ),
-                              ),
-                            ),
-                            items: _buildDropdownItems(areaList),
-                            onChanged: (val) {
-                              print('Area selected: $val'); // Debug log
-                              setState(() {
-                                selectedArea = val;
-                                selectedCabang = null;
-                                cabangList.clear(); // Clear existing cabang list
-                                _hasInteractWithArea = true;
-                              });
-                              if (val != null && val.isNotEmpty) {
-                                _loadCabang(val);
-                              }
-                            },
-                            onTap: () {
-                              setState(() {
-                                _hasInteractWithArea = true;
-                              });
-                            },
-                            validator: (v) =>
-                            _hasInteractWithArea && v == null
-                                ? 'Harap Pilih Area'
-                                : null,
-                          ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Cabang',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Cabang'),
                         if (isLoadingCabang)
                           const CircularProgressIndicator()
                         else
@@ -1295,9 +1674,18 @@ class _DirectVisitState extends State<DirectVisit> {
                               });
                             },
                             onTap: () {
-                              setState(() {
-                                _hasInteractWithCabang = true;
-                              });
+                              if (selectedArea == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Pilih area terlebih dahulu'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              } else {
+                                setState(() {
+                                  _hasInteractWithCabang = true;
+                                });
+                              }
                             },
                             validator: (v) =>
                             _hasInteractWithCabang && v == null
@@ -1305,13 +1693,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                 : null,
                           ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Produk',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
+                        _buildFieldLabel('Produk'),
                         isLoadingProduk
                             ? const CircularProgressIndicator()
                             : DropdownButtonFormField<String>(
@@ -1342,10 +1724,14 @@ class _DirectVisitState extends State<DirectVisit> {
                           onChanged: (val) => setState(() {
                             selectedProduk = val;
                             _hasInteractWithProduk = true;
-                            // Load dealers when product is selected
-                            if (val != null) {
-                              _loadDealer();
-                            }
+                            // Reset dealer search when product changes
+                            isDealerSearchEnabled = false;
+                            isDealerSearchExpanded = false;
+                            selectedDealer = null;
+                            selectedDealerName = null;
+                            dealerList.clear();
+                            filteredDealerList.clear();
+                            _dealerSearchController.clear();
                           }),
                           onTap: () {
                             setState(() {
@@ -1357,70 +1743,10 @@ class _DirectVisitState extends State<DirectVisit> {
                               ? 'Harap Pilih Produk'
                               : null,
                         ),
-                        const SizedBox(height: 0),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Dealer',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: dropdownLight,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.search,
-                                color: Colors.blue,
-                              ),
-                              onPressed: () {
-                                _loadDealer();
-                              },
-                            ),
-                          ],
-                        ),
-                        isLoadingDealer
-                            ? const CircularProgressIndicator()
-                            : DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedDealer,
-                          hint: Text(
-                            '-- Pilih Dealer --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: const TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightNF,
-                                width: 0.5,
-                              ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 2.0,
-                              ),
-                            ),
-                          ),
-                          items: _buildDropdownItems(dealerList),
-                          onChanged: (val) => setState(() {
-                            selectedDealer = val;
-                            _hasInteractWithDealer = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithDealer = true;
-                            });
-                          },
-                          validator: (v) =>
-                          _hasInteractWithDealer && v == null
-                              ? 'Harap Pilih Dealer'
-                              : null,
-                        ),
+                        const SizedBox(height: 16),
+
+                        // Advanced Dealer Search
+                        _buildAdvancedDealerSearch(),
                       ],
                     ),
                   ),
@@ -1461,8 +1787,19 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items: _buildDropdownItems(visitTypeList, codeKey: 'name', nameKey: 'name'),
-                          onChanged: (val) => setState(() => selectedVisitType = val),
-                          validator: (v) => v == null ? 'Harap Pilih Tipe Visit' : null,
+                          onChanged: (val) => setState(() {
+                            selectedVisitType = val;
+                            _hasInteractWithVisitType = true;
+                          }),
+                          onTap: () {
+                            setState(() {
+                              _hasInteractWithVisitType = true;
+                            });
+                          },
+                          validator: (v) =>
+                          _hasInteractWithVisitType && v == null
+                              ? 'Harap Pilih Tipe Visit'
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Tujuan Visit'),
@@ -1484,8 +1821,19 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items: _buildDropdownItems(tujuanVisitList, codeKey: 'name', nameKey: 'name'),
-                          onChanged: (val) => setState(() => selectedTujuanVisit = val),
-                          validator: (v) => v == null ? 'Harap Pilih Tujuan Visit' : null,
+                          onChanged: (val) => setState(() {
+                            selectedTujuanVisit = val;
+                            _hasInteractWithTujuanVisit = true;
+                          }),
+                          onTap: () {
+                            setState(() {
+                              _hasInteractWithTujuanVisit = true;
+                            });
+                          },
+                          validator: (v) =>
+                          _hasInteractWithTujuanVisit && v == null
+                              ? 'Harap Pilih Tujuan Visit'
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Dari Tanggal'),
@@ -1915,124 +2263,146 @@ class _DirectVisitState extends State<DirectVisit> {
                 ),
                 const SizedBox(height: 16),
 
-                // Card Upload Foto
-                Card(
-                  color: const Color(0xFFFDFDFF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 24,
-                      horizontal: 16,
-                    ),
-                    child: Column(
-                      children: [
-                        Center(
-                          child: Text(
-                            'Upload Foto',
-                            style: TextStyle(fontSize: 22, color: headerBlue),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        _photoRow(first: true, file: _photo1),
-                        const SizedBox(height: 24),
-                        _photoRow(first: false, file: _photo2),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
+                // Photo Upload Section
+                _photoRow(first: true, file: _photo1),
+                const SizedBox(height: 16),
+                _photoRow(first: false, file: _photo2),
                 const SizedBox(height: 16),
                 _photoPreviewSection(),
 
-                // Card Lokasi Visit
-                Card(
-                  color: const Color(0xFFFDFDFF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            'Lokasi Visit',
-                            style: TextStyle(fontSize: 22, color: headerBlue),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Latitude',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
-                        Text(
-                          selectedLatitude != null
-                              ? selectedLatitude!.toStringAsFixed(6)
-                              : '-',
-                          style: TextStyle(color: dropdownLight),
-                        ),
-                        const Divider(color: Colors.grey),
-                        Text(
-                          'Longitude',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dropdownLight,
-                          ),
-                        ),
-                        Text(
-                          selectedLongitude?.toStringAsFixed(6) ?? '-',
-                          style: TextStyle(color: dropdownLight),
-                        ),
-                        const Divider(color: Colors.grey),
-                        Align(
-                          alignment: Alignment.center,
-                          child: OutlinedButton(
-                            onPressed: _updateLocation,
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: textButton, width: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(13),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 24,
-                              ),
-                            ),
-                            child: Text(
-                              'cek lokasi',
-                              style: TextStyle(color: textButton, fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ],
+                const SizedBox(height: 24),
+
+                // Location Section
+                if (isLoadingLocation)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: textButton),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
+                    icon: const Icon(Icons.location_on, color: Colors.blue),
+                    label: const Text(
+                      'Ambil Lokasi',
+                      style: TextStyle(color: Colors.blue, fontSize: 16),
+                    ),
+                    onPressed: _updateLocation,
+                  ),
+                const SizedBox(height: 12),
+
+                // Location Display
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.location_on, color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Informasi Lokasi',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: dropdownLight,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Latitude',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: dropdownLight,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  selectedLatitude != null
+                                      ? selectedLatitude!.toStringAsFixed(6)
+                                      : 'Belum diambil',
+                                  style: TextStyle(
+                                    color: selectedLatitude != null ? Colors.green.shade700 : Colors.grey.shade600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Longitude',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: dropdownLight,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  selectedLongitude != null
+                                      ? selectedLongitude!.toStringAsFixed(6)
+                                      : 'Belum diambil',
+                                  style: TextStyle(
+                                    color: selectedLongitude != null ? Colors.green.shade700 : Colors.grey.shade600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+
+                const SizedBox(height: 24),
 
                 // Submit Button
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF1B25A4),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    backgroundColor: headerBlue,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(fontSize: 18),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(45),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   onPressed: isSubmitting ? null : _submitForm,
                   child: isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Submit'),
+                      ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Text(
+                    'Submit Direct Visit',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -2044,6 +2414,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
 class DirectVisit extends StatefulWidget {
   const DirectVisit({Key? key}) : super(key: key);
+
   @override
-  _DirectVisitState createState() => _DirectVisitState();
+  State<StatefulWidget> createState() => _DirectVisitState();
 }
