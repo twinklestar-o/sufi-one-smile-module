@@ -1,6 +1,5 @@
-// direct_visit_screen.dart
 import 'dart:async' show StreamSubscription;
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart' show IntlPhoneField;
@@ -9,39 +8,41 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart' show Country;
 import 'package:geolocator/geolocator.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../../../../../../src/services/api_services.dart';
 
 class _DirectVisitState extends State<DirectVisit> {
-  // sample dropdown values
-  final List<String> jabatanList = ['Branch Manager', 'Sales', 'Staff'];
-  final List<String> areaList = ['SFI JABODETABEKSER', 'SFI JAWA BARAT'];
-  final List<String> cabangList = ['1507 TANGERANG - MBL', '1508 BEKASI - MBL'];
-  final List<String> produkList = ['Mobil Baru', 'Mobil Bekas'];
-  final List<String> dealerList = [
-    'PT. BUANA INDOMOBIL TRADA PULOGADUNG',
-    'PT. OTO ABADI',
-  ];
-  final List<String> visitTypeList = [
-    'Direct Visit Dealer',
-    'Direct Visit Customer',
-  ];
-  final List<String> tujuanVisitList = [
-    'KOORDINASI RUTIN',
-    'PRESENTASI',
-  ]; //belum semua
+  // API Service
+  final ApiService _apiService = ApiService();
+
+  // Dynamic dropdown values from API
+  List<Map<String, dynamic>> jabatanList = [];
+  List<Map<String, dynamic>> areaList = [];
+  List<Map<String, dynamic>> cabangList = [];
+  List<Map<String, dynamic>> produkList = [];
+  List<Map<String, dynamic>> dealerList = [];
+  List<Map<String, dynamic>> visitTypeList = [];
+  List<Map<String, dynamic>> tujuanVisitList = [];
+
+  // Loading states
+  bool isLoadingJabatan = true;
+  bool isLoadingArea = true;
+  bool isLoadingCabang = false;
+  bool isLoadingProduk = true;
+  bool isLoadingDealer = false;
+  bool isLoadingVisitType = true;
+  bool isLoadingTujuanVisit = true;
+  bool isSubmitting = false;
 
   final TextEditingController _namaPicController = TextEditingController();
   final TextEditingController _telpPicController = TextEditingController();
-  List<Map<String, String>> mainPersons =
-  []; // setiap item: {'jabatan':…, 'nama':…, 'telp':…}
-  final _formKey = GlobalKey<FormState>(); // Untuk seluruh formulir
-  final _mainPersonFormKey = GlobalKey<FormState>(); // Khusus untuk Main Person
+  List<Map<String, String>> mainPersons = [];
+  final _formKey = GlobalKey<FormState>();
+  final _mainPersonFormKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
-  // helper untuk PageView
   late final PageController _pageCtrl;
 
-  // selected values
+  // selected values - now using codes instead of names
   String? selectedJabatan;
   String? selectedArea;
   String? selectedCabang;
@@ -54,14 +55,13 @@ class _DirectVisitState extends State<DirectVisit> {
   bool _hasInteractWithCabang = false;
   bool _hasInteractWithProduk = false;
   bool _hasInteractWithDealer = false;
-
   bool _hasInteractWithVisitType = false;
   bool _hasInteractWithTujuanVisit = false;
 
   bool isPhoto1Uploaded = false;
   bool isPhoto2Uploaded = false;
 
-  String? selectedTujuanVisit; //start card 3 data visit
+  String? selectedTujuanVisit;
   DateTime? selectedTanggalMulai;
   DateTime? selectedTanggalBerakhir;
   DateTime? selectedTanggalPenyelesaian;
@@ -84,7 +84,6 @@ class _DirectVisitState extends State<DirectVisit> {
   double? selectedLongitude;
   double? locationAccuracy;
 
-  // state untuk foto
   File? _photo1;
   File? _photo2;
 
@@ -95,6 +94,244 @@ class _DirectVisitState extends State<DirectVisit> {
   static const Color dropdownLightF = Color(0xFFAFA1CF);
   static const Color textButton = Color(0xFF8BADCA);
 
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+    _pageCtrl = PageController();
+    _initializeData();
+
+    // Initialize default selections
+    selectedNamaPIC = '';
+    temaDiskusi = '';
+    problem = '';
+    followUp = '';
+    description = '';
+    namaPICLength = selectedNamaPIC!.length;
+    temaDiskusiLength = temaDiskusi!.length;
+    problemLength = problem!.length;
+    followUpLength = followUp!.length;
+    descriptionLength = description!.length;
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    _positionStream?.cancel();
+    _namaPicController.dispose();
+    _telpPicController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeData() async {
+    await Future.wait([
+      _loadJabatan(),
+      _loadArea(),
+      _loadProduk(),
+      _loadVisitType(),
+      _loadTujuanVisit(),
+    ]);
+  }
+
+  Future<void> _loadJabatan() async {
+    try {
+      setState(() => isLoadingJabatan = true);
+      final response = await _apiService.fetchJabatan();
+      print('Jabatan Response: $response'); // Debug log
+
+      setState(() {
+        if (response is Map && response.containsKey('data')) {
+          jabatanList = List<Map<String, dynamic>>.from(response['data']);
+        } else if (response is List) {
+          jabatanList = List<Map<String, dynamic>>.from(response as Iterable);
+        } else {
+          jabatanList = [];
+        }
+        isLoadingJabatan = false;
+      });
+    } catch (e) {
+      print('Error loading jabatan: $e'); // Debug log
+      setState(() => isLoadingJabatan = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading jabatan: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadArea() async {
+    try {
+      setState(() => isLoadingArea = true);
+      final response = await _apiService.fetchArea(); // Returns Map<String, dynamic>
+      print('Area Response: $response'); // Debug log
+      print('Area Response Type: ${response.runtimeType}'); // Debug log
+
+      setState(() {
+        // Handle Map response with 'data' key
+        if (response is Map && response.containsKey('data')) {
+          areaList = List<Map<String, dynamic>>.from(response['data']);
+        } else if (response is List) {
+          areaList = List<Map<String, dynamic>>.from(response as Iterable);
+        } else {
+          print('Unexpected area response format: $response');
+          areaList = [];
+        }
+        isLoadingArea = false;
+      });
+
+      print('Area List Length: ${areaList.length}'); // Debug log
+      if (areaList.isNotEmpty) {
+        print('First Area Item: ${areaList.first}'); // Debug log
+      }
+    } catch (e) {
+      print('Error loading area: $e'); // Debug log
+      setState(() => isLoadingArea = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading area: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadCabang(String areaCode) async {
+    try {
+      setState(() => isLoadingCabang = true);
+      print('Loading cabang for area code: $areaCode'); // Debug log
+
+      final response = await _apiService.fetchBranches(areaCode); // Returns List directly
+      print('Cabang Response: $response'); // Debug log
+      print('Cabang Response Type: ${response.runtimeType}'); // Debug log
+
+      setState(() {
+        cabangList = List<Map<String, dynamic>>.from(response);
+        selectedCabang = null;
+        isLoadingCabang = false;
+      });
+
+      print('Cabang List Length: ${cabangList.length}'); // Debug log
+      if (cabangList.isNotEmpty) {
+        print('First Cabang Item: ${cabangList.first}'); // Debug log
+      }
+    } catch (e) {
+      print('Error loading cabang: $e'); // Debug log
+      setState(() => isLoadingCabang = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading cabang: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadProduk() async {
+    try {
+      setState(() => isLoadingProduk = true);
+      final response = await _apiService.fetchProducts(); // Returns List directly
+      print('Produk Response: $response'); // Debug log
+
+      setState(() {
+        produkList = List<Map<String, dynamic>>.from(response);
+        isLoadingProduk = false;
+      });
+    } catch (e) {
+      print('Error loading produk: $e'); // Debug log
+      setState(() => isLoadingProduk = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading produk: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadDealer({String? query}) async {
+    try {
+      setState(() => isLoadingDealer = true);
+      final response = await _apiService.fetchDealers(query: query); // Returns List directly
+      print('Dealer Response: $response'); // Debug log
+
+      setState(() {
+        dealerList = List<Map<String, dynamic>>.from(response);
+        isLoadingDealer = false;
+      });
+    } catch (e) {
+      print('Error loading dealer: $e'); // Debug log
+      setState(() => isLoadingDealer = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading dealer: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadVisitType() async {
+    try {
+      setState(() => isLoadingVisitType = true);
+      final response = await _apiService.fetchType();
+      print('Visit Type Response: $response'); // Debug log
+
+      setState(() {
+        if (response is Map && response.containsKey('data')) {
+          visitTypeList = List<Map<String, dynamic>>.from(response['data']);
+        } else if (response is List) {
+          visitTypeList = List<Map<String, dynamic>>.from(response as Iterable);
+        } else {
+          visitTypeList = [];
+        }
+        isLoadingVisitType = false;
+      });
+    } catch (e) {
+      print('Error loading visit type: $e'); // Debug log
+      setState(() => isLoadingVisitType = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading visit type: $e')),
+      );
+    }
+  }
+
+
+  Future<void> _loadTujuanVisit() async {
+    try {
+      setState(() => isLoadingTujuanVisit = true);
+      final response = await _apiService.fetchPurpose();
+      print('Tujuan Visit Response: $response'); // Debug log
+
+      setState(() {
+        if (response is Map && response.containsKey('data')) {
+          tujuanVisitList = List<Map<String, dynamic>>.from(response['data']);
+        } else if (response is List) {
+          tujuanVisitList = List<Map<String, dynamic>>.from(response as Iterable);
+        } else {
+          tujuanVisitList = [];
+        }
+        isLoadingTujuanVisit = false;
+      });
+    } catch (e) {
+      print('Error loading tujuan visit: $e'); // Debug log
+      setState(() => isLoadingTujuanVisit = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading tujuan visit: $e')),
+      );
+    }
+  }
+
+  // Helper method to safely get string value from dynamic data
+  String _getStringValue(dynamic value) {
+    if (value == null) return '';
+    return value.toString();
+  }
+
+  // Helper method to safely get dropdown items
+  List<DropdownMenuItem<String>> _buildDropdownItems(List<Map<String, dynamic>> items, {String codeKey = 'code', String nameKey = 'name'}) {
+    return items.map((item) {
+      final code = _getStringValue(item[codeKey]);
+      final name = _getStringValue(item[nameKey]);
+      return DropdownMenuItem<String>(
+        value: code,
+        child: Text(
+          name.toUpperCase(),
+          style: TextStyle(color: dropdownLight),
+        ),
+      );
+    }).toList();
+  }
+
+  // Keep all existing methods for date selection, location, photos, etc.
+  // ... (keeping all the existing methods from the original code)
+
   Future<void> _selectDate(
       BuildContext context,
       Function(DateTime?) setDate,
@@ -104,7 +341,6 @@ class _DirectVisitState extends State<DirectVisit> {
     DateTime firstDate = DateTime(2000);
     DateTime lastDate = DateTime(2100);
 
-    // Tentukan rentang tanggal berdasarkan fieldType
     switch (fieldType) {
       case 'dariTanggal':
         initialDate = selectedTanggalMulai ?? DateTime.now();
@@ -121,7 +357,6 @@ class _DirectVisitState extends State<DirectVisit> {
         break;
     }
 
-    // Tampilkan dialog pemilih tanggal
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -130,12 +365,10 @@ class _DirectVisitState extends State<DirectVisit> {
       helpText: 'Pilih $fieldType',
     );
 
-    // Proses tanggal yang dipilih
     if (picked != null) {
       bool isValid = true;
       String? errorMessage;
 
-      // Validasi berdasarkan fieldType
       if (fieldType == 'dariTanggal' && picked.isAfter(DateTime.now())) {
         isValid = false;
         errorMessage = 'Dari Tanggal tidak boleh melebihi hari ini';
@@ -157,12 +390,10 @@ class _DirectVisitState extends State<DirectVisit> {
           setDate(picked);
         });
       } else {
-        // Jika validasi gagal, reset semua tanggal
         _resetAllDates();
       }
     }
   }
-
 
   Future<void> _checkLocationPermission() async {
     LocationPermission perm = await Geolocator.checkPermission();
@@ -180,7 +411,6 @@ class _DirectVisitState extends State<DirectVisit> {
 
     if (perm == LocationPermission.deniedForever ||
         perm == LocationPermission.denied) {
-      // Anda bisa tampilkan dialog agar user enable location di settings
       return;
     }
   }
@@ -198,16 +428,14 @@ class _DirectVisitState extends State<DirectVisit> {
       });
     } catch (e) {
       debugPrint('Location error: $e');
-      // Jika gagal, tampilkan SnackBar
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal mengambil lokasi: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil lokasi: $e'))
+      );
     }
   }
 
   StreamSubscription<Position>? _positionStream;
 
-  //reset semua tanggal ke null
   void _resetAllDates() {
     setState(() {
       selectedTanggalMulai = null;
@@ -225,7 +453,7 @@ class _DirectVisitState extends State<DirectVisit> {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: LocationSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 5, // update kalau pergeseran > 5 meter
+        distanceFilter: 5,
       ),
     ).listen((pos) {
       setState(() {
@@ -293,7 +521,6 @@ class _DirectVisitState extends State<DirectVisit> {
     }
   }
 
-  //untuk tampilan upload foto
   Widget _photoRow({required bool first, File? file}) {
     return Column(
       children: [
@@ -308,8 +535,6 @@ class _DirectVisitState extends State<DirectVisit> {
           ),
         ),
         const SizedBox(height: 12),
-
-        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -317,14 +542,14 @@ class _DirectVisitState extends State<DirectVisit> {
               icon: Icons.camera_alt,
               onTap: () => _pickPhoto(first: first, src: ImageSource.camera),
               borderColor: textButton,
-              iconColor: const Color(0xFFCE3970), // Pink untuk kamera
+              iconColor: const Color(0xFFCE3970),
               bgColor: Colors.white,
             ),
             _iconButton(
-              icon: Icons.folder, // Kembali ke Icons.folder seperti semula
+              icon: Icons.folder,
               onTap: () => _pickPhoto(first: first, src: ImageSource.gallery),
               borderColor: textButton,
-              iconColor: const Color(0xFFFDBF12), // Kuning untuk galeri
+              iconColor: const Color(0xFFFDBF12),
               bgColor: Colors.white,
             ),
           ],
@@ -333,7 +558,6 @@ class _DirectVisitState extends State<DirectVisit> {
     );
   }
 
-  // Widget untuk tombol ikon dengan label
   Widget _iconButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -357,7 +581,6 @@ class _DirectVisitState extends State<DirectVisit> {
     );
   }
 
-
   Widget _buildFieldLabel(String label) {
     return Text(
       label,
@@ -376,7 +599,7 @@ class _DirectVisitState extends State<DirectVisit> {
         Expanded(
           child: InkWell(
             onTap: () {
-              print('Field $fieldType tapped at ${DateTime.now()}'); // Debug tap
+              print('Field $fieldType tapped at ${DateTime.now()}');
               onTap();
             },
             child: InputDecorator(
@@ -407,9 +630,7 @@ class _DirectVisitState extends State<DirectVisit> {
     );
   }
 
-
   String? _validateDateField(String fieldType) {
-    // Jika semua tanggal direset, tidak perlu menampilkan error
     if (selectedTanggalMulai == null && selectedTanggalBerakhir == null && selectedTanggalPenyelesaian == null) {
       return null;
     }
@@ -446,7 +667,6 @@ class _DirectVisitState extends State<DirectVisit> {
     return null;
   }
 
-//tampilan preview photo yang diupload
   Widget _photoPreview({required File? file}) {
     return Visibility(
       visible: file != null,
@@ -484,12 +704,10 @@ class _DirectVisitState extends State<DirectVisit> {
   }
 
   Widget _photoPreviewSection() {
-    // Case 1: No photos uploaded
     if (_photo1 == null && _photo2 == null) {
       return const SizedBox.shrink();
     }
 
-    // Case 2: Only one photo uploaded (single preview)
     if (_photo1 != null && _photo2 == null) {
       return Card(
         color: const Color(0xFFFDFDFF),
@@ -602,7 +820,6 @@ class _DirectVisitState extends State<DirectVisit> {
       );
     }
 
-    // Case 3: Both photos uploaded (show slider)
     final photos = [_photo1!, _photo2!];
     return Card(
       color: const Color(0xFFFDFDFF),
@@ -654,9 +871,6 @@ class _DirectVisitState extends State<DirectVisit> {
                             onPressed: () => _showFullScreenImage(context, photos[i]),
                           ),
                         ),
-
-
-
                       ],
                     ),
                   ),
@@ -704,8 +918,7 @@ class _DirectVisitState extends State<DirectVisit> {
             controller: _pageCtrl,
             onPageChanged: (i) => setState(() => _currentPage = i),
             itemCount: photos.length,
-            itemBuilder:
-                (context, i) => ClipRRect(
+            itemBuilder: (context, i) => ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.file(photos[i], fit: BoxFit.cover),
             ),
@@ -731,52 +944,11 @@ class _DirectVisitState extends State<DirectVisit> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _checkLocationPermission();
-    _pageCtrl = PageController();
-    _checkLocationPermission();
-    selectedMainJabatan = null; // agar pakai hint “--pilih--”
-    // initialize default selections
-    selectedJabatan = null; // agar pakai hint “--pilih--”
-    selectedArea = null; // agar pakai hint “--pilih--”
-    selectedCabang = null; // agar pakai hint “--pilih--”
-    selectedProduk = null; // agar pakai hint “--pilih--”
-    selectedDealer = null; // agar pakai hint “--pilih--”
-    selectedVisitType = null; // agar pakai hint “--pilih--”
-    selectedTujuanVisit = null; // agar pakai hint “--pilih--”
-    // selectedMainJabatan = jabatanList = null; // agar pakai hint “--pilih--”
-    // Inisialisasi tanggal ke null agar menampilkan hint
-    selectedTanggalMulai = null;
-    selectedTanggalBerakhir = null;
-    selectedTanggalPenyelesaian = null;
-    selectedNamaPIC = ''; //pengguna harus input
-    temaDiskusi = '';
-    problem = '';
-    followUp = '';
-    description = '';
-    namaPICLength = selectedNamaPIC!.length; // Initialize counter
-    temaDiskusiLength = temaDiskusi!.length;
-    problemLength = problem!.length;
-    followUpLength = followUp!.length;
-    descriptionLength = description!.length;
-  }
-
-  @override
-  void dispose() {
-    _pageCtrl.dispose();
-    super.dispose();
-  }
-
   void _addMainPerson() {
-    // Validasi hanya untuk form Main Person
     if (!_mainPersonFormKey.currentState!.validate()) return;
 
-    // Simpan data dari form Main Person
     _mainPersonFormKey.currentState!.save();
 
-    // Cek nomor telepon duplikat
     if (mainPersons.any((e) => e['telp'] == selectedMainTelp)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nomor telepon sudah pernah digunakan')),
@@ -784,7 +956,6 @@ class _DirectVisitState extends State<DirectVisit> {
       return;
     }
 
-    // Cek duplikat keseluruhan
     if (mainPersons.any(
           (e) =>
       e['jabatan'] == selectedMainJabatan &&
@@ -797,14 +968,12 @@ class _DirectVisitState extends State<DirectVisit> {
       return;
     }
 
-    // Tambahkan data ke mainPersons
     setState(() {
       mainPersons.add({
         'jabatan': selectedMainJabatan!,
         'nama': _namaPicController.text,
         'telp': selectedMainTelp!,
       });
-      // Reset input
       selectedMainJabatan = null;
       selectedMainTelp = null;
       _namaPicController.clear();
@@ -812,12 +981,10 @@ class _DirectVisitState extends State<DirectVisit> {
     });
   }
 
-  // fungsi untuk menghapus
   void _removeMainPerson(int index) {
     setState(() => mainPersons.removeAt(index));
   }
 
-  // Fungsi untuk menampilkan gambar secara fullscreen dengan latar
   void _showFullScreenImage(BuildContext context, File photo) {
     Navigator.push(
       context,
@@ -846,17 +1013,85 @@ class _DirectVisitState extends State<DirectVisit> {
     );
   }
 
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon lengkapi semua field yang wajib diisi')),
+      );
+      return;
+    }
+
+    if (_photo1 == null || _photo2 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon upload kedua foto')),
+      );
+      return;
+    }
+
+    if (selectedLatitude == null || selectedLongitude == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon ambil lokasi terlebih dahulu')),
+      );
+      return;
+    }
+
+    try {
+      setState(() => isSubmitting = true);
+
+      final response = await _apiService.submitDirectVisit(
+        jabatanSaya: selectedJabatan!,
+        areaCode: selectedArea!,
+        branchCode: selectedCabang!,
+        productCode: selectedProduk!,
+        dealerCode: selectedDealer!,
+        tipeVisit: selectedVisitType!,
+        tujuanVisit: selectedTujuanVisit!,
+        dariTanggal: DateFormat('yyyy-MM-dd').format(selectedTanggalMulai!),
+        sampaiTanggal: DateFormat('yyyy-MM-dd').format(selectedTanggalBerakhir!),
+        tanggalSelesai: DateFormat('yyyy-MM-dd').format(selectedTanggalPenyelesaian!),
+        namaPic: selectedNamaPIC!,
+        themeOfDiscussion: temaDiskusi ?? '',
+        problem: problem ?? '',
+        followUp: followUp ?? '',
+        description: description ?? '',
+        photo1: _photo1!,
+        photo2: _photo2!,
+        mainPersons: mainPersons,
+        latitude: selectedLatitude,
+        longitude: selectedLongitude,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Direct visit berhasil disubmit!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Get.back();
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDFDFF),
       appBar: AppBar(
-        backgroundColor: headerBlue, // CHANGE: gunakan headerBlue
+        backgroundColor: headerBlue,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(), // kembali page sebelumnya
+          onPressed: () => Get.back(),
         ),
         title: const Text(
           'Form direct visit',
@@ -891,9 +1126,10 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Dropdown Jabatan
                         _buildFieldLabel('Jabatan'),
-                        DropdownButtonFormField<String>(
+                        isLoadingJabatan
+                            ? const CircularProgressIndicator()
+                            : DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: selectedJabatan,
                           hint: Text(
@@ -917,20 +1153,8 @@ class _DirectVisitState extends State<DirectVisit> {
                               ),
                             ),
                           ),
-                          items:
-                          jabatanList
-                              .map(
-                                (j) => DropdownMenuItem(
-                              value: j,
-                              child: Text(
-                                j.toUpperCase(),
-                                style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
-                              .toList(),
-                          onChanged:
-                              (v) => setState(() {
+                          items: _buildDropdownItems(jabatanList, codeKey: 'name', nameKey: 'name'),
+                          onChanged: (v) => setState(() {
                             selectedJabatan = v;
                             _hasInteractedWithJabatan = true;
                           }),
@@ -939,8 +1163,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               _hasInteractedWithJabatan = true;
                             });
                           },
-                          validator:
-                              (v) =>
+                          validator: (v) =>
                           _hasInteractedWithJabatan && v == null
                               ? 'Harap pilih jabatan'
                               : null,
@@ -974,60 +1197,56 @@ class _DirectVisitState extends State<DirectVisit> {
                             color: dropdownLight,
                           ),
                         ),
-                        DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedArea,
-                          hint: Text(
-                            '-- Pilih Area --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: const TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightNF,
-                                width: 0.5,
-                              ),
+                        if (isLoadingArea)
+                          const CircularProgressIndicator()
+                        else
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: selectedArea,
+                            hint: Text(
+                              '-- Pilih Area --',
+                              style: TextStyle(color: dropdownLight),
                             ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 2.0,
+                            icon: const Icon(Icons.expand_more),
+                            iconEnabledColor: dropdownLight,
+                            style: const TextStyle(color: dropdownLight),
+                            decoration: const InputDecoration(
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: dropdownLightNF,
+                                  width: 0.5,
+                                ),
                               ),
-                            ),
-                          ),
-                          items:
-                          areaList
-                              .map(
-                                (a) => DropdownMenuItem(
-                              value: a,
-                              child: Text(
-                                a.toUpperCase(),
-                                style: const TextStyle(
-                                  color: dropdownLight,
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: dropdownLightF,
+                                  width: 2.0,
                                 ),
                               ),
                             ),
-                          )
-                              .toList(),
-                          onChanged:
-                              (val) => setState(() {
-                            selectedArea = val;
-                            _hasInteractWithArea = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithArea = true;
-                            });
-                          },
-                          validator:
-                              (v) =>
-                          _hasInteractWithArea && v == null
-                              ? 'Harap Pilih Area'
-                              : null,
-                        ),
+                            items: _buildDropdownItems(areaList),
+                            onChanged: (val) {
+                              print('Area selected: $val'); // Debug log
+                              setState(() {
+                                selectedArea = val;
+                                selectedCabang = null;
+                                cabangList.clear(); // Clear existing cabang list
+                                _hasInteractWithArea = true;
+                              });
+                              if (val != null && val.isNotEmpty) {
+                                _loadCabang(val);
+                              }
+                            },
+                            onTap: () {
+                              setState(() {
+                                _hasInteractWithArea = true;
+                              });
+                            },
+                            validator: (v) =>
+                            _hasInteractWithArea && v == null
+                                ? 'Harap Pilih Area'
+                                : null,
+                          ),
                         const SizedBox(height: 12),
                         Text(
                           'Cabang',
@@ -1036,60 +1255,55 @@ class _DirectVisitState extends State<DirectVisit> {
                             color: dropdownLight,
                           ),
                         ),
-                        DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedCabang,
-                          hint: Text(
-                            '-- Pilih Cabang --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: const TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightNF,
-                                width: 0.5,
-                              ),
+                        if (isLoadingCabang)
+                          const CircularProgressIndicator()
+                        else
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: selectedCabang,
+                            hint: Text(
+                              selectedArea == null
+                                  ? '-- Pilih Area Dulu --'
+                                  : cabangList.isEmpty
+                                  ? '-- Tidak ada cabang --'
+                                  : '-- Pilih Cabang --',
+                              style: TextStyle(color: dropdownLight),
                             ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 2.0,
+                            icon: const Icon(Icons.expand_more),
+                            iconEnabledColor: dropdownLight,
+                            style: const TextStyle(color: dropdownLight),
+                            decoration: const InputDecoration(
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: dropdownLightNF,
+                                  width: 0.5,
+                                ),
                               ),
-                            ),
-                          ),
-                          items:
-                          cabangList
-                              .map(
-                                (c) => DropdownMenuItem(
-                              value: c,
-                              child: Text(
-                                c,
-                                style: const TextStyle(
-                                  color: dropdownLight,
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: dropdownLightF,
+                                  width: 2.0,
                                 ),
                               ),
                             ),
-                          )
-                              .toList(),
-                          onChanged:
-                              (val) => setState(() {
-                            selectedCabang = val;
-                            _hasInteractWithCabang = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithCabang = true;
-                            });
-                          },
-                          validator:
-                              (v) =>
-                          _hasInteractWithCabang && v == null
-                              ? 'Harap Pilih Cabang'
-                              : null,
-                        ),
+                            items: _buildDropdownItems(cabangList),
+                            onChanged: selectedArea == null || cabangList.isEmpty ? null : (val) {
+                              print('Cabang selected: $val'); // Debug log
+                              setState(() {
+                                selectedCabang = val;
+                                _hasInteractWithCabang = true;
+                              });
+                            },
+                            onTap: () {
+                              setState(() {
+                                _hasInteractWithCabang = true;
+                              });
+                            },
+                            validator: (v) =>
+                            _hasInteractWithCabang && v == null
+                                ? 'Harap Pilih Cabang'
+                                : null,
+                          ),
                         const SizedBox(height: 12),
                         Text(
                           'Produk',
@@ -1098,7 +1312,9 @@ class _DirectVisitState extends State<DirectVisit> {
                             color: dropdownLight,
                           ),
                         ),
-                        DropdownButtonFormField<String>(
+                        isLoadingProduk
+                            ? const CircularProgressIndicator()
+                            : DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: selectedProduk,
                           hint: Text(
@@ -1122,32 +1338,21 @@ class _DirectVisitState extends State<DirectVisit> {
                               ),
                             ),
                           ),
-                          items:
-                          produkList
-                              .map(
-                                (p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(
-                                p,
-                                style: const TextStyle(
-                                  color: dropdownLight,
-                                ),
-                              ),
-                            ),
-                          )
-                              .toList(),
-                          onChanged:
-                              (val) => setState(() {
+                          items: _buildDropdownItems(produkList),
+                          onChanged: (val) => setState(() {
                             selectedProduk = val;
                             _hasInteractWithProduk = true;
+                            // Load dealers when product is selected
+                            if (val != null) {
+                              _loadDealer();
+                            }
                           }),
                           onTap: () {
                             setState(() {
                               _hasInteractWithProduk = true;
                             });
                           },
-                          validator:
-                              (v) =>
+                          validator: (v) =>
                           _hasInteractWithProduk && v == null
                               ? 'Harap Pilih Produk'
                               : null,
@@ -1170,12 +1375,14 @@ class _DirectVisitState extends State<DirectVisit> {
                                 color: Colors.blue,
                               ),
                               onPressed: () {
-                                // TODO: Implement search functionality
+                                _loadDealer();
                               },
                             ),
                           ],
                         ),
-                        DropdownButtonFormField<String>(
+                        isLoadingDealer
+                            ? const CircularProgressIndicator()
+                            : DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: selectedDealer,
                           hint: Text(
@@ -1199,23 +1406,8 @@ class _DirectVisitState extends State<DirectVisit> {
                               ),
                             ),
                           ),
-                          items:
-                          dealerList
-                              .map(
-                                (d) => DropdownMenuItem(
-                              value: d,
-                              child: Text(
-                                d,
-                                style: const TextStyle(
-                                  color: dropdownLight,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                              .toList(),
-                          onChanged:
-                              (val) => setState(() {
+                          items: _buildDropdownItems(dealerList),
+                          onChanged: (val) => setState(() {
                             selectedDealer = val;
                             _hasInteractWithDealer = true;
                           }),
@@ -1224,8 +1416,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               _hasInteractWithDealer = true;
                             });
                           },
-                          validator:
-                              (v) =>
+                          validator: (v) =>
                           _hasInteractWithDealer && v == null
                               ? 'Harap Pilih Dealer'
                               : null,
@@ -1252,7 +1443,9 @@ class _DirectVisitState extends State<DirectVisit> {
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Tipe Visit'),
-                        DropdownButtonFormField<String>(
+                        isLoadingVisitType
+                            ? const CircularProgressIndicator()
+                            : DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: selectedVisitType,
                           hint: Text('-- Pilih Tipe Visit --', style: TextStyle(color: dropdownLight)),
@@ -1267,15 +1460,15 @@ class _DirectVisitState extends State<DirectVisit> {
                               borderSide: BorderSide(color: dropdownLightF, width: 2.0),
                             ),
                           ),
-                          items: visitTypeList
-                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: TextStyle(color: dropdownLight))))
-                              .toList(),
+                          items: _buildDropdownItems(visitTypeList, codeKey: 'name', nameKey: 'name'),
                           onChanged: (val) => setState(() => selectedVisitType = val),
                           validator: (v) => v == null ? 'Harap Pilih Tipe Visit' : null,
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Tujuan Visit'),
-                        DropdownButtonFormField<String>(
+                        isLoadingTujuanVisit
+                            ? const CircularProgressIndicator()
+                            : DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: selectedTujuanVisit,
                           hint: Text('-- Pilih Tujuan Visit --', style: TextStyle(color: dropdownLight)),
@@ -1290,9 +1483,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               borderSide: BorderSide(color: dropdownLightF, width: 2.0),
                             ),
                           ),
-                          items: tujuanVisitList
-                              .map((v) => DropdownMenuItem(value: v, child: Text(v, style: TextStyle(color: dropdownLight))))
-                              .toList(),
+                          items: _buildDropdownItems(tujuanVisitList, codeKey: 'name', nameKey: 'name'),
                           onChanged: (val) => setState(() => selectedTujuanVisit = val),
                           validator: (v) => v == null ? 'Harap Pilih Tujuan Visit' : null,
                         ),
@@ -1305,7 +1496,6 @@ class _DirectVisitState extends State<DirectVisit> {
                                 (date) {
                               setState(() {
                                 selectedTanggalMulai = date;
-                                // Reset Sampai Tanggal dan Tanggal Selesai jika Dari Tanggal berubah
                                 if (date != null) {
                                   if (selectedTanggalBerakhir != null && selectedTanggalBerakhir!.isBefore(date)) {
                                     selectedTanggalBerakhir = null;
@@ -1329,7 +1519,6 @@ class _DirectVisitState extends State<DirectVisit> {
                                 (date) {
                               setState(() {
                                 selectedTanggalBerakhir = date;
-                                // Reset Tanggal Selesai jika Sampai Tanggal berubah dan Tanggal Selesai tidak valid
                                 if (date != null && selectedTanggalPenyelesaian != null && selectedTanggalPenyelesaian!.isAfter(date)) {
                                   selectedTanggalPenyelesaian = null;
                                 }
@@ -1488,7 +1677,8 @@ class _DirectVisitState extends State<DirectVisit> {
                     ),
                   ),
                 ),
-                // ─── Card Main Person ─────────────────────────────
+
+                // Card Main Person
                 Card(
                   color: const Color(0xFFFDFDFF),
                   shape: RoundedRectangleBorder(
@@ -1512,7 +1702,6 @@ class _DirectVisitState extends State<DirectVisit> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Dropdown Jabatan
                               _buildFieldLabel('Jabatan'),
                               DropdownButtonFormField<String>(
                                 isExpanded: true,
@@ -1532,24 +1721,13 @@ class _DirectVisitState extends State<DirectVisit> {
                                     ),
                                   ),
                                 ),
-                                items: jabatanList
-                                    .map(
-                                      (j) => DropdownMenuItem(
-                                    value: j,
-                                    child: Text(
-                                      j.toUpperCase(),
-                                      style: TextStyle(color: dropdownLight),
-                                    ),
-                                  ),
-                                )
-                                    .toList(),
+                                items: _buildDropdownItems(jabatanList, codeKey: 'name', nameKey: 'name'),
                                 onChanged: (v) => setState(() {
                                   selectedMainJabatan = v;
                                 }),
                                 validator: (v) => v == null ? 'Harap Pilih Jabatan' : null,
                               ),
                               const SizedBox(height: 12),
-                              // Text Nama PIC
                               _buildFieldLabel('Nama PIC'),
                               TextFormField(
                                 controller: _namaPicController,
@@ -1567,7 +1745,6 @@ class _DirectVisitState extends State<DirectVisit> {
                                 validator: (v) => (v == null || v.isEmpty) ? 'Nama wajib diisi' : null,
                               ),
                               const SizedBox(height: 12),
-                              // Text No Telpon PIC
                               _buildFieldLabel('No Telpon PIC'),
                               IntlPhoneField(
                                 controller: _telpPicController,
@@ -1596,7 +1773,6 @@ class _DirectVisitState extends State<DirectVisit> {
                                 },
                               ),
                               const SizedBox(height: 16),
-                              // Tombol Tambahkan
                               Align(
                                 alignment: Alignment.center,
                                 child: OutlinedButton(
@@ -1616,7 +1792,6 @@ class _DirectVisitState extends State<DirectVisit> {
                             ],
                           ),
                         ),
-                        // Daftar PIC yang sudah ditambahkan
                         if (mainPersons.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           GridView.builder(
@@ -1740,7 +1915,7 @@ class _DirectVisitState extends State<DirectVisit> {
                 ),
                 const SizedBox(height: 16),
 
-                // ─── Card Upload Foto ─────────────────────────────
+                // Card Upload Foto
                 Card(
                   color: const Color(0xFFFDFDFF),
                   shape: RoundedRectangleBorder(
@@ -1759,16 +1934,10 @@ class _DirectVisitState extends State<DirectVisit> {
                             style: TextStyle(fontSize: 22, color: headerBlue),
                           ),
                         ),
-
                         const SizedBox(height: 20),
                         _photoRow(first: true, file: _photo1),
-
                         const SizedBox(height: 24),
                         _photoRow(first: false, file: _photo2),
-
-                        const SizedBox(height: 24),
-
-
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -1779,7 +1948,7 @@ class _DirectVisitState extends State<DirectVisit> {
                 const SizedBox(height: 16),
                 _photoPreviewSection(),
 
-                // ─── Card Lokasi Visit ─────────────────────────────
+                // Card Lokasi Visit
                 Card(
                   color: const Color(0xFFFDFDFF),
                   shape: RoundedRectangleBorder(
@@ -1797,8 +1966,6 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
-                        // Latitude
                         Text(
                           'Latitude',
                           style: TextStyle(
@@ -1813,8 +1980,6 @@ class _DirectVisitState extends State<DirectVisit> {
                           style: TextStyle(color: dropdownLight),
                         ),
                         const Divider(color: Colors.grey),
-
-                        // Longitude
                         Text(
                           'Longitude',
                           style: TextStyle(
@@ -1827,13 +1992,10 @@ class _DirectVisitState extends State<DirectVisit> {
                           style: TextStyle(color: dropdownLight),
                         ),
                         const Divider(color: Colors.grey),
-
-                        // Tombol cek lokasi
                         Align(
                           alignment: Alignment.center,
                           child: OutlinedButton(
-                            onPressed:
-                            _updateLocation, // nanti Anda implementasi method ini
+                            onPressed: _updateLocation,
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: textButton, width: 2),
                               shape: RoundedRectangleBorder(
@@ -1856,23 +2018,20 @@ class _DirectVisitState extends State<DirectVisit> {
                 ),
                 const SizedBox(height: 16),
 
-                // const SizedBox(height: 24),
-                // tombol Submit
+                // Submit Button
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF1B25A4),
-                    foregroundColor: Colors.white, // warna teks
+                    foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(45),
                     ),
                   ),
-
-                  onPressed: () {
-                    // navigasi atau aksi submit
-                    // Get.toNamed(AppRoutes.nextPage);
-                  },
-                  child: const Text('Submit'),
+                  onPressed: isSubmitting ? null : _submitForm,
+                  child: isSubmitting
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Submit'),
                 ),
               ],
             ),
