@@ -7,6 +7,8 @@ import '../../app/modules/smile/models/type.dart';
 import 'package:sufi_one/app/modules/smile/models/purpose.dart';
 import 'package:sufi_one/app/modules/smile/models/branch.dart';
 import 'package:sufi_one/app/modules/smile/models/product.dart';
+import 'package:sufi_one/app/modules/smile/models/jabatanSFI.dart';
+
 
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
@@ -21,6 +23,7 @@ class DatabaseHelper {
   static const tableBranch = 'Branches';
   static const tableProduct = 'product';
   static const tableDealer = 'dealers';
+static const tableJabatanSFI = 'jabatanSFI';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -58,6 +61,16 @@ class DatabaseHelper {
       CREATE TABLE $tableArea (
         code TEXT NOT NULL,
         name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $tableJabatanSFI (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -138,6 +151,26 @@ class DatabaseHelper {
       );
     });
   }
+
+   Future<int> insertJabatanSFI(JabatanSFI jabatanSFI) async {
+    final db = await database;
+    return await db.insert(tableJabatanSFI, jabatanSFI.toJson());
+  }
+   Future<List<JabatanSFI>> getAllJabatanSFI() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableJabatanSFI);
+    return List.generate(maps.length, (i) {
+      return JabatanSFI(
+        id: maps[i]['id'],
+        name: maps[i]['name'],
+        kode: maps[i]['kode'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
+
 
   Future<int> insertDealer(Dealer dealer) async {
     final db = await database;

@@ -4,6 +4,7 @@ import 'package:sufi_one/app/Auth/views/register_view.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/area_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/purpose_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/smile_view.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/jabatanSFI_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/data_master.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/direct_visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_visit.dart';
@@ -51,6 +52,7 @@ class SmileRoutes {
   static const branch = '/public/smile/list_master/branch';
   static const product = '/public/smile/list_master/product';
   static const dealer = '/public/smile/list_master/dealer';
+  static const jabatanSFI = '/public/smile/list_master/jabatanSFI';
   static final routes = [
     GetPage(
       name: register,
@@ -144,6 +146,11 @@ class SmileRoutes {
       name: dealer,
       transition: Transition.zoom,
       page: () => DealerScreen(),
+    ),
+    GetPage(
+      name: jabatanSFI,
+      transition: Transition.zoom,
+      page: () => JabatanSFIScreen(),
     ),
   ];
 }

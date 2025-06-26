@@ -151,6 +151,9 @@ class ApiService {
       headers: _getHeaders(token),
     );
 
+
+
+
     print('Product API Response Status: ${response.statusCode}');
     print('Product API Response Body: ${response.body}');
 
@@ -161,6 +164,24 @@ class ApiService {
       throw Exception('Sesi telah berakhir, silakan login kembali');
     } else {
       throw Exception('Gagal memuat data product: ${response.statusCode}');
+    }
+  }
+
+       Future<Map<String, dynamic>> fetchJabatanSFI() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse(Url + 'jabatansfi'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 401) {
+      // Token expired, redirect to login
+      Get.offAll(() => LoginPage());
+      throw Exception('Sesi telah berakhir, silakan login kembali');
+    } else {
+      throw Exception('Gagal memuat data jabatanSFI');
     }
   }
 

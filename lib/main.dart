@@ -13,6 +13,7 @@ import 'package:sufi_one/src/services/api_services.dart';
 import 'package:sufi_one/app/modules/smile/repositories/type_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/purpose_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/branch_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/jabatanSFI_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,12 @@ void main() async {
     dbHelper: dbHelper,
     apiService: apiService,
   );
+   final jabatanSFIRepository = JabatanSFIRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+
+
   // Inisialisasi OneSignal
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("INI KODE DARI ONESIGNAL");
@@ -66,6 +73,7 @@ void main() async {
         Provider<BranchRepository>(create: (_) => branchRepository),
         Provider<ProductRepository>(create: (_) => productRepository),
         Provider<DealerRepository>(create: (_) => dealerRepository),
+         Provider<JabatanSFIRepository>(create: (_) => jabatanSFIRepository),
         //
       ],
       child: const MyApp(),
