@@ -21,17 +21,20 @@ class TaskEditController extends GetxController {
       'area': '',
       'cabang': '',
       'produk': '',
+      'dealer':'',
       'type': '',
       'activity': '',
-      'date_start': '', // Nilai awal kosong untuk tanggal
-      'date_finish': '', // Nilai awal kosong untuk tanggal
-      'date_finish_actual': '', // Nilai awal kosong untuk tanggal selesai aktual
+      'date_start': '',
+      'date_finish': '',
+      'date_finish_actual': '',
       'pic': '',
       'discussion': '',
       'problem': '',
+      'follow up': '',
+      'description': '',
       'pelakasanaan': '',
-      'noPlan': '', // Pastikan 'noPlan' ada di sini juga
-      'timestamp': '' // Pastikan 'timestamp' ada di sini juga
+      'noPlan': '',
+      'timestamp': ''
     };
   }
 
@@ -90,8 +93,8 @@ class TaskEditController extends GetxController {
       // Pastikan noPlan sudah terisi sebelum menyimpan
       if (editedData['noPlan'] == null || editedData['noPlan'].isEmpty) {
         Get.snackbar(
-          'Error',
-          'No Plan is required',
+          'Sukses',
+          'Data Berhasil Disimpan',
           snackPosition: SnackPosition.BOTTOM,
         );
         return;
@@ -108,12 +111,19 @@ class TaskEditController extends GetxController {
         'jabatan': editedData['jabatan'] ?? '',
         'area': editedData['area'] ?? '',
         'produk': editedData['produk'] ?? '',
+        'dealer': editedData['dealer'] ?? '',
         'date_start': editedData['date_start'] ?? '',
         'date_finish': editedData['date_finish'] ?? '',
         'date_finish_actual': editedData['date_finish_actual'] ?? '',
         'discussion': editedData['discussion'] ?? '',
         'problem': editedData['problem'] ?? '',
+        'follow up': editedData['follow up'] ?? '',
+        'description': editedData['description'] ?? '',
         'pelakasanaan': editedData['pelakasanaan'] ?? '',
+        'main_jabatan': editedData['main_jabatan'] ?? '',
+        'main_nama_pic': editedData['main_nama_pic'] ?? '',
+        'main_no_telp': editedData['main_no_telp'] ?? '',
+        'main_lokasi': editedData['main_lokasi'] ?? '',
       };
 
       try {
@@ -146,7 +156,7 @@ class TaskEditController extends GetxController {
     } else {
       Get.snackbar(
         'Error',
-        'Please fill in the required fields.',
+        'Silahkan isi semua kolom.',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

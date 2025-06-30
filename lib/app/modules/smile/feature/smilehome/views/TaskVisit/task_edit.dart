@@ -90,6 +90,7 @@ class TaskEdit extends GetView<TaskEditController> {
                         _buildTextField('Area', 'area', data),
                         _buildTextField('Cabang', 'cabang', data),
                         _buildTextField('Produk', 'produk', data),
+                        _buildTextField('Dealer', 'dealer', data),
                       ],
                     ),
                   ),
@@ -129,19 +130,13 @@ class TaskEdit extends GetView<TaskEditController> {
                           'date_finish',
                           data,
                         ),
-                        _buildDateTextField(
-                          'Tanggal selesai',
-                          'date_finish_actual',
-                          data,
-                        ),
+                        _buildDateTextField('Tanggal selesai', 'date_finish_actual', data,),
                         _buildTextField('Nama PIC', 'pic', data),
                         _buildTextField('Theme discussion', 'discussion', data),
                         _buildTextField('Problem', 'problem', data),
-                        _buildTextField(
-                          'Keterangan Pelaksanaan',
-                          'pelakasanaan',
-                          data,
-                        ),
+                        _buildTextField('Follow Up', 'follow up', data,),
+                        _buildTextField('Description', 'description', data,),
+                        _buildTextField('Keterangan Pelaksanaan', 'pelakasanaan', data,),
                         DropdownButtonFormField<String>(
                           value: controller.editedData['status'],
                           decoration: const InputDecoration(
@@ -168,6 +163,40 @@ class TaskEdit extends GetView<TaskEditController> {
                     ),
                   ),
                 ),
+                // --- Main Person Section ---
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  margin: const EdgeInsets.only(top: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Main Person',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const Divider(
+                          thickness: 1,
+                          color: Colors.grey,
+                        ),
+                        _buildTextField('Jabatan PIC', 'main_jabatan', data),
+                        _buildTextField('Nama PIC', 'main_nama_pic', data),
+                        _buildTextField('Nomor Telepon PIC', 'main_no_telp', data),
+                        _buildTextField('Lokasi PIC', 'main_lokasi', data),
+                      ],
+                    ),
+                  ),
+                ),
+
               ],
             );
           }),
@@ -175,6 +204,8 @@ class TaskEdit extends GetView<TaskEditController> {
       ),
     );
   }
+
+
 
   Widget _buildTextField(
     String label,

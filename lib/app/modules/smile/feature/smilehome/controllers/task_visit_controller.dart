@@ -89,5 +89,11 @@ class TaskVisitController extends GetxController {
       taskVisitData[index] = updatedData;
       filteredTaskVisitData.refresh(); // Mengupdate filtered data
     }
+    // Tambah data baru ke task visit list
+    void addTaskVisit(Map<String, dynamic> newVisit) {
+      taskVisitData.add(newVisit);
+      filteredTaskVisitData.assignAll(taskVisitData); // Perbarui yang tampil juga
+    }
+
   }
 }

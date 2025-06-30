@@ -58,6 +58,7 @@ class TaskView extends GetView<TaskViewController> {
                   _buildField('Area', data['area'] ?? '-'),
                   _buildField('Cabang', data['cabang'] ?? '-'),
                   _buildField('Produk', data['produk'] ?? '-'),
+                  _buildField('Dealer', data['dealer'] ?? '-'),
                 ],
               ),
               const SizedBox(height: 24), // Jarak antar bagian
@@ -77,14 +78,21 @@ class TaskView extends GetView<TaskViewController> {
                   _buildField('Nama PIC', data['pic'] ?? '-'),
                   _buildField('Theme discussion', data['discussion'] ?? '-'),
                   _buildField('Problem', data['problem'] ?? '-'),
-                  _buildField(
-                    'Keterangan Pelaksanaan',
-                    data['pelakasanaan'] ?? '-',
-                  ),
-                  _buildField(
-                    'Status',
-                    data['status'] ?? '-', // Menampilkan status dari data
-                  ),
+                  _buildField('Follow Up', data['follow up'] ?? '-'),
+                  _buildField('Description', data['description'] ?? '-'),
+                  _buildField('Keterangan Pelaksanaan', data['pelakasanaan'] ?? '-',),
+                  _buildField('Status', data['status'] ?? '-',),
+                ],
+              ),
+              const SizedBox(height: 24), // Jarak antar bagian
+              // === BAGIAN MAIN PERSON ===
+              _buildDataSectionCard(
+                title: 'Main Person',
+                children: [
+                  _buildField('Jabatan PIC', data['main_jabatan'] ?? '-'),
+                  _buildField('Nama PIC', data['main_nama_pic'] ?? '-'),
+                  _buildField('Nomor Telepon PIC', data['main_no_telp'] ?? '-'),
+                  _buildField('Lokasi PIC', data['main_lokasi'] ?? '-'),
                 ],
               ),
             ],

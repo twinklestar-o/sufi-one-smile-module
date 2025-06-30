@@ -77,7 +77,9 @@ class ApiService {
   Future<Map<String, dynamic>> fetchArea() async {
     final token = await _getToken();
     final response = await http.get(
-      Uri.parse(Url + 'area'), // Using singular 'area' as per colleague's version
+      Uri.parse(
+        Url + 'area',
+      ), // Using singular 'area' as per colleague's version
       headers: _getHeaders(token),
     );
 
@@ -147,12 +149,11 @@ class ApiService {
   Future<Map<String, dynamic>> fetchProduct() async {
     final token = await _getToken();
     final response = await http.get(
-      Uri.parse(Url + 'product'), // Using singular 'product' as per colleague's version
+      Uri.parse(
+        Url + 'product',
+      ), // Using singular 'product' as per colleague's version
       headers: _getHeaders(token),
     );
-
-
-
 
     print('Product API Response Status: ${response.statusCode}');
     print('Product API Response Body: ${response.body}');
@@ -167,14 +168,14 @@ class ApiService {
     }
   }
 
-       Future<Map<String, dynamic>> fetchJabatanSFI() async {
+  Future<Map<String, dynamic>> fetchJabatanSFI() async {
     final token = await _getToken();
     final response = await http.get(
       Uri.parse(Url + 'jabatansfi'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
-if (response.statusCode == 200) {
+    if (response.statusCode == 200) {
       return json.decode(response.body);
     } else if (response.statusCode == 401) {
       // Token expired, redirect to login
@@ -315,13 +316,14 @@ if (response.statusCode == 200) {
     required File photo1,
     required File photo2,
     required List<Map<String, String>> mainPersons,
+    int status = 0, // default status = 0 (planning)
     double? latitude,
     double? longitude,
   }) async {
     final token = await _getToken();
 
-    // Add validation before creating the request
-    if (dealerCode.length > 20) { // Adjust length based on your DB column
+    // Validasi panjang data
+    if (dealerCode.length > 20) {
       throw Exception('Dealer code terlalu panjang. Maksimal 20 karakter.');
     }
     if (areaCode.length > 10) {
@@ -334,23 +336,21 @@ if (response.statusCode == 200) {
       throw Exception('Product code terlalu panjang. Maksimal 20 karakter.');
     }
 
-    // Add this right after the token validation and before creating the request
     print('Validating field lengths:');
-    print('Dealer Code: ${dealerCode} (${dealerCode.length} chars)');
-    print('Area Code: ${areaCode} (${areaCode.length} chars)');
-    print('Branch Code: ${branchCode} (${branchCode.length} chars)');
-    print('Product Code: ${productCode} (${productCode.length} chars)');
+    print('Dealer Code: $dealerCode (${dealerCode.length} chars)');
+    print('Area Code: $areaCode (${areaCode.length} chars)');
+    print('Branch Code: $branchCode (${branchCode.length} chars)');
+    print('Product Code: $productCode (${productCode.length} chars)');
 
     var request = http.MultipartRequest(
       'POST',
       Uri.parse(Url + 'direct-visit'),
     );
 
-    // Add headers
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Accept'] = 'application/json';
 
-    // Add text fields
+    // Kirim semua field
     request.fields['jabatan_saya'] = jabatanSaya;
     request.fields['area_code'] = areaCode;
     request.fields['branch_code'] = branchCode;
@@ -366,18 +366,21 @@ if (response.statusCode == 200) {
     request.fields['problem'] = problem;
     request.fields['follow_up'] = followUp;
     request.fields['description'] = description;
+    request.fields['status'] = status.toString(); // <<-- tambahkan status
 
     if (latitude != null) request.fields['latitude'] = latitude.toString();
     if (longitude != null) request.fields['longitude'] = longitude.toString();
 
-    // Add main persons
+    // Kirim main persons
     for (int i = 0; i < mainPersons.length; i++) {
       request.fields['main_persons[$i][jabatan]'] = mainPersons[i]['jabatan']!;
-      request.fields['main_persons[$i][nama_pic]'] = mainPersons[i]['nama']!;
-      request.fields['main_persons[$i][telp_pic]'] = mainPersons[i]['telp']!;
+      request.fields['main_persons[$i][nama_pic]'] =
+      mainPersons[i]['nama_pic']!;
+      request.fields['main_persons[$i][telp_pic]'] =
+      mainPersons[i]['telp_pic']!;
     }
 
-    // Add photos
+    // Kirim file foto
     request.files.add(await http.MultipartFile.fromPath('photo1', photo1.path));
     request.files.add(await http.MultipartFile.fromPath('photo2', photo2.path));
 
@@ -397,7 +400,9 @@ if (response.statusCode == 200) {
         throw Exception('Sesi telah berakhir, silakan login kembali');
       } else {
         final errorData = json.decode(response.body);
-        throw Exception('Gagal submit: ${errorData['message'] ?? 'Unknown error'} (${response.statusCode})');
+        throw Exception(
+          'Gagal submit: ${errorData['message'] ?? 'Unknown error'} (${response.statusCode})',
+        );
       }
     } catch (e) {
       print('Submit Error: $e');
