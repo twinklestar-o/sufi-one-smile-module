@@ -18,36 +18,42 @@ class _AreaScreenState extends State<AreaScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadLocalDataOnly();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadLocalDataOnly() async {
+    final repository = Provider.of<AreaRepository>(context, listen: false);
+
+    // Ambil data lokal saja
+    final localData = await repository.dbHelper.getAllArea();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _areaFuture = Future.value(localData);
+      _isLoading = false;
+      _errorMessage = localData.isEmpty ? 'Data area kosong (offline)' : null;
     });
+  }
+
+  Future<void> _loadData() async {
+    final repository = Provider.of<AreaRepository>(context, listen: false);
 
     try {
-      final repository = Provider.of<AreaRepository>(context, listen: false);
-      _areaFuture = repository.getArea();
+      final data = await repository.getArea();
+      if (!mounted) return;
 
-      final data = await _areaFuture;
-
-      if (data.isEmpty) {
-        setState(() {
-          _errorMessage = 'Data Area kosong';
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error loading data: $e');
       setState(() {
-        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        _areaFuture = Future.value(data); // simpan future statis
         _isLoading = false;
+        if (data.isEmpty) {
+          _errorMessage = 'Data Area kosong';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
       });
     }
   }
@@ -60,24 +66,43 @@ class _AreaScreenState extends State<AreaScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final repository = Provider.of<AreaRepository>(context, listen: false);
-      _areaFuture = repository.getArea(forceRefresh: true);
+    final repository = Provider.of<AreaRepository>(context, listen: false);
 
-      final data = await _areaFuture;
+    try {
+      // Selalu coba ambil data terbaru dari API
+      final data = await repository.getArea(forceRefresh: true);
 
       setState(() {
+        _areaFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data Area kosong setelah refresh';
+          _errorMessage = 'Data area kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
-      debugPrint('Error refreshing: $e');
-      setState(() {
-        _errorMessage = 'Gagal refresh: ${e.toString()}';
-        _isLoading = false;
-      });
+      debugPrint('Gagal refresh dari API: $e');
+
+      try {
+        // Coba ambil dari database lokal
+        final localData = await repository.getArea(forceRefresh: false);
+        setState(() {
+          _areaFuture = Future.value(localData);
+          _isLoading = false;
+
+          if (localData.isEmpty) {
+            _errorMessage = 'Gagal ambil dari API & database lokal kosong.';
+          } else {
+            _errorMessage = 'Gagal ambil dari API, tampilkan data lokal.';
+          }
+        });
+      } catch (e2) {
+        debugPrint('Gagal ambil dari lokal juga: $e2');
+        setState(() {
+          _areaFuture = Future.value([]);
+          _isLoading = false;
+          _errorMessage = 'Gagal total: tidak bisa ambil data.';
+        });
+      }
     }
   }
 
@@ -136,6 +161,10 @@ class _AreaScreenState extends State<AreaScreen> {
     return FutureBuilder<List<Area>>(
       future: _areaFuture,
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
         if (snapshot.hasError) {
           return Center(child: Text('Terjadi kesalahan: ${snapshot.error}'));
         }
@@ -156,7 +185,6 @@ class _AreaScreenState extends State<AreaScreen> {
                 child: ListTile(
                   title: Text(area.name),
                   subtitle: Text('Kode: ${area.code}'),
-                  trailing: Icon(Icons.chevron_right),
                 ),
               );
             },

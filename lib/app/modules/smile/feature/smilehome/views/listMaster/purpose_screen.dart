@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/smile/models/purpose.dart';
 import 'package:sufi_one/app/modules/smile/repositories/purpose_repository.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class PurposeScreen extends StatefulWidget {
   @override
@@ -16,36 +18,43 @@ class _PurposeScreenState extends State<PurposeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadLocalDataOnly();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadLocalDataOnly() async {
+    final repository = Provider.of<PurposeRepository>(context, listen: false);
+
+    // Ambil data lokal saja
+    final localData = await repository.dbHelper.getAllPurpose();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _purposeFuture = Future.value(localData);
+      _isLoading = false;
+      _errorMessage =
+          localData.isEmpty ? 'Data tujuan visit kosong (offline)' : null;
     });
+  }
+
+  Future<void> _loadData() async {
+    final repository = Provider.of<PurposeRepository>(context, listen: false);
 
     try {
-      final repository = Provider.of<PurposeRepository>(context, listen: false);
-      _purposeFuture = repository.getPurpose();
+      final data = await repository.getPurpose();
+      if (!mounted) return;
 
-      final data = await _purposeFuture;
-
-      if (data.isEmpty) {
-        setState(() {
-          _errorMessage = 'Data purpose kosong';
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error loading data: $e');
       setState(() {
-        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        _purposeFuture = Future.value(data); // simpan future statis
         _isLoading = false;
+        if (data.isEmpty) {
+          _errorMessage = 'Data Tujuan Visit kosong';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
       });
     }
   }
@@ -58,24 +67,43 @@ class _PurposeScreenState extends State<PurposeScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final repository = Provider.of<PurposeRepository>(context, listen: false);
-      _purposeFuture = repository.getPurpose(forceRefresh: true);
+    final repository = Provider.of<PurposeRepository>(context, listen: false);
 
-      final data = await _purposeFuture;
+    try {
+      // Selalu coba ambil data terbaru dari API
+      final data = await repository.getPurpose(forceRefresh: true);
 
       setState(() {
+        _purposeFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data purpose kosong setelah refresh';
+          _errorMessage = 'Data tujuan visit kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
-      debugPrint('Error refreshing: $e');
-      setState(() {
-        _errorMessage = 'Gagal refresh: ${e.toString()}';
-        _isLoading = false;
-      });
+      debugPrint('Gagal refresh dari API: $e');
+
+      try {
+        // Coba ambil dari database lokal
+        final localData = await repository.getPurpose(forceRefresh: false);
+        setState(() {
+          _purposeFuture = Future.value(localData);
+          _isLoading = false;
+
+          if (localData.isEmpty) {
+            _errorMessage = 'Gagal ambil dari API & database lokal kosong.';
+          } else {
+            _errorMessage = 'Gagal ambil dari API, tampilkan data lokal.';
+          }
+        });
+      } catch (e2) {
+        debugPrint('Gagal ambil dari lokal juga: $e2');
+        setState(() {
+          _purposeFuture = Future.value([]);
+          _isLoading = false;
+          _errorMessage = 'Gagal total: tidak bisa ambil data.';
+        });
+      }
     }
   }
 
@@ -83,14 +111,27 @@ class _PurposeScreenState extends State<PurposeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Purpose'),
+        backgroundColor: const Color(0xFF0E47A1),
+        title: const Text(
+          'Daftar Tujuan Visit',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refreshData,
             tooltip: 'Refresh Data',
+            color: Colors.white,
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: _buildBody(),
     );
@@ -141,7 +182,6 @@ class _PurposeScreenState extends State<PurposeScreen> {
                 child: ListTile(
                   title: Text(purpose.name),
                   subtitle: Text('Kode: ${purpose.kode}'),
-                  trailing: Icon(Icons.chevron_right),
                 ),
               );
             },

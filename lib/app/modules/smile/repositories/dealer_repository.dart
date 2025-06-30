@@ -20,7 +20,9 @@ class DealerRepository {
       }
 
       final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime();
+      final localLastUpdate = await dbHelper.getLastUpdateTime(
+        'dealer_last_update',
+      );
 
       if (serverLastUpdate != null &&
           (localLastUpdate == null ||
@@ -65,7 +67,7 @@ class DealerRepository {
       }
 
       // Update timestamp
-      await dbHelper.updateCollectionTimestamp();
+      await dbHelper.updateCollectionTimestamp('dealer_last_update');
 
       return dealerList;
     } catch (e) {

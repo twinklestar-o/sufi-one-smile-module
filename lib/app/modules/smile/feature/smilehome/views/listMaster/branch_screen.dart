@@ -16,36 +16,42 @@ class _BranchScreenState extends State<BranchScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadLocalDataOnly();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadLocalDataOnly() async {
+    final repository = Provider.of<BranchRepository>(context, listen: false);
+
+    // Ambil data lokal saja
+    final localData = await repository.dbHelper.getAllBranches();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _branchFuture = Future.value(localData);
+      _isLoading = false;
+      _errorMessage = localData.isEmpty ? 'Data cabang kosong (offline)' : null;
     });
+  }
+
+  Future<void> _loadData() async {
+    final repository = Provider.of<BranchRepository>(context, listen: false);
 
     try {
-      final repository = Provider.of<BranchRepository>(context, listen: false);
-      _branchFuture = repository.getBranch();
+      final data = await repository.getBranch();
+      if (!mounted) return;
 
-      final data = await _branchFuture;
-
-      if (data.isEmpty) {
-        setState(() {
-          _errorMessage = 'Data branch kosong';
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error loading data: $e');
       setState(() {
-        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        _branchFuture = Future.value(data); // simpan future statis
         _isLoading = false;
+        if (data.isEmpty) {
+          _errorMessage = 'Data Cabang kosong';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
       });
     }
   }
@@ -58,24 +64,43 @@ class _BranchScreenState extends State<BranchScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final repository = Provider.of<BranchRepository>(context, listen: false);
-      _branchFuture = repository.getBranch(forceRefresh: true);
+    final repository = Provider.of<BranchRepository>(context, listen: false);
 
-      final data = await _branchFuture;
+    try {
+      // Selalu coba ambil data terbaru dari API
+      final data = await repository.getBranch(forceRefresh: true);
 
       setState(() {
+        _branchFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data branch kosong setelah refresh';
+          _errorMessage = 'Data cabang kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
-      debugPrint('Error refreshing: $e');
-      setState(() {
-        _errorMessage = 'Gagal refresh: ${e.toString()}';
-        _isLoading = false;
-      });
+      debugPrint('Gagal refresh dari API: $e');
+
+      try {
+        // Coba ambil dari database lokal
+        final localData = await repository.getBranch(forceRefresh: false);
+        setState(() {
+          _branchFuture = Future.value(localData);
+          _isLoading = false;
+
+          if (localData.isEmpty) {
+            _errorMessage = 'Gagal ambil dari API & database lokal kosong.';
+          } else {
+            _errorMessage = 'Gagal ambil dari API, tampilkan data lokal.';
+          }
+        });
+      } catch (e2) {
+        debugPrint('Gagal ambil dari lokal juga: $e2');
+        setState(() {
+          _branchFuture = Future.value([]);
+          _isLoading = false;
+          _errorMessage = 'Gagal total: tidak bisa ambil data.';
+        });
+      }
     }
   }
 
@@ -83,13 +108,15 @@ class _BranchScreenState extends State<BranchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Daftar Branch',
+        backgroundColor: const Color(0xFF0E47A1),
+        title: const Text(
+          'Daftar Cabang',
           style: TextStyle(
-            color: Colors.white, // Mengubah warna teks judul menjadi putih
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
-        ),
-        backgroundColor: Color(0xFF0E47A1), // Mengubah warna background AppBar dengan kode hex
+        ), // Mengubah warna background AppBar dengan kode hex
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -99,14 +126,13 @@ class _BranchScreenState extends State<BranchScreen> {
           ),
         ],
         iconTheme: IconThemeData(
-          color: Colors.white, // Mengubah warna icon panah kembali menjadi putih
+          color:
+              Colors.white, // Mengubah warna icon panah kembali menjadi putih
         ),
       ),
       body: _buildBody(),
     );
   }
-
-
 
   Widget _buildBody() {
     if (_isLoading) {
@@ -152,12 +178,9 @@ class _BranchScreenState extends State<BranchScreen> {
                 margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 child: ListTile(
                   title: Text(branch.name),
-                  subtitle: Text('Kode: ${branch.code} | Area: ${branch.areaCode}'),
-                  trailing: Icon(Icons.chevron_right),
-                  onTap: () {
-                    // Aksi ketika item branch ditekan
-                    // Misalnya navigasi ke halaman detail atau edit branch
-                  },
+                  subtitle: Text(
+                    'Kode: ${branch.code} | Area: ${branch.areaCode}',
+                  ),
                 ),
               );
             },

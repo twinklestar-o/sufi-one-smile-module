@@ -9,7 +9,6 @@ import 'package:sufi_one/app/modules/smile/models/branch.dart';
 import 'package:sufi_one/app/modules/smile/models/product.dart';
 import 'package:sufi_one/app/modules/smile/models/jabatanSFI.dart';
 
-
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
   static const _databaseVersion = 1;
@@ -23,7 +22,7 @@ class DatabaseHelper {
   static const tableBranch = 'Branches';
   static const tableProduct = 'product';
   static const tableDealer = 'dealers';
-static const tableJabatanSFI = 'jabatanSFI';
+  static const tableJabatanSFI = 'jabatanSFI';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -59,7 +58,7 @@ static const tableJabatanSFI = 'jabatanSFI';
 
     await db.execute('''
       CREATE TABLE $tableArea (
-        code TEXT NOT NULL,
+        code TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
@@ -152,11 +151,12 @@ static const tableJabatanSFI = 'jabatanSFI';
     });
   }
 
-   Future<int> insertJabatanSFI(JabatanSFI jabatanSFI) async {
+  Future<int> insertJabatanSFI(JabatanSFI jabatanSFI) async {
     final db = await database;
     return await db.insert(tableJabatanSFI, jabatanSFI.toJson());
   }
-   Future<List<JabatanSFI>> getAllJabatanSFI() async {
+
+  Future<List<JabatanSFI>> getAllJabatanSFI() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableJabatanSFI);
     return List.generate(maps.length, (i) {
@@ -169,8 +169,6 @@ static const tableJabatanSFI = 'jabatanSFI';
       );
     });
   }
-
-
 
   Future<int> insertDealer(Dealer dealer) async {
     final db = await database;
@@ -249,20 +247,20 @@ static const tableJabatanSFI = 'jabatanSFI';
     });
   }
 
-  Future<void> updateCollectionTimestamp() async {
+  Future<void> updateCollectionTimestamp(String key) async {
     final db = await database;
     await db.insert(tableMetadata, {
-      'key': 'jabatan_last_update',
+      'key': key,
       'value': DateTime.now().toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<DateTime?> getLastUpdateTime() async {
+  Future<DateTime?> getLastUpdateTime(String key) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableMetadata,
       where: 'key = ?',
-      whereArgs: ['jabatan_last_update'],
+      whereArgs: [key],
       limit: 1,
     );
 

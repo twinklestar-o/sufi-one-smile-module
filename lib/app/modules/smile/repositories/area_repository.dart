@@ -19,8 +19,11 @@ class AreaRepository {
         return await _fetchFromApiAndSave();
       }
 
+      final localLastUpdate = await dbHelper.getLastUpdateTime(
+        'area_last_update',
+      );
+
       final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime();
 
       if (serverLastUpdate != null &&
           (localLastUpdate == null ||
@@ -64,7 +67,7 @@ class AreaRepository {
       }
 
       // Update timestamp
-      await dbHelper.updateCollectionTimestamp();
+      await dbHelper.updateCollectionTimestamp('area_last_update');
 
       return areaList;
     } catch (e) {

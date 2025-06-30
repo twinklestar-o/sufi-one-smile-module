@@ -20,7 +20,9 @@ class PurposeRepository {
       }
 
       final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime();
+      final localLastUpdate = await dbHelper.getLastUpdateTime(
+        'purpose_last_update',
+      );
 
       if (serverLastUpdate != null &&
           (localLastUpdate == null ||
@@ -53,7 +55,7 @@ class PurposeRepository {
 
       // Konversi ke List<Purpose>
       final List<Purpose> purposeList =
-      purposeData.map((json) => Purpose.fromJson(json)).toList();
+          purposeData.map((json) => Purpose.fromJson(json)).toList();
 
       // Clear old data
       final db = await dbHelper.database;
@@ -65,7 +67,7 @@ class PurposeRepository {
       }
 
       // Update timestamp
-      await dbHelper.updateCollectionTimestamp();
+      await dbHelper.updateCollectionTimestamp('purpose_last_update');
 
       return purposeList;
     } catch (e) {

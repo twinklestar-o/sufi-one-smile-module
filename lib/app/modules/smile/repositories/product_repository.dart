@@ -20,7 +20,9 @@ class ProductRepository {
       }
 
       final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime();
+      final localLastUpdate = await dbHelper.getLastUpdateTime(
+        'product_last_update',
+      );
 
       if (serverLastUpdate != null &&
           (localLastUpdate == null ||
@@ -53,7 +55,7 @@ class ProductRepository {
 
       // Konversi ke List<Product>
       final List<Product> productList =
-      productData.map((json) => Product.fromJson(json)).toList();
+          productData.map((json) => Product.fromJson(json)).toList();
 
       // Clear old data
       final db = await dbHelper.database;
@@ -65,7 +67,7 @@ class ProductRepository {
       }
 
       // Update timestamp
-      await dbHelper.updateCollectionTimestamp();
+      await dbHelper.updateCollectionTimestamp('product_last_update');
 
       return productList;
     } catch (e) {

@@ -20,7 +20,9 @@ class JabatanSFIRepository {
       }
 
       final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime();
+      final localLastUpdate = await dbHelper.getLastUpdateTime(
+        'jabatanSFI_last_update',
+      );
 
       if (serverLastUpdate != null &&
           (localLastUpdate == null ||
@@ -53,7 +55,7 @@ class JabatanSFIRepository {
 
       // Konversi ke List<JabatanSFI>
       final List<JabatanSFI> jabatanSFIList =
-      jabatanSFIData.map((json) => JabatanSFI.fromJson(json)).toList();
+          jabatanSFIData.map((json) => JabatanSFI.fromJson(json)).toList();
 
       // Clear old data
       final db = await dbHelper.database;
@@ -65,7 +67,7 @@ class JabatanSFIRepository {
       }
 
       // Update timestamp
-      await dbHelper.updateCollectionTimestamp();
+      await dbHelper.updateCollectionTimestamp('jabatanSFI_last_update');
 
       return jabatanSFIList;
     } catch (e) {

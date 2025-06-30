@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/smile/models/product.dart';
 import 'package:sufi_one/app/modules/smile/repositories/product_repository.dart';
-
+import 'package:get/get.dart';
 
 class ProductScreen extends StatefulWidget {
   @override
@@ -17,36 +17,43 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadLocalDataOnly();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadLocalDataOnly() async {
+    final repository = Provider.of<ProductRepository>(context, listen: false);
+
+    // Ambil data lokal saja
+    final localData = await repository.dbHelper.getAllProduct();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _productFuture = Future.value(localData);
+      _isLoading = false;
+      _errorMessage =
+          localData.isEmpty ? 'Data product kosong (offline)' : null;
     });
+  }
+
+  Future<void> _loadData() async {
+    final repository = Provider.of<ProductRepository>(context, listen: false);
 
     try {
-      final repository = Provider.of<ProductRepository>(context, listen: false);
-      _productFuture = repository.getProduct();
+      final data = await repository.getProduct();
+      if (!mounted) return;
 
-      final data = await _productFuture;
-
-      if (data.isEmpty) {
-        setState(() {
-          _errorMessage = 'Data Product kosong';
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error loading data: $e');
       setState(() {
-        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        _productFuture = Future.value(data); // simpan future statis
         _isLoading = false;
+        if (data.isEmpty) {
+          _errorMessage = 'Data Product kosong';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
       });
     }
   }
@@ -59,24 +66,43 @@ class _ProductScreenState extends State<ProductScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final repository = Provider.of<ProductRepository>(context, listen: false);
-      _productFuture = repository.getProduct(forceRefresh: true);
+    final repository = Provider.of<ProductRepository>(context, listen: false);
 
-      final data = await _productFuture;
+    try {
+      // Selalu coba ambil data terbaru dari API
+      final data = await repository.getProduct(forceRefresh: true);
 
       setState(() {
+        _productFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data Product kosong setelah refresh';
+          _errorMessage = 'Data product kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
-      debugPrint('Error refreshing: $e');
-      setState(() {
-        _errorMessage = 'Gagal refresh: ${e.toString()}';
-        _isLoading = false;
-      });
+      debugPrint('Gagal refresh dari API: $e');
+
+      try {
+        // Coba ambil dari database lokal
+        final localData = await repository.getProduct(forceRefresh: false);
+        setState(() {
+          _productFuture = Future.value(localData);
+          _isLoading = false;
+
+          if (localData.isEmpty) {
+            _errorMessage = 'Gagal ambil dari API & database lokal kosong.';
+          } else {
+            _errorMessage = 'Gagal ambil dari API, tampilkan data lokal.';
+          }
+        });
+      } catch (e2) {
+        debugPrint('Gagal ambil dari lokal juga: $e2');
+        setState(() {
+          _productFuture = Future.value([]);
+          _isLoading = false;
+          _errorMessage = 'Gagal total: tidak bisa ambil data.';
+        });
+      }
     }
   }
 
@@ -84,7 +110,15 @@ class _ProductScreenState extends State<ProductScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Product'),
+        backgroundColor: const Color(0xFF0E47A1),
+        title: const Text(
+          'Daftar Product',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -92,6 +126,10 @@ class _ProductScreenState extends State<ProductScreen> {
             tooltip: 'Refresh Data',
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: _buildBody(),
     );
@@ -142,7 +180,6 @@ class _ProductScreenState extends State<ProductScreen> {
                 child: ListTile(
                   title: Text(product.name),
                   subtitle: Text('Kode: ${product.kode}'),
-                  trailing: Icon(Icons.chevron_right),
                 ),
               );
             },

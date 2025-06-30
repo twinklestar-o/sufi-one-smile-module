@@ -22,10 +22,13 @@ class BranchRepository {
       }
 
       final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime();
+      final localLastUpdate = await dbHelper.getLastUpdateTime(
+        'cabang_last_update',
+      );
 
       if (serverLastUpdate != null &&
-          (localLastUpdate == null || serverLastUpdate.isAfter(localLastUpdate))) {
+          (localLastUpdate == null ||
+              serverLastUpdate.isAfter(localLastUpdate))) {
         return await _fetchFromApiAndSave();
       }
 
@@ -48,37 +51,48 @@ class BranchRepository {
 
       if (rawResponse is List) {
         branchData = rawResponse;
-      } else if (rawResponse is Map<String, dynamic> && rawResponse.containsKey('data')) {
+      } else if (rawResponse is Map<String, dynamic> &&
+          rawResponse.containsKey('data')) {
         branchData = rawResponse['data'];
       } else if (rawResponse is String) {
         final decodedResponse = json.decode(rawResponse);
         if (decodedResponse is List) {
           branchData = decodedResponse;
-        } else if (decodedResponse is Map<String, dynamic> && decodedResponse.containsKey('data')) {
+        } else if (decodedResponse is Map<String, dynamic> &&
+            decodedResponse.containsKey('data')) {
           branchData = decodedResponse['data'];
         } else {
           throw Exception('Format respons API tidak didukung setelah decode');
         }
       } else {
-        throw Exception('Format respons API tidak valid: Tidak berupa List, Map, atau String JSON');
+        throw Exception(
+          'Format respons API tidak valid: Tidak berupa List, Map, atau String JSON',
+        );
       }
 
       if (branchData is! List) {
         throw Exception('Data cabang dari API bukan berupa daftar');
       }
 
-      final List<Branch> branchList = branchData.map((json) => Branch.fromJson(json as Map<String, dynamic>)).toList();
+      final List<Branch> branchList =
+          branchData
+              .map((json) => Branch.fromJson(json as Map<String, dynamic>))
+              .toList();
 
       final db = await dbHelper.database;
       await db.delete('branches');
 
       Batch batch = db.batch();
       for (var branch in branchList) {
-        batch.insert('branches', branch.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+        batch.insert(
+          'branches',
+          branch.toJson(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
       await batch.commit();
 
-      await dbHelper.updateCollectionTimestamp();
+      await dbHelper.updateCollectionTimestamp('cabang_last_update');
 
       return branchList;
     } catch (e) {

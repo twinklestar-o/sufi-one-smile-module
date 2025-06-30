@@ -19,81 +19,92 @@ class _TypeScreenState extends State<TypeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData(); // Memuat data saat screen diinisialisasi
+    _loadLocalDataOnly();
   }
 
-  // Fungsi untuk memuat data Type
-  Future<void> _loadData() async {
-    // Memastikan widget masih terpasang di pohon widget sebelum melakukan setState
+  Future<void> _loadLocalDataOnly() async {
+    final repository = Provider.of<TypeRepository>(context, listen: false);
+
+    // Ambil data lokal saja
+    final localData = await repository.dbHelper.getAllType();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true; // Set loading state menjadi true
-      _errorMessage = null; // Hapus pesan error sebelumnya
+      _typeFuture = Future.value(localData);
+      _isLoading = false;
+      _errorMessage =
+          localData.isEmpty ? 'Data tipe visit kosong (offline)' : null;
     });
+  }
+
+  Future<void> _loadData() async {
+    final repository = Provider.of<TypeRepository>(context, listen: false);
 
     try {
-      // Mengambil instance TypeRepository dari Provider
-      final repository = Provider.of<TypeRepository>(context, listen: false);
-      // Memanggil method getType untuk mendapatkan data
-      _typeFuture = repository.getType();
+      final data = await repository.getType();
+      if (!mounted) return;
 
-      // Menunggu hingga data selesai diambil
-      final data = await _typeFuture;
-
-      if (data.isEmpty) {
-        // Jika data kosong, set pesan error dan hentikan loading
-        setState(() {
-          _errorMessage = 'Data Type kosong';
-          _isLoading = false;
-        });
-      } else {
-        // Jika data ada, hentikan loading
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      // Tangani error jika terjadi saat memuat data
-      debugPrint('Error loading Type data: $e');
       setState(() {
-        _errorMessage = 'Gagal memuat data Type: ${e.toString()}';
+        _typeFuture = Future.value(data); // simpan future statis
         _isLoading = false;
+        if (data.isEmpty) {
+          _errorMessage = 'Data Tipe Visit kosong';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
       });
     }
   }
 
-  // Fungsi untuk merefresh data Type
   Future<void> _refreshData() async {
-    // Memastikan widget masih terpasang di pohon widget
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true; // Set loading state menjadi true
-      _errorMessage = null; // Hapus pesan error sebelumnya
+      _isLoading = true;
+      _errorMessage = null;
     });
 
-    try {
-      // Mengambil instance TypeRepository dari Provider
-      final repository = Provider.of<TypeRepository>(context, listen: false);
-      // Memanggil method getType dengan forceRefresh: true untuk memaksa pengambilan dari API
-      _typeFuture = repository.getType(forceRefresh: true);
+    final repository = Provider.of<TypeRepository>(context, listen: false);
 
-      // Menunggu hingga data selesai direfresh
-      final data = await _typeFuture;
+    try {
+      // Selalu coba ambil data terbaru dari API
+      final data = await repository.getType(forceRefresh: true);
 
       setState(() {
-        _isLoading = false; // Hentikan loading
+        _typeFuture = Future.value(data);
+        _isLoading = false;
         if (data.isEmpty) {
-          // Jika data kosong setelah refresh, set pesan error
-          _errorMessage = 'Data Type kosong setelah refresh';
+          _errorMessage = 'Data tipe visit kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
-      // Tangani error jika terjadi saat merefresh data
-      debugPrint('Error refreshing Type data: $e');
-      setState(() {
-        _errorMessage = 'Gagal refresh data Type: ${e.toString()}';
-        _isLoading = false;
-      });
+      debugPrint('Gagal refresh dari API: $e');
+
+      try {
+        // Coba ambil dari database lokal
+        final localData = await repository.getType(forceRefresh: false);
+        setState(() {
+          _typeFuture = Future.value(localData);
+          _isLoading = false;
+
+          if (localData.isEmpty) {
+            _errorMessage = 'Gagal ambil dari API & database lokal kosong.';
+          } else {
+            _errorMessage = 'Gagal ambil dari API, tampilkan data lokal.';
+          }
+        });
+      } catch (e2) {
+        debugPrint('Gagal ambil dari lokal juga: $e2');
+        setState(() {
+          _typeFuture = Future.value([]);
+          _isLoading = false;
+          _errorMessage = 'Gagal total: tidak bisa ambil data.';
+        });
+      }
     }
   }
 
@@ -173,8 +184,7 @@ class _TypeScreenState extends State<TypeScreen> {
         // Jika data tersedia, tampilkan dalam ListView
         final typeList = snapshot.data!;
         return RefreshIndicator(
-          onRefresh:
-              _refreshData, // Panggil _refreshData saat user melakukan pull-to-refresh
+          onRefresh: _refreshData,
           child: ListView.builder(
             itemCount: typeList.length,
             itemBuilder: (context, index) {
@@ -182,15 +192,8 @@ class _TypeScreenState extends State<TypeScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 child: ListTile(
-                  title: Text(
-                    type.name ?? 'No Name',
-                  ), // Asumsi model Type memiliki properti 'name'
-                  subtitle: Text(
-                    'ID: ${type.id ?? 'N/A'}',
-                  ), // Asumsi model Type memiliki properti 'id'
-                  // Anda bisa menambahkan detail lain dari model Type di sini
-                  // Contoh: subtitle: Text('Deskripsi: ${type.description ?? ''}'),
-                  trailing: const Icon(Icons.chevron_right),
+                  title: Text(type.name ?? 'No Name'),
+                  subtitle: Text('ID: ${type.id ?? 'N/A'}'),
                 ),
               );
             },

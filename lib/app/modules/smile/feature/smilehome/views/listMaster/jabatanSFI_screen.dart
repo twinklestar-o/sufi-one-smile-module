@@ -18,36 +18,49 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadLocalDataOnly();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadLocalDataOnly() async {
+    final repository = Provider.of<JabatanSFIRepository>(
+      context,
+      listen: false,
+    );
+
+    // Ambil data lokal saja
+    final localData = await repository.dbHelper.getAllJabatanSFI();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _jabatanSFIFuture = Future.value(localData);
+      _isLoading = false;
+      _errorMessage =
+          localData.isEmpty ? 'Data jabatan SFI kosong (offline)' : null;
     });
+  }
+
+  Future<void> _loadData() async {
+    final repository = Provider.of<JabatanSFIRepository>(
+      context,
+      listen: false,
+    );
 
     try {
-      final repository = Provider.of<JabatanSFIRepository>(context, listen: false);
-      _jabatanSFIFuture = repository.getJabatanSFI();
+      final data = await repository.getJabatanSFI();
+      if (!mounted) return;
 
-      final data = await _jabatanSFIFuture;
-
-      if (data.isEmpty) {
-        setState(() {
-          _errorMessage = 'Data jabatan SFI kosong';
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error loading data: $e');
       setState(() {
-        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        _jabatanSFIFuture = Future.value(data); // simpan future statis
         _isLoading = false;
+        if (data.isEmpty) {
+          _errorMessage = 'Data Jabatan kosong';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
       });
     }
   }
@@ -60,24 +73,46 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final repository = Provider.of<JabatanSFIRepository>(context, listen: false);
-      _jabatanSFIFuture = repository.getJabatanSFI(forceRefresh: true);
+    final repository = Provider.of<JabatanSFIRepository>(
+      context,
+      listen: false,
+    );
 
-      final data = await _jabatanSFIFuture;
+    try {
+      // Selalu coba ambil data terbaru dari API
+      final data = await repository.getJabatanSFI(forceRefresh: true);
 
       setState(() {
+        _jabatanSFIFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data jabatanSFI kosong setelah refresh';
+          _errorMessage = 'Data jabatan kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
-      debugPrint('Error refreshing: $e');
-      setState(() {
-        _errorMessage = 'Gagal refresh: ${e.toString()}';
-        _isLoading = false;
-      });
+      debugPrint('Gagal refresh dari API: $e');
+
+      try {
+        // Coba ambil dari database lokal
+        final localData = await repository.getJabatanSFI(forceRefresh: false);
+        setState(() {
+          _jabatanSFIFuture = Future.value(localData);
+          _isLoading = false;
+
+          if (localData.isEmpty) {
+            _errorMessage = 'Gagal ambil dari API & database lokal kosong.';
+          } else {
+            _errorMessage = 'Gagal ambil dari API, tampilkan data lokal.';
+          }
+        });
+      } catch (e2) {
+        debugPrint('Gagal ambil dari lokal juga: $e2');
+        setState(() {
+          _jabatanSFIFuture = Future.value([]);
+          _isLoading = false;
+          _errorMessage = 'Gagal total: tidak bisa ambil data.';
+        });
+      }
     }
   }
 
@@ -156,7 +191,6 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
                 child: ListTile(
                   title: Text(jabatanSFI.name),
                   subtitle: Text('Kode: ${jabatanSFI.kode}'),
-                  trailing: Icon(Icons.chevron_right),
                 ),
               );
             },
