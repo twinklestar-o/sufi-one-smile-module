@@ -17,6 +17,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
   // Dynamic dropdown values from API
   List<Map<String, dynamic>> jabatanList = [];
+  List<Map<String, dynamic>> jabatanSFIList = [];
   List<Map<String, dynamic>> areaList = [];
   List<Map<String, dynamic>> cabangList = [];
   List<Map<String, dynamic>> produkList = [];
@@ -27,6 +28,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
   // Loading states
   bool isLoadingJabatan = true;
+  bool isLoadingJabatanSFI = true;
   bool isLoadingArea = true;
   bool isLoadingCabang = false;
   bool isLoadingProduk = true;
@@ -52,7 +54,7 @@ class _DirectVisitState extends State<DirectVisit> {
   late final PageController _pageCtrl;
 
   // selected values - now using codes instead of names
-  String? selectedJabatan;
+  String? selectedJabatanSFI;
   String? selectedArea;
   String? selectedCabang;
   String? selectedProduk;
@@ -60,7 +62,7 @@ class _DirectVisitState extends State<DirectVisit> {
   String? selectedDealerName;
   String? selectedVisitType;
 
-  bool _hasInteractedWithJabatan = false;
+  bool _hasInteractedWithJabatanSFI = false;
   bool _hasInteractWithArea = false;
   bool _hasInteractWithCabang = false;
   bool _hasInteractWithProduk = false;
@@ -87,7 +89,7 @@ class _DirectVisitState extends State<DirectVisit> {
   int descriptionLength = 0;
   int _currentPage = 0;
 
-  String? selectedMainJabatan;
+  String? selectedJabatan;
   String? selectedMainTelp;
 
   double? selectedLatitude;
@@ -163,6 +165,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
   Future<void> _initializeData() async {
     await Future.wait([
+      _loadJabatanSFI(),
       _loadJabatan(),
       _loadArea(),
       _loadProduk(),
@@ -190,6 +193,31 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading jabatan: $e'); // Debug log
       setState(() => isLoadingJabatan = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading jabatan: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadJabatanSFI() async {
+    try {
+      setState(() => isLoadingJabatanSFI = true);
+      final response = await _apiService.fetchJabatanSFI();
+      print('Jabatan Response: $response'); // Debug log
+
+      setState(() {
+        if (response is Map && response.containsKey('data')) {
+          jabatanSFIList = List<Map<String, dynamic>>.from(response['data']);
+        } else if (response is List) {
+          jabatanSFIList = List<Map<String, dynamic>>.from(response as Iterable);
+        } else {
+          jabatanSFIList = [];
+        }
+        isLoadingJabatanSFI = false;
+      });
+    } catch (e) {
+      print('Error loading jabatan: $e'); // Debug log
+      setState(() => isLoadingJabatanSFI = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading jabatan: $e')),
       );
@@ -1334,7 +1362,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
     if (mainPersons.any(
           (e) =>
-      e['jabatan'] == selectedMainJabatan &&
+      e['jabatan'] == selectedJabatan &&
           e['nama'] == _namaPicController.text &&
           e['telp'] == selectedMainTelp,
     )) {
@@ -1347,11 +1375,11 @@ class _DirectVisitState extends State<DirectVisit> {
     setState(() {
       // Insert at beginning instead of add to end
       mainPersons.insert(0, {
-        'jabatan': selectedMainJabatan!,
+        'jabatan': selectedJabatan!,
         'nama': _namaPicController.text,
         'telp': selectedMainTelp!,
       });
-      selectedMainJabatan = null;
+      selectedJabatan = null;
       selectedMainTelp = null;
       _namaPicController.clear();
       _telpPicController.text = '';
@@ -1416,7 +1444,7 @@ class _DirectVisitState extends State<DirectVisit> {
       setState(() => isSubmitting = true);
 
       final response = await _apiService.submitDirectVisit(
-        jabatanSaya: selectedJabatan!,
+        jabatanSaya: selectedJabatanSFI!,
         areaCode: selectedArea!,
         branchCode: selectedCabang!,
         productCode: selectedProduk!,
@@ -1504,11 +1532,11 @@ class _DirectVisitState extends State<DirectVisit> {
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Jabatan'),
-                        isLoadingJabatan
+                        isLoadingJabatanSFI
                             ? const CircularProgressIndicator()
                             : DropdownButtonFormField<String>(
                           isExpanded: true,
-                          value: selectedJabatan,
+                          value: selectedJabatanSFI,
                           hint: Text(
                             '-- Pilih Jabatan --',
                             style: TextStyle(color: dropdownLight),
@@ -1530,18 +1558,18 @@ class _DirectVisitState extends State<DirectVisit> {
                               ),
                             ),
                           ),
-                          items: _buildDropdownItems(jabatanList, codeKey: 'name', nameKey: 'name'),
+                          items: _buildDropdownItems(jabatanSFIList, codeKey: 'name', nameKey: 'name'),
                           onChanged: (v) => setState(() {
-                            selectedJabatan = v;
-                            _hasInteractedWithJabatan = true;
+                            selectedJabatanSFI = v;
+                            _hasInteractedWithJabatanSFI = true;
                           }),
                           onTap: () {
                             setState(() {
-                              _hasInteractedWithJabatan = true;
+                              _hasInteractedWithJabatanSFI = true;
                             });
                           },
                           validator: (v) =>
-                          _hasInteractedWithJabatan && v == null
+                          _hasInteractedWithJabatanSFI && v == null
                               ? 'Harap pilih jabatan'
                               : null,
                         ),
@@ -2053,7 +2081,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               _buildFieldLabel('Jabatan'),
                               DropdownButtonFormField<String>(
                                 isExpanded: true,
-                                value: selectedMainJabatan,
+                                value: selectedJabatan,
                                 hint: Text(
                                   '-- Pilih Jabatan --',
                                   style: TextStyle(color: dropdownLight),
@@ -2071,7 +2099,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 items: _buildDropdownItems(jabatanList, codeKey: 'name', nameKey: 'name'),
                                 onChanged: (v) => setState(() {
-                                  selectedMainJabatan = v;
+                                  selectedJabatan = v;
                                 }),
                                 validator: (v) => v == null ? 'Harap Pilih Jabatan' : null,
                               ),

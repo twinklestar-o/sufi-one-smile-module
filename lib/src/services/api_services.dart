@@ -375,9 +375,9 @@ class ApiService {
     for (int i = 0; i < mainPersons.length; i++) {
       request.fields['main_persons[$i][jabatan]'] = mainPersons[i]['jabatan']!;
       request.fields['main_persons[$i][nama_pic]'] =
-      mainPersons[i]['nama_pic']!;
+      mainPersons[i]['nama']!;
       request.fields['main_persons[$i][telp_pic]'] =
-      mainPersons[i]['telp_pic']!;
+      mainPersons[i]['telp']!;
     }
 
     // Kirim file foto
