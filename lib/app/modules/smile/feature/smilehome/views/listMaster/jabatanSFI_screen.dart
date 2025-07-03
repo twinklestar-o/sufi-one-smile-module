@@ -36,7 +36,7 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
       _jabatanSFIFuture = Future.value(localData);
       _isLoading = false;
       _errorMessage =
-          localData.isEmpty ? 'Data jabatan SFI kosong (offline)' : null;
+      localData.isEmpty ? 'Data jabatan SFI kosong (offline)' : null;
     });
   }
 

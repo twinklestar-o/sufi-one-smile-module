@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sufi_one/app/theme/color_constant.dart';
 
-class SuzukiFinanceAppBarWsidebar extends StatelessWidget
+class SuzukiFinanceAppBarWOsidebar extends StatelessWidget
     implements PreferredSizeWidget {
-  const SuzukiFinanceAppBarWsidebar({
+  const SuzukiFinanceAppBarWOsidebar({
     super.key,
     this.title = const Text('Register'),
   });
@@ -36,14 +36,6 @@ class SuzukiFinanceAppBarWsidebar extends StatelessWidget
             ],
           ),*/
         ],
-      ),
-      leading: IconButton(
-        //  Add the menu icon button here
-        icon: const Icon(Icons.menu, color: Colors.white),
-        onPressed: () {
-          // Use the Scaffold's key to open the drawer
-          Scaffold.of(context).openDrawer();
-        },
       ),
     );
   }

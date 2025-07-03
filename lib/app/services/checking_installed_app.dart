@@ -69,7 +69,7 @@ class CheckingInstalledAppService {
                     ),
                     onPressed: () {
                       Get.back();
-                      Get.offAllNamed(HomeRoutes.homepageCust);
+                      Get.offAllNamed(HomeRoutes.homepage);
                     },
                     child: Text(
                       "Saya Mengerti",

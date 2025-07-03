@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
+import 'package:sufi_one/app/modules/smile/controllers/AuthController.dart';
 import 'package:sufi_one/app/modules/smile/repositories/area_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/product_repository.dart';
 import 'package:sufi_one/app/routes/app_routes.dart';
@@ -14,9 +15,16 @@ import 'package:sufi_one/app/modules/smile/repositories/type_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/purpose_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/branch_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatanSFI_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Get.put(AuthController());
+
+  // ✅ Pastikan shared_preferences siap
+  final prefs = await SharedPreferences.getInstance();
+  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
   // Initialize dependencies
   final dbHelper = DatabaseHelper.instance;

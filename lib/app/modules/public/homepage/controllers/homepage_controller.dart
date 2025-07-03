@@ -1,11 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/public/homepage/views/homepage_view.dart';
+import 'package:sufi_one/app/modules/smile/models/user.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sufi_one/app/modules/public/homepage/models/homepage_model.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sufi_one/app/Auth/views/login_view.dart';
+import 'package:sufi_one/app/modules/smile/constants/constants.dart';
 
-class HomepageCustController extends GetxController {
+class HomepageController extends GetxController {
   var currentPage = 0.obs;
   Timer? _timer;
 
@@ -84,6 +94,44 @@ class HomepageCustController extends GetxController {
       Get.snackbar('Error', 'Tidak dapat membuka link promo');
     }
   }
+
+  Future<User> fetchUser() async {
+    try {
+      // Ambil token dari SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null || token.isEmpty) {
+        Get.offAll(() => LoginPage());
+        throw Exception('Token tidak tersedia');
+      }
+
+      // Lakukan request ke endpoint profile dengan token
+      final response = await http.get(
+        Uri.parse(Url + 'profile'),
+        headers: {
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+          HttpHeaders.acceptHeader: 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseJson = jsonDecode(response.body) as Map<String, dynamic>;
+        return User.fromJson(responseJson);
+      } else {
+        // Jika status code bukan 200, arahkan ke login
+        Get.offAll(() => HomepageView());
+        throw Exception(
+          'Gagal mengambil data profil. Status code: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      // Tangani error lainnya dan arahkan ke login
+      Get.offAll(() => HomepageView());
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
+
 
   @override
   void onClose() {

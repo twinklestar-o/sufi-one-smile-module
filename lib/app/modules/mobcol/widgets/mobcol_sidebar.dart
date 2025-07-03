@@ -91,7 +91,7 @@ final List<SidebarItemData> _sidebarItems = [
     icon: const Icon(Icons.keyboard_backspace_sharp, color: Colors.white),
     title: 'Kembali',
     onTap: () {
-      Get.offNamed(HomeRoutes.homepageCust);
+      Get.offNamed(HomeRoutes.homepage);
     },
   ),
 ];
