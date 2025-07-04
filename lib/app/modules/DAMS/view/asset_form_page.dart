@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:sufi_one/app/modules/DAMS/controller/scan_controller.dart';
+import 'package:sufi_one/app/modules/DAMS/dams_route.dart';
 import 'package:sufi_one/app/modules/DAMS/model/asset.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
@@ -115,7 +116,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
       );
     }
     _namaUserAssetController.text = asset.detail?.username ?? '';
-    _keteranganController.text = asset.detail?.description ?? '';
+    _keteranganController.text = asset.detail?.addRemark ?? '';
     _selectedStatus = asset.detail?.status;
     _selectedCondition = asset.detail?.condition;
     _statusAssetController.text = asset.detail?.status ?? '';
@@ -173,31 +174,63 @@ class _AssetFormPageState extends State<AssetFormPage> {
   }
 
   Future<void> _saveChanges() async {
-    if (!_formKey.currentState!.validate() || _editedAsset == null) return;
+    if (_editedAsset == null) return;
 
     setState(() => _isSaving = true);
 
     try {
+      // Gunakan nilai dari controller atau nilai aslinya jika tidak diubah
       final updatedAsset = _editedAsset!.copyWith(
-        division: _divisionController.text,
-        floor: _lantaiUserController.text,
+        division:
+            _divisionController.text.isNotEmpty
+                ? _divisionController.text
+                : _editedAsset!.division,
+        floor:
+            _lantaiUserController.text.isNotEmpty
+                ? _lantaiUserController.text
+                : _editedAsset!.floor,
         lastUpdate: DateTime.now(),
       );
 
       final updatedDetail = _editedAssetDetail!.copyWith(
-        item: _namaAssetController.text,
-        tanggalPembelian: DateFormat(
-          'dd/MM/yyyy',
-        ).parse(_tanggalBeliController.text),
-        costAc: _hargaBeliController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-        bokVal: _nilaiBukuController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-        username: _namaUserAssetController.text,
-        description: _keteranganController.text,
-        status: _selectedStatus ?? '',
-        condition: _selectedCondition ?? '',
-        position: _posisiUserController.text,
-        locRoom: _lokasiUserController.text,
-        group: _groupController.text,
+        item:
+            _namaAssetController.text.isNotEmpty
+                ? _namaAssetController.text
+                : _editedAssetDetail!.item,
+        tanggalPembelian:
+            _tanggalBeliController.text.isNotEmpty
+                ? DateFormat('dd/MM/yyyy').parse(_tanggalBeliController.text)
+                : _editedAssetDetail!.tanggalPembelian,
+        costAc:
+            _hargaBeliController.text.isNotEmpty
+                ? _hargaBeliController.text.replaceAll(RegExp(r'[^0-9]'), '')
+                : _editedAssetDetail!.costAc,
+        bokVal:
+            _nilaiBukuController.text.isNotEmpty
+                ? _nilaiBukuController.text.replaceAll(RegExp(r'[^0-9]'), '')
+                : _editedAssetDetail!.bokVal,
+        username:
+            _namaUserAssetController.text.isNotEmpty
+                ? _namaUserAssetController.text
+                : _editedAssetDetail!.username,
+        description:
+            _keteranganController.text.isNotEmpty
+                ? _keteranganController.text
+                : _editedAssetDetail!.description,
+        status: _selectedStatus ?? _editedAssetDetail!.status,
+        condition: _selectedCondition ?? _editedAssetDetail!.condition,
+        position:
+            _posisiUserController.text.isNotEmpty
+                ? _posisiUserController.text
+                : _editedAssetDetail!.position,
+        locRoom:
+            _lokasiUserController.text.isNotEmpty
+                ? _lokasiUserController.text
+                : _editedAssetDetail!.locRoom,
+        group:
+            _groupController.text.isNotEmpty
+                ? _groupController.text
+                : _editedAssetDetail!.group,
         lastUpdate: DateTime.now(),
       );
 
@@ -265,13 +298,17 @@ class _AssetFormPageState extends State<AssetFormPage> {
         title: Text('Edit Asset: ${widget.kodeAset}'),
         backgroundColor: headerBlue,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.offAllNamed(DamsRoute.homePage),
+        ),
         actions: [
           IconButton(
             icon:
                 _isSaving
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Icon(Icons.save),
-            onPressed: _isSaving || _editedAsset == null ? null : _saveChanges,
+            onPressed: _isSaving ? null : _saveChanges,
           ),
         ],
       ),
@@ -468,7 +505,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 fillColor: Colors.grey[100],
               ),
               validator: (value) {
-                if (value == null || !_statusOptions.contains(value)) {
+                if (value == null) {
                   return 'Pilih status asset yang valid';
                 }
                 return null;
@@ -498,7 +535,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 fillColor: Colors.grey[100],
               ),
               validator: (value) {
-                if (value == null || !_conditionOptions.contains(value)) {
+                if (value == null) {
                   return 'Pilih kondisi asset yang valid';
                 }
                 return null;

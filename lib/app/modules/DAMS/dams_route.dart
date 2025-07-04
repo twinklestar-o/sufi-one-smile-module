@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:sufi_one/app/modules/DAMS/view/history_view.dart';
 import 'package:sufi_one/app/modules/DAMS/view/scan_code_page.dart';
 import 'package:sufi_one/app/modules/DAMS/view/dams_view.dart';
 
@@ -7,9 +8,9 @@ class DamsRoute {
   // variabel: pertamaKedua
   // route: pertama_kedua
 
-  static const scanCode = '/public/scan_code';
-  static const homePage = '/public/home_page';
-
+  static const scanCode = '/public/dams/scan_code';
+  static const homePage = '/public/dams/home_page';
+  static const historyPage = '/public/dams/asset/history';
   static final routes = [
     GetPage(
       name: scanCode,
@@ -20,6 +21,11 @@ class DamsRoute {
       name: homePage,
       transition: Transition.zoom,
       page: () => DamsHomePage(),
+    ),
+    GetPage(
+      name: historyPage,
+      transition: Transition.zoom,
+      page: () => AssetHistory(),
     ),
   ];
 }

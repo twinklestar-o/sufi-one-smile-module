@@ -34,7 +34,7 @@ class _DirectVisitState extends State<DirectVisit> {
   final TextEditingController _namaPicController = TextEditingController();
   final TextEditingController _telpPicController = TextEditingController();
   List<Map<String, String>> mainPersons =
-  []; // setiap item: {'jabatan':…, 'nama':…, 'telp':…}
+      []; // setiap item: {'jabatan':…, 'nama':…, 'telp':…}
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
   // helper untuk PageView
@@ -95,9 +95,9 @@ class _DirectVisitState extends State<DirectVisit> {
   static const Color textButton = Color(0xFF8BADCA);
 
   Future<void> _selectDate(
-      BuildContext context,
-      Function(DateTime?) setDate,
-      ) async {
+    BuildContext context,
+    Function(DateTime?) setDate,
+  ) async {
     //fungsi selectDate untuk memilih tanggal
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -195,9 +195,9 @@ class _DirectVisitState extends State<DirectVisit> {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil foto: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil foto: $e')));
     }
   }
 
@@ -221,9 +221,9 @@ class _DirectVisitState extends State<DirectVisit> {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil foto: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil foto: $e')));
     }
   }
 
@@ -232,7 +232,9 @@ class _DirectVisitState extends State<DirectVisit> {
       children: [
         Center(
           child: Text(
-            file == null ? 'Pilih ${first ? "Foto 1" : "Foto 2"}' : 'Foto ${first ? "1" : "2"} terunggah',
+            file == null
+                ? 'Pilih ${first ? "Foto 1" : "Foto 2"}'
+                : 'Foto ${first ? "1" : "2"} terunggah',
             style: TextStyle(
               color: headerBlue,
               fontSize: 16,
@@ -289,7 +291,6 @@ class _DirectVisitState extends State<DirectVisit> {
       ),
     );
   }
-
 
   Widget _buildFieldLabel(String label) {
     return Text(
@@ -393,11 +394,7 @@ class _DirectVisitState extends State<DirectVisit> {
                 onTap: () => _showFullScreenImage(context, _photo1!),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _photo1!,
-                    fit: BoxFit.cover,
-                    height: 350,
-                  ),
+                  child: Image.file(_photo1!, fit: BoxFit.cover, height: 350),
                 ),
               ),
               const SizedBox(height: 16),
@@ -405,7 +402,8 @@ class _DirectVisitState extends State<DirectVisit> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: true, src: ImageSource.camera),
+                    onPressed:
+                        () => _pickPhoto(first: true, src: ImageSource.camera),
                     icon: const Icon(Icons.camera_alt, color: Colors.white),
                     label: const Text("Retake"),
                     style: ElevatedButton.styleFrom(
@@ -414,7 +412,8 @@ class _DirectVisitState extends State<DirectVisit> {
                     ),
                   ),
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: true, src: ImageSource.gallery),
+                    onPressed:
+                        () => _pickPhoto(first: true, src: ImageSource.gallery),
                     icon: const Icon(Icons.photo, color: Colors.white),
                     label: const Text("Browse"),
                     style: ElevatedButton.styleFrom(
@@ -449,11 +448,7 @@ class _DirectVisitState extends State<DirectVisit> {
                 onTap: () => _showFullScreenImage(context, _photo2!),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _photo2!,
-                    fit: BoxFit.cover,
-                    height: 350,
-                  ),
+                  child: Image.file(_photo2!, fit: BoxFit.cover, height: 350),
                 ),
               ),
               const SizedBox(height: 16),
@@ -461,7 +456,8 @@ class _DirectVisitState extends State<DirectVisit> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: false, src: ImageSource.camera),
+                    onPressed:
+                        () => _pickPhoto(first: false, src: ImageSource.camera),
                     icon: const Icon(Icons.camera_alt, color: Colors.white),
                     label: const Text("Retake"),
                     style: ElevatedButton.styleFrom(
@@ -470,7 +466,9 @@ class _DirectVisitState extends State<DirectVisit> {
                     ),
                   ),
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: false, src: ImageSource.gallery),
+                    onPressed:
+                        () =>
+                            _pickPhoto(first: false, src: ImageSource.gallery),
                     icon: const Icon(Icons.photo, color: Colors.white),
                     label: const Text("Browse"),
                     style: ElevatedButton.styleFrom(
@@ -508,43 +506,45 @@ class _DirectVisitState extends State<DirectVisit> {
                 controller: _pageCtrl,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 itemCount: photos.length,
-                itemBuilder: (context, i) => GestureDetector(
-                  onTap: () => _showFullScreenImage(context, photos[i]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Stack(
-                      children: [
-                        Image.file(
-                          photos[i],
-                          fit: BoxFit.cover,
-                          height: double.infinity,
-                          width: double.infinity,
-                        ),
-                        Positioned(
-                          right: 10,
-                          bottom: 10,
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.fullscreen_sharp,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 4.0,
-                                  color: Colors.black.withOpacity(1),
-                                  offset: const Offset(2, 2),
-                                ),
-                              ],
+                itemBuilder:
+                    (context, i) => GestureDetector(
+                      onTap: () => _showFullScreenImage(context, photos[i]),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Stack(
+                          children: [
+                            Image.file(
+                              photos[i],
+                              fit: BoxFit.cover,
+                              height: double.infinity,
+                              width: double.infinity,
                             ),
-                            onPressed: () => _showFullScreenImage(context, photos[i]),
-                          ),
+                            Positioned(
+                              right: 10,
+                              bottom: 10,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.fullscreen_sharp,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 4.0,
+                                      color: Colors.black.withOpacity(1),
+                                      offset: const Offset(2, 2),
+                                    ),
+                                  ],
+                                ),
+                                onPressed:
+                                    () => _showFullScreenImage(
+                                      context,
+                                      photos[i],
+                                    ),
+                              ),
+                            ),
+                          ],
                         ),
-
-
-
-                      ],
+                      ),
                     ),
-                  ),
-                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -590,9 +590,9 @@ class _DirectVisitState extends State<DirectVisit> {
             itemCount: photos.length,
             itemBuilder:
                 (context, i) => ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(photos[i], fit: BoxFit.cover),
-            ),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(photos[i], fit: BoxFit.cover),
+                ),
           ),
         ),
         const SizedBox(height: 16),
@@ -668,8 +668,8 @@ class _DirectVisitState extends State<DirectVisit> {
 
     // 3. Cek duplikat keseluruhan
     if (mainPersons.any(
-          (e) =>
-      e['jabatan'] == selectedMainJabatan &&
+      (e) =>
+          e['jabatan'] == selectedMainJabatan &&
           e['nama'] == _namaPicController.text &&
           e['telp'] == selectedMainTelp,
     )) {
@@ -704,30 +704,30 @@ class _DirectVisitState extends State<DirectVisit> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          body: Stack(
-            children: [
-              Center(
-                child: InteractiveViewer(
-                  child: Image.file(photo),
-                ),
+        builder:
+            (_) => Scaffold(
+              backgroundColor: Colors.black,
+              body: Stack(
+                children: [
+                  Center(child: InteractiveViewer(child: Image.file(photo))),
+                  Positioned(
+                    top: 40,
+                    right: 20,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                top: 40,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -800,22 +800,22 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          jabatanList
-                              .map(
-                                (j) => DropdownMenuItem(
-                              value: j,
-                              child: Text(
-                                j.toUpperCase(),
-                                style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              jabatanList
+                                  .map(
+                                    (j) => DropdownMenuItem(
+                                      value: j,
+                                      child: Text(
+                                        j.toUpperCase(),
+                                        style: TextStyle(color: dropdownLight),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (v) => setState(() {
-                            selectedJabatan = v;
-                            _hasInteractedWithJabatan = true;
-                          }),
+                                selectedJabatan = v;
+                                _hasInteractedWithJabatan = true;
+                              }),
                           onTap: () {
                             setState(() {
                               _hasInteractedWithJabatan = true;
@@ -823,9 +823,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           },
                           validator:
                               (v) =>
-                          _hasInteractedWithJabatan && v == null
-                              ? 'Harap pilih jabatan'
-                              : null,
+                                  _hasInteractedWithJabatan && v == null
+                                      ? 'Harap pilih jabatan'
+                                      : null,
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -881,24 +881,24 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          areaList
-                              .map(
-                                (a) => DropdownMenuItem(
-                              value: a,
-                              child: Text(
-                                a.toUpperCase(),
-                                style: const TextStyle(
-                                  color: dropdownLight,
-                                ),
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              areaList
+                                  .map(
+                                    (a) => DropdownMenuItem(
+                                      value: a,
+                                      child: Text(
+                                        a.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: dropdownLight,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (val) => setState(() {
-                            selectedArea = val;
-                            _hasInteractWithArea = true;
-                          }),
+                                selectedArea = val;
+                                _hasInteractWithArea = true;
+                              }),
                           onTap: () {
                             setState(() {
                               _hasInteractWithArea = true;
@@ -906,9 +906,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           },
                           validator:
                               (v) =>
-                          _hasInteractWithArea && v == null
-                              ? 'Harap Pilih Area'
-                              : null,
+                                  _hasInteractWithArea && v == null
+                                      ? 'Harap Pilih Area'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -943,24 +943,24 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          cabangList
-                              .map(
-                                (c) => DropdownMenuItem(
-                              value: c,
-                              child: Text(
-                                c,
-                                style: const TextStyle(
-                                  color: dropdownLight,
-                                ),
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              cabangList
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(
+                                        c,
+                                        style: const TextStyle(
+                                          color: dropdownLight,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (val) => setState(() {
-                            selectedCabang = val;
-                            _hasInteractWithCabang = true;
-                          }),
+                                selectedCabang = val;
+                                _hasInteractWithCabang = true;
+                              }),
                           onTap: () {
                             setState(() {
                               _hasInteractWithCabang = true;
@@ -968,9 +968,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           },
                           validator:
                               (v) =>
-                          _hasInteractWithCabang && v == null
-                              ? 'Harap Pilih Cabang'
-                              : null,
+                                  _hasInteractWithCabang && v == null
+                                      ? 'Harap Pilih Cabang'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -1005,24 +1005,24 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          produkList
-                              .map(
-                                (p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(
-                                p,
-                                style: const TextStyle(
-                                  color: dropdownLight,
-                                ),
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              produkList
+                                  .map(
+                                    (p) => DropdownMenuItem(
+                                      value: p,
+                                      child: Text(
+                                        p,
+                                        style: const TextStyle(
+                                          color: dropdownLight,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (val) => setState(() {
-                            selectedProduk = val;
-                            _hasInteractWithProduk = true;
-                          }),
+                                selectedProduk = val;
+                                _hasInteractWithProduk = true;
+                              }),
                           onTap: () {
                             setState(() {
                               _hasInteractWithProduk = true;
@@ -1030,9 +1030,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           },
                           validator:
                               (v) =>
-                          _hasInteractWithProduk && v == null
-                              ? 'Harap Pilih Produk'
-                              : null,
+                                  _hasInteractWithProduk && v == null
+                                      ? 'Harap Pilih Produk'
+                                      : null,
                         ),
                         const SizedBox(height: 0),
                         Row(
@@ -1082,25 +1082,25 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          dealerList
-                              .map(
-                                (d) => DropdownMenuItem(
-                              value: d,
-                              child: Text(
-                                d,
-                                style: const TextStyle(
-                                  color: dropdownLight,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              dealerList
+                                  .map(
+                                    (d) => DropdownMenuItem(
+                                      value: d,
+                                      child: Text(
+                                        d,
+                                        style: const TextStyle(
+                                          color: dropdownLight,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (val) => setState(() {
-                            selectedDealer = val;
-                            _hasInteractWithDealer = true;
-                          }),
+                                selectedDealer = val;
+                                _hasInteractWithDealer = true;
+                              }),
                           onTap: () {
                             setState(() {
                               _hasInteractWithDealer = true;
@@ -1108,9 +1108,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           },
                           validator:
                               (v) =>
-                          _hasInteractWithDealer && v == null
-                              ? 'Harap Pilih Dealer'
-                              : null,
+                                  _hasInteractWithDealer && v == null
+                                      ? 'Harap Pilih Dealer'
+                                      : null,
                         ),
                       ],
                     ),
@@ -1165,22 +1165,22 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          visitTypeList
-                              .map(
-                                (v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(
-                                v,
-                                style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              visitTypeList
+                                  .map(
+                                    (v) => DropdownMenuItem(
+                                      value: v,
+                                      child: Text(
+                                        v,
+                                        style: TextStyle(color: dropdownLight),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (val) => setState(() {
-                            selectedVisitType = val;
-                            _hasInteractWithVisitType = true;
-                          }),
+                                selectedVisitType = val;
+                                _hasInteractWithVisitType = true;
+                              }),
                           onTap: () {
                             setState(() {
                               _hasInteractWithVisitType = true;
@@ -1188,9 +1188,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           },
                           validator:
                               (v) =>
-                          _hasInteractWithVisitType && v == null
-                              ? 'Harap Pilih Tipe Visit'
-                              : null,
+                                  _hasInteractWithVisitType && v == null
+                                      ? 'Harap Pilih Tipe Visit'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -1225,22 +1225,22 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          tujuanVisitList
-                              .map(
-                                (v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(
-                                v,
-                                style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              tujuanVisitList
+                                  .map(
+                                    (v) => DropdownMenuItem(
+                                      value: v,
+                                      child: Text(
+                                        v,
+                                        style: TextStyle(color: dropdownLight),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (val) => setState(() {
-                            selectedTujuanVisit = val;
-                            _hasInteractWithTujuanVisit = true;
-                          }),
+                                selectedTujuanVisit = val;
+                                _hasInteractWithTujuanVisit = true;
+                              }),
                           onTap: () {
                             setState(() {
                               _hasInteractWithTujuanVisit = true;
@@ -1248,9 +1248,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           },
                           validator:
                               (v) =>
-                          _hasInteractWithTujuanVisit && v == null
-                              ? 'Harap Pilih Tujuan Visit'
-                              : null,
+                                  _hasInteractWithTujuanVisit && v == null
+                                      ? 'Harap Pilih Tujuan Visit'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -1262,9 +1262,9 @@ class _DirectVisitState extends State<DirectVisit> {
                         ),
                         _buildDateField(
                           selectedTanggalMulai,
-                              () => _selectDate(
+                          () => _selectDate(
                             context,
-                                (date) =>
+                            (date) =>
                                 setState(() => selectedTanggalMulai = date),
                           ),
                         ),
@@ -1278,9 +1278,9 @@ class _DirectVisitState extends State<DirectVisit> {
                         ),
                         _buildDateField(
                           selectedTanggalBerakhir,
-                              () => _selectDate(
+                          () => _selectDate(
                             context,
-                                (date) =>
+                            (date) =>
                                 setState(() => selectedTanggalBerakhir = date),
                           ),
                         ),
@@ -1294,10 +1294,10 @@ class _DirectVisitState extends State<DirectVisit> {
                         ),
                         _buildDateField(
                           selectedTanggalPenyelesaian,
-                              () => _selectDate(
+                          () => _selectDate(
                             context,
-                                (date) => setState(
-                                  () => selectedTanggalPenyelesaian = date,
+                            (date) => setState(
+                              () => selectedTanggalPenyelesaian = date,
                             ),
                           ),
                         ),
@@ -1345,14 +1345,14 @@ class _DirectVisitState extends State<DirectVisit> {
                           ],
                           onChanged:
                               (val) => setState(() {
-                            selectedNamaPIC = val;
-                            namaPICLength = val.length;
-                          }),
+                                selectedNamaPIC = val;
+                                namaPICLength = val.length;
+                              }),
                           validator:
                               (v) =>
-                          v == null || v.isEmpty
-                              ? 'Nama PIC wajib diisi'
-                              : null,
+                                  v == null || v.isEmpty
+                                      ? 'Nama PIC wajib diisi'
+                                      : null,
                         ),
 
                         const SizedBox(height: 12),
@@ -1374,7 +1374,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 maxLength: 1000,
                                 maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
+                                    MaxLengthEnforcement.enforced,
                                 minLines: 3,
                                 maxLines: 5,
                                 decoration: InputDecoration(
@@ -1399,14 +1399,14 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 onChanged:
                                     (val) => setState(() {
-                                  temaDiskusi = val;
-                                  temaDiskusiLength = val.length;
-                                }),
+                                      temaDiskusi = val;
+                                      temaDiskusiLength = val.length;
+                                    }),
                                 validator:
                                     (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Tema diskusi wajib diisi'
-                                    : null,
+                                        v == null || v.isEmpty
+                                            ? 'Tema diskusi wajib diisi'
+                                            : null,
                               ),
                             ),
                           ],
@@ -1430,7 +1430,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 maxLength: 1000,
                                 maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
+                                    MaxLengthEnforcement.enforced,
                                 minLines: 3,
                                 maxLines: 5,
                                 decoration: InputDecoration(
@@ -1455,14 +1455,14 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 onChanged:
                                     (val) => setState(() {
-                                  problem = val;
-                                  problemLength = val.length;
-                                }),
+                                      problem = val;
+                                      problemLength = val.length;
+                                    }),
                                 validator:
                                     (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Problem wajib diisi'
-                                    : null,
+                                        v == null || v.isEmpty
+                                            ? 'Problem wajib diisi'
+                                            : null,
                               ),
                             ),
                           ],
@@ -1486,7 +1486,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 maxLength: 1000,
                                 maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
+                                    MaxLengthEnforcement.enforced,
                                 minLines: 3,
                                 maxLines: 5,
                                 decoration: InputDecoration(
@@ -1511,14 +1511,14 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 onChanged:
                                     (val) => setState(() {
-                                  followUp = val;
-                                  followUpLength = val.length;
-                                }),
+                                      followUp = val;
+                                      followUpLength = val.length;
+                                    }),
                                 validator:
                                     (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Follow-Up wajib diisi'
-                                    : null,
+                                        v == null || v.isEmpty
+                                            ? 'Follow-Up wajib diisi'
+                                            : null,
                               ),
                             ),
                           ],
@@ -1542,7 +1542,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 maxLength: 1000,
                                 maxLengthEnforcement:
-                                MaxLengthEnforcement.enforced,
+                                    MaxLengthEnforcement.enforced,
                                 minLines: 3,
                                 maxLines: 5,
                                 decoration: InputDecoration(
@@ -1567,14 +1567,14 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 onChanged:
                                     (val) => setState(() {
-                                  description = val;
-                                  descriptionLength = val.length;
-                                }),
+                                      description = val;
+                                      descriptionLength = val.length;
+                                    }),
                                 validator:
                                     (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Deskripsi wajib diisi'
-                                    : null,
+                                        v == null || v.isEmpty
+                                            ? 'Deskripsi wajib diisi'
+                                            : null,
                               ),
                             ),
                           ],
@@ -1623,22 +1623,22 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                          jabatanList
-                              .map(
-                                (j) => DropdownMenuItem(
-                              value: j,
-                              child: Text(
-                                j.toUpperCase(),
-                                style: TextStyle(color: dropdownLight),
-                              ),
-                            ),
-                          )
-                              .toList(),
+                              jabatanList
+                                  .map(
+                                    (j) => DropdownMenuItem(
+                                      value: j,
+                                      child: Text(
+                                        j.toUpperCase(),
+                                        style: TextStyle(color: dropdownLight),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (v) => setState(() {
-                            selectedMainJabatan =
-                                v; // selalu salah satu dari jabatanList
-                          }),
+                                selectedMainJabatan =
+                                    v; // selalu salah satu dari jabatanList
+                              }),
                           validator:
                               (v) => v == null ? 'Harap Pilih Jabatan' : null,
                         ),
@@ -1661,9 +1661,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           onChanged: (_) => setState(() {}),
                           validator:
                               (v) =>
-                          (v == null || v.isEmpty)
-                              ? 'Nama wajib diisi'
-                              : null,
+                                  (v == null || v.isEmpty)
+                                      ? 'Nama wajib diisi'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
 
@@ -1732,8 +1732,8 @@ class _DirectVisitState extends State<DirectVisit> {
 
                               // 2. Cek duplikat keseluruhan (jabatan+nama+telp)
                               if (mainPersons.any(
-                                    (e) =>
-                                e['jabatan'] == selectedMainJabatan &&
+                                (e) =>
+                                    e['jabatan'] == selectedMainJabatan &&
                                     e['nama'] == _namaPicController.text &&
                                     e['telp'] == selectedMainTelp,
                               )) {
@@ -1747,7 +1747,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
                               // 3. Cek duplikat nomor
                               if (mainPersons.any(
-                                    (e) => e['telp'] == selectedMainTelp,
+                                (e) => e['telp'] == selectedMainTelp,
                               )) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -1795,17 +1795,17 @@ class _DirectVisitState extends State<DirectVisit> {
                           const SizedBox(height: 16),
                           GridView.builder(
                             shrinkWrap:
-                            true, // penting biar nggak ambil seluruh layar
+                                true, // penting biar nggak ambil seluruh layar
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: mainPersons.length,
                             gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, // 2 kartu per baris
-                              crossAxisSpacing: 12, // jarak horisontal
-                              mainAxisSpacing: 12, // jarak vertikal
-                              childAspectRatio:
-                              3 / 3, // sesuaikan lebar:tinggi
-                            ),
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2, // 2 kartu per baris
+                                  crossAxisSpacing: 12, // jarak horisontal
+                                  mainAxisSpacing: 12, // jarak vertikal
+                                  childAspectRatio:
+                                      3 / 3, // sesuaikan lebar:tinggi
+                                ),
                             itemBuilder: (context, i) {
                               final pic = mainPersons[i];
                               return Card(
@@ -1881,7 +1881,6 @@ class _DirectVisitState extends State<DirectVisit> {
                         // Preview foto (menggunakan if-else if dalam widget tree)
                         // if (isPhoto1Uploaded && isPhoto2Uploaded)
                         //   _photoCarouselWithControls(),
-
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -1991,7 +1990,7 @@ class _DirectVisitState extends State<DirectVisit> {
                           alignment: Alignment.center,
                           child: OutlinedButton(
                             onPressed:
-                            _updateLocation, // nanti Anda implementasi method ini
+                                _updateLocation, // nanti Anda implementasi method ini
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: textButton, width: 2),
                               shape: RoundedRectangleBorder(

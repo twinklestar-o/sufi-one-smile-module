@@ -68,12 +68,12 @@ class DamsHomePage extends StatelessWidget {
                   _menuCard(
                     icon: Icons.history,
                     label: 'History',
-                    onTap: () => Get.toNamed('/history'),
+                    onTap: () => Get.toNamed(DamsRoute.historyPage),
                   ),
                   _menuCard(
                     icon: Icons.table_chart,
                     label: 'Data Master',
-                    onTap: () => Get.toNamed('/data-master'),
+                    onTap: () => Get.toNamed(DamsRoute.homePage),
                   ),
                 ],
               ),

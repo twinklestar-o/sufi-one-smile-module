@@ -13,6 +13,23 @@ class ScanCodePage extends StatefulWidget {
 class _ScanCodePageState extends State<ScanCodePage> {
   final ScanController _scanController = Get.put(ScanController());
   bool _isLoading = false;
+  MobileScannerController? _mobileScannerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _mobileScannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+  }
+
+  @override
+  void dispose() {
+    _mobileScannerController?.dispose();
+    super.dispose();
+  }
 
   void _handleBarcode(BarcodeCapture barcodes) async {
     if (barcodes.barcodes.isEmpty || _isLoading) return;
@@ -23,6 +40,9 @@ class _ScanCodePageState extends State<ScanCodePage> {
     setState(() => _isLoading = true);
 
     try {
+      // Stop the camera first
+      await _mobileScannerController?.stop();
+
       // First verify the asset exists by fetching it
       await _scanController.getAssetByKodeAset(barcode.rawValue!);
 
@@ -31,7 +51,9 @@ class _ScanCodePageState extends State<ScanCodePage> {
         Get.to(() => AssetFormPage(kodeAset: barcode.rawValue!));
       }
     } catch (e) {
+      // Restart the camera if there's an error
       if (mounted) {
+        await _mobileScannerController?.start();
         Get.snackbar(
           'Error',
           e.toString(),
@@ -56,11 +78,7 @@ class _ScanCodePageState extends State<ScanCodePage> {
         children: [
           MobileScanner(
             onDetect: _handleBarcode,
-            controller: MobileScannerController(
-              detectionSpeed: DetectionSpeed.normal,
-              facing: CameraFacing.back,
-              torchEnabled: false,
-            ),
+            controller: _mobileScannerController,
           ),
           if (_isLoading) const Center(child: CircularProgressIndicator()),
         ],
