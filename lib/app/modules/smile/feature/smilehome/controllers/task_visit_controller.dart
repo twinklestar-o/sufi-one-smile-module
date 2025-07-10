@@ -49,14 +49,18 @@ class TaskVisitController extends GetxController {
     }
   }
 
-  // Search query
+  //search query
   void updateSearchQuery(String query) {
-    filteredTaskVisitData.value = taskVisitData.where((visit) {
-      return (visit.branchCode ?? '').toLowerCase().contains(query.toLowerCase()) ||
-          (visit.namaPic ?? '').toLowerCase().contains(query.toLowerCase()) ||
-          (visit.tipeVisit ?? '').toLowerCase().contains(query.toLowerCase()) ||
-          (visit.tujuanVisit ?? '').toLowerCase().contains(query.toLowerCase());
-    }).toList();
+    if (query.isEmpty) {
+      filteredTaskVisitData.assignAll(taskVisitData);
+    } else {
+      filteredTaskVisitData.assignAll(
+        taskVisitData.where((visit) {
+          final branchCode = visit.branchCode?.toLowerCase() ?? '';
+          return branchCode == query.toLowerCase(); // ⬅ Ubah contains() jadi ==
+        }).toList(),
+      );
+    }
   }
 
   // Tambah Visit baru
