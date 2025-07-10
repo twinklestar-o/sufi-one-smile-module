@@ -1,99 +1,76 @@
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:get_storage/get_storage.dart';
+import '../../../models/visit.dart';
 
 class TaskVisitController extends GetxController {
-  // Data asli dari JSON
-  final RxList<Map<String, dynamic>> taskVisitData =
-      <Map<String, dynamic>>[].obs;
-
-  // Data yang sudah difilter (yang akan ditampilkan di UI)
-  final RxList<Map<String, dynamic>> filteredTaskVisitData =
-      <Map<String, dynamic>>[].obs;
-
-  // Query pencarian yang dimasukkan pengguna
-  final RxString searchQuery = ''.obs;
+  var taskVisitData = <Visit>[].obs;
+  var filteredTaskVisitData = <Visit>[].obs;
+  var isLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadTaskVisitData();
-
-    // Debounce: filter data setelah pengguna berhenti mengetik selama 300ms.
-    debounce(
-      searchQuery,
-          (_) => _filterData(),
-      time: const Duration(milliseconds: 300),
-    );
-
-    // Ketika data asli (taskVisitData) pertama kali dimuat, langsung filter (tampilkan semua jika searchQuery kosong)
-    ever(taskVisitData, (_) => _filterData());
+    fetchTaskVisitData();
   }
 
-  // Fungsi untuk memuat data dari file JSON
-  Future<void> loadTaskVisitData() async {
+  // Ambil data dari API Direct Visit Planning
+  Future<void> fetchTaskVisitData() async {
+    isLoading.value = true;
+    final box = GetStorage();
+    final token = box.read('token');
+    final url = Uri.parse('http://192.168.0.105:8000/api/direct-visit/planning');
+
     try {
-      final String response = await rootBundle.loadString(
-        'res/dummyData/task/dataa.json',
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
-      final data = jsonDecode(response) as List<dynamic>;
-      taskVisitData.assignAll(
-        data.cast<Map<String, dynamic>>(),
-      ); // Gunakan assignAll
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        final List<dynamic> data = json is List ? json : json['data'];
+
+        final List<Visit> visits = data.map((e) => Visit.fromJson(e)).toList();
+
+        taskVisitData.assignAll(visits);
+        filteredTaskVisitData.assignAll(visits);
+      } else {
+        Get.snackbar('Gagal', 'Gagal mengambil data (${response.statusCode})');
+      }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal memuat data kunjungan tugas: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      // Jika gagal, pastikan filtered data juga kosong atau tampilkan pesan error
-      filteredTaskVisitData.clear();
+      Get.snackbar('Error', 'Terjadi kesalahan: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  // Fungsi internal untuk memfilter data berdasarkan searchQuery saat ini
-  void _filterData() {
-    final keyword = searchQuery.value.toLowerCase();
-    if (keyword.isEmpty) {
-      // Jika query kosong, tampilkan semua data
-      filteredTaskVisitData.assignAll(taskVisitData);
-    } else {
-      // Jika ada query, filter data
-      filteredTaskVisitData.assignAll(
-        taskVisitData.where((item) {
-          final cabang = item['cabang']?.toLowerCase() ?? '';
-          final pic = item['pic']?.toLowerCase() ?? '';
-          final type = item['type']?.toLowerCase() ?? '';
-          final activity = item['activity']?.toLowerCase() ?? '';
-
-          return cabang.contains(keyword) ||
-              pic.contains(keyword) ||
-              type.contains(keyword) ||
-              activity.contains(keyword);
-        }).toList(),
-      );
-    }
-  }
-
-  // Fungsi publik yang dipanggil dari UI untuk memperbarui query pencarian.
-  // Perubahan ini akan memicu `debounce` yang kemudian akan memanggil `_filterData`.
+  // Search query
   void updateSearchQuery(String query) {
-    searchQuery.value = query;
+    filteredTaskVisitData.value = taskVisitData.where((visit) {
+      return (visit.branchCode ?? '').toLowerCase().contains(query.toLowerCase()) ||
+          (visit.namaPic ?? '').toLowerCase().contains(query.toLowerCase()) ||
+          (visit.tipeVisit ?? '').toLowerCase().contains(query.toLowerCase()) ||
+          (visit.tujuanVisit ?? '').toLowerCase().contains(query.toLowerCase());
+    }).toList();
   }
 
-  // Fungsi untuk memperbarui data yang sudah ada setelah diedit
-  void updateTaskVisit(Map<String, dynamic> updatedData) {
-    final index = taskVisitData.indexWhere((item) => item['id'] == updatedData['id']);
-    if (index != -1) {
-      // Update data di list asli
-      taskVisitData[index] = updatedData;
-      filteredTaskVisitData.refresh(); // Mengupdate filtered data
-    }
-    // Tambah data baru ke task visit list
-    void addTaskVisit(Map<String, dynamic> newVisit) {
-      taskVisitData.add(newVisit);
-      filteredTaskVisitData.assignAll(taskVisitData); // Perbarui yang tampil juga
-    }
+  // Tambah Visit baru
+  void addTaskVisit(Visit newVisit) {
+    taskVisitData.add(newVisit);
+    filteredTaskVisitData.assignAll(taskVisitData);
+  }
 
+  // Update Visit
+  void updateTaskVisit(Visit updatedVisit) {
+    final index = taskVisitData.indexWhere((e) => e.id == updatedVisit.id);
+    if (index != -1) {
+      taskVisitData[index] = updatedVisit;
+      filteredTaskVisitData.assignAll(taskVisitData);
+    }
   }
 }

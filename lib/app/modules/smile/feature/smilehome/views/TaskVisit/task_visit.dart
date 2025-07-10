@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/task_visit_controller.dart';
+import '../../../../models/visit.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/visit_search_delegate.dart';
+import 'package:sufi_one/app/modules/smile/smile_route.dart';
 
 class TaskVisit extends GetView<TaskVisitController> {
   const TaskVisit({super.key});
@@ -11,10 +13,10 @@ class TaskVisit extends GetView<TaskVisitController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0048A7), // Gunakan kode warna hex
+        backgroundColor: const Color(0xFF0048A7),
         title: const Text(
           'Task Visit Dealer',
-          style: TextStyle(color: Colors.white), // Warna teks putih
+          style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -24,72 +26,81 @@ class TaskVisit extends GetView<TaskVisitController> {
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {
-              // Menampilkan pencarian
               showSearch(
                 context: context,
-                delegate: VisitSearchDelegate(
-                  controller,
-                ), // Memanggil VisitSearchDelegate
+                delegate: VisitSearchDelegate(controller),
               );
             },
           ),
         ],
       ),
+
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF0048A7),
+        child: const Icon(Icons.add, color: Colors.white),
+        onPressed: () async {
+          final result = await Get.toNamed('/public/smile/direct_visit');
+          if (result != null && result is Visit) {
+            controller.taskVisitData.add(result);
+            controller.filteredTaskVisitData.assignAll(controller.taskVisitData);
+          }
+        },
+      ),
+
       body: Obx(() {
-        if (controller.filteredTaskVisitData.isEmpty) {
+        if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        if (controller.filteredTaskVisitData.isEmpty) {
+          return const Center(child: Text('Tidak ada data Task Visit.'));
+        }
+
         return ListView.builder(
           padding: const EdgeInsets.all(8.0),
-          itemCount:
-              controller.filteredTaskVisitData.length, // Gunakan filtered data
+          itemCount: controller.filteredTaskVisitData.length,
           itemBuilder: (context, index) {
-            final data =
-                controller
-                    .filteredTaskVisitData[index]; // Ambil data dari filtered
+            final visit = controller.filteredTaskVisitData[index];
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8.0),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16.0),
-                title: Text(
-                  data['cabang'] ?? '',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 4),
-                    Text('PIC: ${data['pic'] ?? ''}'),
-                    Text(data['type'] ?? ''),
-                    Text(data['activity'] ?? ''),
                     Text(
-                      data['timestamp'] ?? '',
+                      visit.branchCode ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('PIC: ${visit.namaPic ?? ''}'),
+                    Text('Tipe Visit: ${visit.tipeVisit ?? ''}'),
+                    Text('Tujuan: ${visit.tujuanVisit ?? ''}'),
+                    Text(
+                      _formatTanggal(visit.dariTanggal),
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _menuCard(
-                      icon: Icons.visibility,
-                      label: 'View',
-                      onTap:
-                          () => Get.toNamed(
-                            '/public/smile/task_view',
-                            arguments: data,
-                          ),
-                    ),
-                    const SizedBox(width: 8),
-                    _menuCard(
-                      icon: Icons.edit,
-                      label: 'Edit',
-                      onTap:
-                          () => Get.toNamed(
-                            '/public/smile/task_edit',
-                            arguments: data,
-                          ),
-                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.remove_red_eye),
+                          label: const Text("View"),
+                          onPressed: () => Get.toNamed(SmileRoutes.taskView, arguments: visit),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.edit),
+                          label: const Text("Edit"),
+                          onPressed: () async {
+                            final result = await Get.toNamed(SmileRoutes.taskEdit, arguments: visit);
+                            if (result != null && result is Visit) {
+                              controller.updateTaskVisit(result);
+                            }
+                          },
+                        ),
+                      ],
+                    )
                   ],
                 ),
               ),
@@ -100,26 +111,8 @@ class TaskVisit extends GetView<TaskVisitController> {
     );
   }
 
-  Widget _menuCard({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return OutlinedButton(
-      onPressed: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.blue),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(color: Colors.blue)),
-        ],
-      ),
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Colors.blue),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      ),
-    );
+  String _formatTanggal(DateTime? date) {
+    if (date == null) return '';
+    return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
   }
 }

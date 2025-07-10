@@ -1,182 +1,115 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'package:intl/intl.dart';
-
-import '../views/TaskVisit/task_edit.dart'; // Import for date formatting in controller for default values if needed
+import '../../../models/visit.dart';
 
 class TaskEditController extends GetxController {
-  RxMap<String, dynamic> editedData = RxMap<String, dynamic>({});
   final formKey = GlobalKey<FormState>();
+  final RxMap<String, dynamic> editedData = <String, dynamic>{}.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    // Inisialisasi editedData dari arguments atau jika tidak ada, berikan nilai default
-    // Pastikan semua keys yang digunakan di UI ada di sini, meskipun nilainya kosong
-    editedData.value = (Get.arguments as Map<String, dynamic>?) ?? {
-      'jabatan': '',
-      'area': '',
-      'cabang': '',
-      'produk': '',
-      'dealer':'',
-      'type': '',
-      'activity': '',
-      'date_start': '',
-      'date_finish': '',
-      'date_finish_actual': '',
-      'pic': '',
-      'discussion': '',
-      'problem': '',
-      'follow up': '',
-      'description': '',
-      'pelakasanaan': '',
-      'noPlan': '',
-      'timestamp': ''
+  void initializeData(Visit visit) {
+    editedData.value = {
+      'id': visit.id,
+      'jabatanSaya': visit.jabatanSaya ?? '',
+      'areaCode': visit.areaCode ?? '',
+      'branchCode': visit.branchCode ?? '',
+      'productCode': visit.productCode ?? '',
+      'dealerCode': visit.dealerCode ?? '',
+      'tipeVisit': visit.tipeVisit ?? '',
+      'tujuanVisit': visit.tujuanVisit ?? '',
+      'dariTanggal': visit.dariTanggal,
+      'sampaiTanggal': visit.sampaiTanggal,
+      'tanggalSelesai': visit.tanggalSelesai,
+      'namaPic': visit.namaPic ?? '',
+      'themeOfDiscussion': visit.themeOfDiscussion ?? '',
+      'problem': visit.problem ?? '',
+      'followUp': visit.followUp ?? '',
+      'description': visit.description ?? '',
+      'mainJabatan': '',
+      'mainNamaPic': '',
+      'mainNoTelp': '',
+      'mainLokasi': '',
+      'status': 'Terlaksana',
     };
+
+    if (visit.mainPersons != null && visit.mainPersons!.isNotEmpty) {
+      final main = visit.mainPersons!.first;
+      editedData['mainJabatan'] = main['jabatan'] ?? '';
+      editedData['mainNamaPic'] = main['nama'] ?? '';
+      editedData['mainNoTelp'] = main['no_telp'] ?? '';
+      editedData['mainLokasi'] = main['lokasi'] ?? '';
+    }
   }
 
-  // Fungsi untuk menampilkan date picker
-  Future<DateTime?> selectDate(BuildContext context) async {
-    DateTime initialDate = DateTime.now();
-
-    // Coba parse tanggal yang sudah ada dari editedData jika ada dan valid
-    String? currentPickedDateString = editedData['date_start']; // Contoh mengambil dari date_start
-    if (context.findAncestorWidgetOfExactType<TaskEdit>()?.controller.editedData['date_start'] != null &&
-        context.findAncestorWidgetOfExactType<TaskEdit>()!.controller.editedData['date_start']!.isNotEmpty) {
-      try {
-        initialDate = DateFormat('yyyy-MM-dd').parse(context.findAncestorWidgetOfExactType<TaskEdit>()!.controller.editedData['date_start']!);
-      } catch (e) {
-        print("Error parsing initial date: $e");
-        // Jika gagal parse, biarkan initialDate sebagai DateTime.now()
-      }
-    }
-
+  Future<DateTime?> selectDate(BuildContext context, String key) async {
+    DateTime initialDate = editedData[key] ?? DateTime.now();
 
     DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: initialDate, // Menggunakan tanggal yang ada atau tanggal saat ini
-      firstDate: DateTime(2000), // Tanggal paling awal yang bisa dipilih
-      lastDate: DateTime(2101), // Tanggal paling akhir yang bisa dipilih
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Colors.blue, // Warna background header date picker
-              onPrimary: Colors.white, // Warna teks header (hari, bulan, tahun)
-              surface: Colors.white, // Warna background date picker body
-              onSurface: Colors.black, // Warna teks tanggal
+            colorScheme: const ColorScheme.light(
+              primary: Colors.blue,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
             ),
-            dialogBackgroundColor: Colors.white, // Warna background dialog
+            dialogBackgroundColor: Colors.white,
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blue, // Warna tombol Cancel/OK
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.blue),
             ),
           ),
           child: child!,
         );
       },
     );
+
+    if (pickedDate != null) {
+      editedData[key] = pickedDate;
+    }
+
     return pickedDate;
   }
 
-  Future<void> saveEditedData() async {
+  Visit? saveEditedData() {
     if (formKey.currentState?.validate() ?? false) {
-      formKey.currentState?.save(); // Memastikan data tersimpan dengan benar
+      formKey.currentState?.save();
 
-      // Debugging: Print data edited
-      print("Edited Data: ${editedData.value}");
-
-      // Pastikan noPlan sudah terisi sebelum menyimpan
-      if (editedData['noPlan'] == null || editedData['noPlan'].isEmpty) {
-        Get.snackbar(
-          'Sukses',
-          'Data Berhasil Disimpan',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-
-      // Data yang akan disimpan. Pastikan semua field yang ingin Anda simpan sudah ada di sini.
-      final taskData = {
-        'noPlan': editedData['noPlan'] ?? '',
-        'cabang': editedData['cabang'] ?? '',
-        'pic': editedData['pic'] ?? '',
-        'type': editedData['type'] ?? '',
-        'activity': editedData['activity'] ?? '',
-        'timestamp': editedData['timestamp'] ?? '',
-        'jabatan': editedData['jabatan'] ?? '',
-        'area': editedData['area'] ?? '',
-        'produk': editedData['produk'] ?? '',
-        'dealer': editedData['dealer'] ?? '',
-        'date_start': editedData['date_start'] ?? '',
-        'date_finish': editedData['date_finish'] ?? '',
-        'date_finish_actual': editedData['date_finish_actual'] ?? '',
-        'discussion': editedData['discussion'] ?? '',
-        'problem': editedData['problem'] ?? '',
-        'follow up': editedData['follow up'] ?? '',
-        'description': editedData['description'] ?? '',
-        'pelakasanaan': editedData['pelakasanaan'] ?? '',
-        'main_jabatan': editedData['main_jabatan'] ?? '',
-        'main_nama_pic': editedData['main_nama_pic'] ?? '',
-        'main_no_telp': editedData['main_no_telp'] ?? '',
-        'main_lokasi': editedData['main_lokasi'] ?? '',
-      };
-
-      try {
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/task_data.json');
-        final existingData = await _loadLocalData();
-
-        // Periksa apakah noPlan ada di existingData untuk update atau tambah baru
-        existingData[editedData['noPlan']] = taskData;
-
-
-        // Simpan data yang sudah diperbarui ke file JSON
-        // Menggunakan .values.toList() jika Anda ingin menyimpan sebagai list of maps
-        // Jika Anda ingin menyimpan sebagai map of maps, cukup jsonEncode(existingData)
-        await file.writeAsString(jsonEncode(existingData.values.toList()), flush: true);
-
-        Get.snackbar(
-          'Success',
-          'Task data saved successfully',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        Get.back();
-      } catch (e) {
-        Get.snackbar(
-          'Error',
-          'Failed to save task data: $e',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
-    } else {
-      Get.snackbar(
-        'Error',
-        'Silahkan isi semua kolom.',
-        snackPosition: SnackPosition.BOTTOM,
+      return Visit(
+        id: editedData['id'],
+        jabatanSaya: editedData['jabatanSaya'],
+        areaCode: editedData['areaCode'],
+        branchCode: editedData['branchCode'],
+        productCode: editedData['productCode'],
+        dealerCode: editedData['dealerCode'],
+        tipeVisit: editedData['tipeVisit'],
+        tujuanVisit: editedData['tujuanVisit'],
+        dariTanggal: editedData['dariTanggal'],
+        sampaiTanggal: editedData['sampaiTanggal'],
+        tanggalSelesai: editedData['tanggalSelesai'],
+        namaPic: editedData['namaPic'],
+        themeOfDiscussion: editedData['themeOfDiscussion'],
+        problem: editedData['problem'],
+        followUp: editedData['followUp'],
+        description: editedData['description'],
+        photo1: null,
+        photo2: null,
+        latitude: null,
+        longitude: null,
+        mainPersons: [
+          {
+            'jabatan': editedData['mainJabatan'],
+            'nama': editedData['mainNamaPic'],
+            'no_telp': editedData['mainNoTelp'],
+            'lokasi': editedData['mainLokasi'],
+          }
+        ],
       );
     }
-  }
-
-  Future<Map<String, Map<String, dynamic>>> _loadLocalData() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/task_data.json');
-    if (await file.exists()) {
-      final String response = await file.readAsString();
-      final data = jsonDecode(response) as List<dynamic>;
-
-      // Membaca data dan mengorganisirnya dengan 'noPlan' sebagai key
-      return {for (var item in data) item['noPlan']: item.cast<String, dynamic>()};
-    }
-    return {};
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
+    return null;
   }
 }

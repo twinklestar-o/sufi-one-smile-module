@@ -1,199 +1,260 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/task_view_controller.dart'; // Pastikan controller TaskViewController telah ada
+import '../../../../models/visit.dart';
+import '../../../../smile_route.dart';
 
-class TaskView extends GetView<TaskViewController> {
+class TaskView extends StatelessWidget {
   const TaskView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic> data =
-        Get.arguments as Map<String, dynamic>? ?? {};
+    final Visit visit = Get.arguments;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0048A7), // Warna biru tua
-        title: const Text(
-          'View Task Visit',
-          style: TextStyle(color: Colors.white), // Teks putih
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // Ikon putih
-          onPressed: () => Get.back(),
-        ),
-      ),
-      body: Obx(() {
-        if (controller.taskData.isEmpty && data.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    Widget _buildSectionHeader(String title) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0048A7),
+            ),
+          ),
+          const Divider(height: 24, thickness: 1, color: Colors.grey),
+        ],
+      );
+    }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    Widget _buildDisplayField(String label, String value, {bool isLongText = false}) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: Text(
+                value,
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                maxLines: isLongText ? null : 1,
+                overflow: isLongText ? TextOverflow.clip : TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildPhotoSection(String title, String? photoUrl1, String? photoUrl2) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0048A7)),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // --- Image Section (like TaskEdit) ---
-              Container(
-                width: double.infinity,
-                height: 200,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(
-                      'res/images/car.jpg',
-                    ), // Use the same image as TaskEdit
-                    fit: BoxFit.cover,
-                  ),
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(8),
-                  ), // Add border radius for consistency
-                ),
-              ),
-              const SizedBox(height: 16), // Spacing after the image
-              // === BAGIAN DATA TASK ===
-              _buildDataSectionCard(
-                title: 'Data Task',
-                children: [
-                  _buildField('Jabatan Saya', data['jabatan'] ?? '-'),
-                  _buildField('Area', data['area'] ?? '-'),
-                  _buildField('Cabang', data['cabang'] ?? '-'),
-                  _buildField('Produk', data['produk'] ?? '-'),
-                  _buildField('Dealer', data['dealer'] ?? '-'),
-                ],
-              ),
-              const SizedBox(height: 24), // Jarak antar bagian
-              // === BAGIAN DATA VISIT ===
-              _buildDataSectionCard(
-                title: 'Data Visit',
-                children: [
-                  _buildField('Tipe visit', data['type'] ?? '-'),
-                  _buildField('Tujuan visit', data['activity'] ?? '-'),
-                  // Corrected to use date_finish_actual for "Tanggal selesai" if that's the intended field
-                  _buildField('Dari tanggal', data['date_start'] ?? '-'),
-                  _buildField('Sampai tanggal', data['date_finish'] ?? '-'),
-                  _buildField(
-                    'Tanggal selesai',
-                    data['date_finish_actual'] ?? '-',
-                  ), // Changed key here
-                  _buildField('Nama PIC', data['pic'] ?? '-'),
-                  _buildField('Theme discussion', data['discussion'] ?? '-'),
-                  _buildField('Problem', data['problem'] ?? '-'),
-                  _buildField('Follow Up', data['follow up'] ?? '-'),
-                  _buildField('Description', data['description'] ?? '-'),
-                  _buildField('Keterangan Pelaksanaan', data['pelakasanaan'] ?? '-',),
-                  _buildField('Status', data['status'] ?? '-',),
-                ],
-              ),
-              const SizedBox(height: 24), // Jarak antar bagian
-              // === BAGIAN MAIN PERSON ===
-              _buildDataSectionCard(
-                title: 'Main Person',
-                children: [
-                  _buildField('Jabatan PIC', data['main_jabatan'] ?? '-'),
-                  _buildField('Nama PIC', data['main_nama_pic'] ?? '-'),
-                  _buildField('Nomor Telepon PIC', data['main_no_telp'] ?? '-'),
-                  _buildField('Lokasi PIC', data['main_lokasi'] ?? '-'),
-                ],
-              ),
+              _buildPhotoPreview(photoUrl1, "Foto 1"),
+              _buildPhotoPreview(photoUrl2, "Foto 2"),
             ],
           ),
-        );
-      }),
-    );
-  }
+        ],
+      );
+    }
 
-  /// Helper widget to create a data section wrapped in a Card.
-  Widget _buildDataSectionCard({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Card(
-      margin: EdgeInsets.zero, // Remove default Card margin
-      elevation: 2, // Add slight shadow
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8), // Consistent rounded corners
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detail Task Visit'),
+        backgroundColor: const Color(0xFF0048A7),
+        foregroundColor: Colors.white,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0), // Padding inside the Card
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.stretch, // Stretch for centered title
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section title within the Card
-            _buildSectionTitle(title),
-            const SizedBox(height: 8), // Space between title and first field
-            // List of data fields
-            ...children,
+            // 1. Jabatan Saya & Data Dealer
+            _buildCardSection([
+              _buildSectionHeader('Jabatan Saya'),
+              _buildDisplayField('Jabatan', visit.jabatanSaya ?? "-"),
+              const SizedBox(height: 16),
+              _buildSectionHeader('Data Dealer'),
+              _buildDisplayField('Area', visit.areaCode ?? "-"),
+              _buildDisplayField('Cabang', visit.branchCode ?? "-"),
+              _buildDisplayField('Produk', visit.productCode ?? "-"),
+              _buildDisplayField('Dealer', visit.dealerCode ?? "-"),
+            ]),
+
+            // 2. Data Visit
+            _buildCardSection([
+              _buildSectionHeader('Data Visit'),
+              _buildDisplayField('Tipe Visit', visit.tipeVisit ?? "-"),
+              _buildDisplayField('Tujuan Visit', visit.tujuanVisit ?? "-"),
+              _buildDisplayField('Dari Tanggal', _formatTanggal(visit.dariTanggal)),
+              _buildDisplayField('Sampai Tanggal', _formatTanggal(visit.sampaiTanggal)),
+              _buildDisplayField('Tanggal Selesai', _formatTanggal(visit.tanggalSelesai)),
+              _buildDisplayField('Nama PIC', visit.namaPic ?? "-"),
+            ]),
+
+            // 3. Main Person
+            _buildCardSection([
+              _buildSectionHeader('Main Person'),
+              _buildDisplayField('Jabatan', visit.jabatanSaya ?? "-"),
+              _buildDisplayField('Nama PIC', visit.namaPic ?? "-"),
+            ]),
+
+            // 4. Foto
+            _buildCardSection([
+              _buildPhotoSection('Pilih Foto', visit.photo1, visit.photo2),
+            ]),
+
+            // 5. Lokasi
+            _buildCardSection([
+              ElevatedButton.icon(
+                icon: const Icon(Icons.location_on),
+                label: const Text('Ambil Lokasi'),
+                onPressed: () {
+                  Get.snackbar('Info', 'Fitur Ambil Lokasi belum diimplementasikan.');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF0048A7),
+                  side: const BorderSide(color: Color(0xFF0048A7)),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSectionHeader('Informasi Lokasi'),
+              Row(
+                children: [
+                  Expanded(child: _buildDisplayField('Latitude', visit.latitude?.toString() ?? "Belum diambil")),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildDisplayField('Longitude', visit.longitude?.toString() ?? "Belum diambil")),
+                ],
+              ),
+            ]),
+
+            // 6. Diskusi dan Masalah
+            _buildCardSection([
+              _buildSectionHeader('Theme of Discussion'),
+              _buildDisplayField('Theme of Discussion', visit.themeOfDiscussion ?? "-", isLongText: true),
+              const SizedBox(height: 16),
+              _buildSectionHeader('Problem'),
+              _buildDisplayField('Problem', visit.problem ?? "-", isLongText: true),
+              const SizedBox(height: 16),
+              _buildSectionHeader('Follow-Up'),
+              _buildDisplayField('Follow-Up', visit.followUp ?? "-", isLongText: true),
+              const SizedBox(height: 16),
+              _buildSectionHeader('Description'),
+              _buildDisplayField('Description', visit.description ?? "-", isLongText: true),
+            ]),
+
+            // 7. Tombol Edit Saja
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Edit'),
+                  onPressed: () async {
+                    final result = await Get.toNamed(SmileRoutes.taskEdit, arguments: visit);
+                    if (result != null && result is Visit) {
+                      Get.back(result: result); // Kirim data hasil edit balik ke halaman sebelumnya
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF0048A7),
+                    side: const BorderSide(color: Color(0xFF0048A7)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
           ],
         ),
       ),
     );
   }
 
-  /// Helper widget for Section Titles (e.g., "Data Task", "Data Visit").
-  Widget _buildSectionTitle(String title) {
+  // ✅ Tambahan fungsi untuk menampilkan preview foto
+  Widget _buildPhotoPreview(String? photoPath, String label) {
+    if (photoPath == null || photoPath.isEmpty) {
+      return Column(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey),
+            ),
+            child: const Icon(Icons.image_not_supported, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Text(label),
+        ],
+      );
+    }
+
+    final String fullUrl = 'https://sufione.com/storage/$photoPath';
+
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch, // Stretch for centered text
       children: [
-        Text(
-          title,
-          textAlign: TextAlign.center, // Center the text
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black, // Text color black
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            fullUrl,
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.broken_image, size: 50, color: Colors.red),
           ),
         ),
-        const Divider(
-          color: Colors.grey, // Line color grey for consistency with TaskEdit
-          thickness: 1,
-          height: 20, // Adjust height to control space above/below line
-        ), // Separator line
+        const SizedBox(height: 8),
+        Text(label),
       ],
     );
   }
 
-  /// Helper widget for each display field (Label above value box).
-  Widget _buildField(String label, String value) {
+  Widget _buildCardSection(List<Widget> children) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 8,
-      ), // Padding between fields
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Label above the value box
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.black54,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 6), // Space between label and value box
-          // Value box
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100], // Background color of the box
-              border: Border.all(
-                color: Colors.black, // Border color black
-                width: 1.0, // Border width
-              ),
-              borderRadius: BorderRadius.circular(
-                8,
-              ), // Consistent rounded corners
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Colors.grey.shade300),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+        ),
       ),
     );
+  }
+
+  String _formatTanggal(DateTime? date) {
+    if (date == null) return '-';
+    return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
   }
 }

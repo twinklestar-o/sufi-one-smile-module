@@ -10,6 +10,7 @@ import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatan_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/dealer_repository.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/task_visit_controller.dart';
 import 'package:sufi_one/src/services/api_services.dart';
 import 'package:sufi_one/app/modules/smile/repositories/type_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/purpose_repository.dart';
@@ -17,10 +18,11 @@ import 'package:sufi_one/app/modules/smile/repositories/branch_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatanSFI_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Get.put(AuthController());
+  Get.put(TaskVisitController());
+
 
   // ✅ Pastikan shared_preferences siap
   final prefs = await SharedPreferences.getInstance();

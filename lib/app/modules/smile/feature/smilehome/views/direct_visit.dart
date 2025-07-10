@@ -10,6 +10,12 @@ import 'package:intl_phone_field/country_picker_dialog.dart' show Country;
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../../src/services/api_services.dart';
+import '../../../models/visit.dart';
+import 'dart:io';
+
+import '../controllers/task_visit_controller.dart';
+
+
 
 class _DirectVisitState extends State<DirectVisit> {
   // API Service
@@ -380,20 +386,33 @@ class _DirectVisitState extends State<DirectVisit> {
     return value.toString();
   }
 
-  // Helper method to safely get dropdown items
-  List<DropdownMenuItem<String>> _buildDropdownItems(List<Map<String, dynamic>> items, {String codeKey = 'code', String nameKey = 'name'}) {
-    return items.map((item) {
-      final code = _getStringValue(item[codeKey]);
-      final name = _getStringValue(item[nameKey]);
+  List<DropdownMenuItem<String>> _buildDropdownItems(
+      List<Map<String, dynamic>> list, {
+        String codeKey = 'code',
+        String nameKey = 'name',
+      }) {
+    final seen = <String>{};
+
+    final items = list.map((item) {
+      final val = item[codeKey]?.toString().trim();
+      print("📦 Item value: $val");
+      if (val == null || val.isEmpty || seen.contains(val)) {
+        print("⚠️ Duplikat ditemukan: $val");
+        return null;
+      }
+      seen.add(val);
       return DropdownMenuItem<String>(
-        value: code,
+        value: val,
         child: Text(
-          name.toUpperCase(),
+          item[nameKey]?.toString().trim().toUpperCase() ?? '',
           style: TextStyle(color: dropdownLight),
         ),
       );
-    }).toList();
+    }).whereType<DropdownMenuItem<String>>().toList();
+
+    return items;
   }
+
 
   void _activateDealerSearch() {
     if (selectedProduk == null) {
@@ -1466,6 +1485,29 @@ class _DirectVisitState extends State<DirectVisit> {
         longitude: selectedLongitude,
       );
 
+      final newVisit = Visit(
+        jabatanSaya: selectedJabatanSFI,
+        areaCode: selectedArea,
+        branchCode: selectedCabang,
+        productCode: selectedProduk,
+        dealerCode: selectedDealer,
+        tipeVisit: selectedVisitType,
+        tujuanVisit: selectedTujuanVisit,
+        dariTanggal: selectedTanggalMulai,
+        sampaiTanggal: selectedTanggalBerakhir,
+        tanggalSelesai: selectedTanggalPenyelesaian,
+        namaPic: selectedNamaPIC,
+        themeOfDiscussion: temaDiskusi,
+        problem: problem,
+        followUp: followUp,
+        description: description,
+        photo1: _photo1?.path,
+        photo2: _photo2?.path,
+        latitude: selectedLatitude,
+        longitude: selectedLongitude,
+        mainPersons: mainPersons,
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Direct visit berhasil disubmit!'),
@@ -1473,8 +1515,11 @@ class _DirectVisitState extends State<DirectVisit> {
         ),
       );
 
-      Get.back();
+      // ✅ Refresh data di halaman Task Visit
+      Get.find<TaskVisitController>().fetchTaskVisitData();
 
+      // ✅ Kembali ke halaman sebelumnya
+      Get.back(result: newVisit);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

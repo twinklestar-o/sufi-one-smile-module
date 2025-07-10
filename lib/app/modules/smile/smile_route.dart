@@ -24,6 +24,9 @@ import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/ty
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/branch_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/product_screen.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/views/listMaster/dealer_screen.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/views/TaskVisit/task_view.dart';
+
+
 
 class SmileRoutes {
   //Penamaan
@@ -53,6 +56,7 @@ class SmileRoutes {
   static const product = '/public/smile/list_master/product';
   static const dealer = '/public/smile/list_master/dealer';
   static const jabatanSFI = '/public/smile/list_master/jabatanSFI';
+
   static final routes = [
     GetPage(
       name: register,
