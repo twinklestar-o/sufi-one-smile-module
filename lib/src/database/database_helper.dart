@@ -1,6 +1,13 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sufi_one/app/modules/smile/models/area.dart';
+import 'package:sufi_one/app/modules/smile/models/dealer.dart';
 import '../../app/modules/smile/models/jabatan.dart';
+import '../../app/modules/smile/models/type.dart';
+import 'package:sufi_one/app/modules/smile/models/purpose.dart';
+import 'package:sufi_one/app/modules/smile/models/branch.dart';
+import 'package:sufi_one/app/modules/smile/models/product.dart';
+import 'package:sufi_one/app/modules/smile/models/jabatanSFI.dart';
 
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
@@ -9,6 +16,13 @@ class DatabaseHelper {
   // Table names
   static const tableJabatan = 'jabatan';
   static const tableMetadata = 'metadata';
+  static const tableArea = 'area';
+  static const tableType = 'types';
+  static const tablePurpose = 'purpose';
+  static const tableBranch = 'Branches';
+  static const tableProduct = 'product';
+  static const tableDealer = 'dealers';
+  static const tableJabatanSFI = 'jabatanSFI';
 
   // Singleton instance
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -43,6 +57,74 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
+      CREATE TABLE $tableArea (
+        code TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $tableJabatanSFI (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $tableType (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )''');
+
+    await db.execute('''
+      CREATE TABLE $tablePurpose (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $tableDealer (
+        name TEXT NOT NULL,
+        code TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE $tableProduct (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kode TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+  CREATE TABLE $tableBranch (
+    code TEXT PRIMARY KEY,
+    area_code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (area_code) REFERENCES $tableArea (code)
+  )
+''');
+
+    await db.execute('''
       CREATE TABLE $tableMetadata (
         key TEXT PRIMARY KEY,
         value TEXT
@@ -69,20 +151,177 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> updateCollectionTimestamp() async {
+  Future<int> insertJabatanSFI(JabatanSFI jabatanSFI) async {
+    final db = await database;
+    return await db.insert(tableJabatanSFI, jabatanSFI.toJson());
+  }
+
+  Future<List<JabatanSFI>> getAllJabatanSFI() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableJabatanSFI);
+    return List.generate(maps.length, (i) {
+      return JabatanSFI(
+        id: maps[i]['id'],
+        name: maps[i]['name'],
+        kode: maps[i]['kode'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
+  Future<int> insertDealer(Dealer dealer) async {
+    final db = await database;
+    return await db.insert(tableDealer, dealer.toJson());
+  }
+
+  Future<List<Dealer>> getAllDealer() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableDealer);
+    return List.generate(maps.length, (i) {
+      return Dealer(
+        name: maps[i]['name'],
+        code: maps[i]['code'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
+  Future<void> insertBranch(Branch branch) async {
+    final db = await database;
+    await db.insert(
+      tableBranch,
+      branch.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Branch>> getAllBranches() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableBranch);
+
+    return List.generate(maps.length, (i) {
+      return Branch.fromJson(maps[i]);
+    });
+  }
+
+  Future<int> insertProduct(Product product) async {
+    final db = await database;
+    return await db.insert(tableProduct, product.toJson());
+  }
+
+  Future<List<Product>> getAllProduct() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableProduct);
+    return List.generate(maps.length, (i) {
+      return Product(
+        name: maps[i]['name'],
+        kode: maps[i]['kode'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
+  Future<int> insertArea(Area area) async {
+    final db = await database;
+    return await db.insert(tableArea, area.toJson());
+  }
+
+  Future<int> insertPurpose(Purpose purpose) async {
+    final db = await database;
+    return await db.insert(tablePurpose, purpose.toJson());
+  }
+
+  Future<List<Area>> getAllArea() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableArea);
+    return List.generate(maps.length, (i) {
+      return Area(
+        code: maps[i]['code'],
+        name: maps[i]['name'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
+  Future<void> updateCollectionTimestamp(String key) async {
     final db = await database;
     await db.insert(tableMetadata, {
-      'key': 'jabatan_last_update',
+      'key': key,
       'value': DateTime.now().toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<DateTime?> getLastUpdateTime() async {
+  Future<DateTime?> getLastUpdateTime(String key) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableMetadata,
       where: 'key = ?',
-      whereArgs: ['jabatan_last_update'],
+      whereArgs: [key],
+      limit: 1,
+    );
+
+    if (maps.isNotEmpty) {
+      return DateTime.parse(maps.first['value']);
+    }
+    return null;
+  }
+
+  Future<List<Purpose>> getAllPurpose() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tablePurpose);
+    return List.generate(maps.length, (i) {
+      return Purpose(
+        id: maps[i]['id'],
+        name: maps[i]['name'],
+        kode: maps[i]['kode'],
+        createdAt: maps[i]['created_at'],
+        updatedAt: maps[i]['updated_at'],
+      );
+    });
+  }
+
+  Future<int> insertType(Type type) async {
+    final db = await database;
+    return await db.insert(
+      tableType,
+      type.toJson(), // <<< Asumsi model Type memiliki toJson()
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Type>> getAllType() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableType);
+    return List.generate(maps.length, (i) {
+      return Type.fromJson(
+        maps[i],
+      ); // <<< Asumsi model Type memiliki fromJson()
+    });
+  }
+
+  Future<void> clearAllType() async {
+    final db = await database;
+    await db.delete(tableType);
+  }
+
+  Future<void> updateLastTypeUpdateTime() async {
+    final db = await database;
+    await db.insert(tableMetadata, {
+      'key': 'type_last_update', // Kunci unik untuk timestamp Type
+      'value': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<DateTime?> getLastTypeUpdateTime() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableMetadata,
+      where: 'key = ?',
+      whereArgs: ['type_last_update'], // Kunci unik untuk timestamp Type
       limit: 1,
     );
 

@@ -5,10 +5,12 @@ import 'package:sufi_one/app/Auth/bindings/register_binding.dart';
 import 'package:sufi_one/app/Auth/views/forgot_password_view.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/Auth/views/register_view.dart';
+import 'package:sufi_one/app/modules/public/homepage/bindings/homepage_binding.dart';
 import 'package:sufi_one/app/modules/public/homepage/views/home_view.dart';
-import 'package:sufi_one/app/modules/public/homepage/views/homepage_cust_view.dart';
+import 'package:sufi_one/app/modules/public/homepage/views/homepage_view.dart';
+import 'package:sufi_one/app/modules/public/about/views/contact_view.dart';
 import 'package:sufi_one/app/modules/public/homepage/splash/splash_view.dart';
-import 'package:sufi_one/app/modules/public/homepage/bindings/homepage_cust_binding.dart';
+import 'package:sufi_one/app/modules/public/homepage/bindings/homepage_binding.dart';
 import 'package:sufi_one/app/modules/public/profile_page/views/profile_page_view.dart';
 import 'package:sufi_one/app/modules/public/profile_page/bindings/profile_page_binding.dart';
 import 'package:sufi_one/app/modules/public/profile_page/views/profile_edit_view.dart';
@@ -31,7 +33,7 @@ import 'package:sufi_one/app/modules/public/webview/generic_webview.dart';
 class HomeRoutes {
   static const splash = '/';
   static const publicHome = '/public/home';
-  static const homepageCust = '/public/homepage/homepage_cust_view';
+  static const homepage = '/public/homepage/homepage_view';
   static const catalog = '/public/catalog';
   static const login = '/public/profile_page/login';
   static const register = '/public/profile_page/register';
@@ -54,9 +56,9 @@ class HomeRoutes {
     GetPage(name: splash, page: () => SplashPage()),
     GetPage(name: publicHome, page: () => PublicHomePage()),
     GetPage(
-      name: homepageCust,
-      page: () => const HomepageCustView(),
-      binding: HomepageCustBinding(),
+      name: homepage,
+      page: () => const HomepageView(),
+      binding: HomepageBinding(),
     ),
     GetPage(name: login, page: () => LoginPage(), binding: LoginBinding()),
     GetPage(
@@ -82,12 +84,12 @@ class HomeRoutes {
     GetPage(name: promo, page: () => const PromoView()),
     GetPage(
       name: about,
-      page: () => const AboutView(),
+      page: () =>  AboutView(),
       binding: AboutBinding(),
     ),
     GetPage(
       name: contact,
-      page: () => const ContactView(),
+      page: () =>  ContactView(),
       binding: ContactBinding(),
     ),
     GetPage(

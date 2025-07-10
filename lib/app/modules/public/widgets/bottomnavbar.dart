@@ -14,7 +14,7 @@ class BottomNavbar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        Get.offAllNamed(HomeRoutes.homepageCust);
+        Get.offAllNamed(HomeRoutes.homepage);
         break;
       case 1:
         Get.offAllNamed(HomeRoutes.about);

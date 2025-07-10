@@ -18,6 +18,10 @@ class HistoryVisit extends GetView<HistoryVisitController> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () => controller.reloadHistoryDataFromLocal(),
+          ),
+          IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {},
           ),

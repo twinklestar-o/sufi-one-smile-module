@@ -47,6 +47,7 @@ class LoginController extends GetxController {
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
+          await prefs.setBool('isLoggedIn', true);
 
           Get.snackbar(
             'Success',

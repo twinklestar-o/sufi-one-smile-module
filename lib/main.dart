@@ -3,13 +3,30 @@ import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
+import 'package:sufi_one/app/modules/smile/controllers/AuthController.dart';
+import 'package:sufi_one/app/modules/smile/repositories/area_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/product_repository.dart';
 import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatan_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/dealer_repository.dart';
+import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/task_visit_controller.dart';
 import 'package:sufi_one/src/services/api_services.dart';
+import 'package:sufi_one/app/modules/smile/repositories/type_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/purpose_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/branch_repository.dart';
+import 'package:sufi_one/app/modules/smile/repositories/jabatanSFI_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Get.put(AuthController());
+  Get.put(TaskVisitController());
+
+
+  // ✅ Pastikan shared_preferences siap
+  final prefs = await SharedPreferences.getInstance();
+  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
   // Initialize dependencies
   final dbHelper = DatabaseHelper.instance;
@@ -18,6 +35,36 @@ void main() async {
     dbHelper: dbHelper,
     apiService: apiService,
   );
+  final typeRepository = TypeRepository(
+    //
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+  final areaRepository = AreaRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+  final purposeRepository = PurposeRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+  final branchRepository = BranchRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+  final productRepository = ProductRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+  final dealerRepository = DealerRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+   final jabatanSFIRepository = JabatanSFIRepository(
+    dbHelper: dbHelper,
+    apiService: apiService,
+  );
+
 
   // Inisialisasi OneSignal
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
@@ -30,6 +77,14 @@ void main() async {
         Provider<DatabaseHelper>(create: (_) => dbHelper),
         Provider<ApiService>(create: (_) => apiService),
         Provider<JabatanRepository>(create: (_) => jabatanRepository),
+        Provider<AreaRepository>(create: (_) => areaRepository),
+        Provider<TypeRepository>(create: (_) => typeRepository),
+        Provider<PurposeRepository>(create: (_) => purposeRepository),
+        Provider<BranchRepository>(create: (_) => branchRepository),
+        Provider<ProductRepository>(create: (_) => productRepository),
+        Provider<DealerRepository>(create: (_) => dealerRepository),
+         Provider<JabatanSFIRepository>(create: (_) => jabatanSFIRepository),
+        //
       ],
       child: const MyApp(),
     ),

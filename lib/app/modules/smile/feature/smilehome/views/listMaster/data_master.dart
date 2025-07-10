@@ -14,21 +14,14 @@ class _DataMasterState extends State<DataMaster> {
   bool _showScrollToTop = false;
 
   final List<Map<String, dynamic>> masterItems = const [
-    {'title': 'AREA', 'route': '/master/area'},
-    {'title': 'CABANG', 'route': '/master/cabang'},
-    {'title': 'DEALER', 'route': '/master/dealer'},
+    {'title': 'AREA', 'route': SmileRoutes.area},
+    {'title': 'CABANG', 'route': SmileRoutes.branch},
+    {'title': 'DEALER', 'route': SmileRoutes.dealer},
     {'title': 'JABATAN', 'route': SmileRoutes.jabatan},
-    {'title': 'JABATAN SFI', 'route': '/master/jabatan-sfi'},
-    {'title': 'MAIN DEALER', 'route': '/master/main-dealer'},
-    {'title': 'PRODUK', 'route': '/master/produk'},
-    {'title': 'TIPE VISIT', 'route': '/master/tipe-visit'},
-    {'title': 'TUJUAN VISIT', 'route': '/master/tujuan-visit'},
-    {'title': 'Tanggal Mulai', 'route': '/master/tanggal-mulai'},
-    {'title': 'Sampai Tanggal', 'route': '/master/sampai-tanggal'},
-    {'title': 'Tanggal Selesai', 'route': '/master/tanggal-selesai'},
-    {'title': 'Nama PIC', 'route': '/master/nama-pic'},
-    {'title': 'Theme Discussion', 'route': '/master/theme-discussion'},
-    {'title': 'Problem', 'route': '/master/problem'},
+   {'title': 'JABATAN SFI', 'route': SmileRoutes.jabatanSFI},
+    {'title': 'PRODUK', 'route': SmileRoutes.product},
+    {'title': 'TIPE VISIT', 'route': SmileRoutes.type},
+    {'title': 'TUJUAN VISIT', 'route': SmileRoutes.purpose},
   ];
 
   @override
@@ -63,7 +56,14 @@ class _DataMasterState extends State<DataMaster> {
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E47A1),
-        title: const Text('List Master', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'List Master',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),

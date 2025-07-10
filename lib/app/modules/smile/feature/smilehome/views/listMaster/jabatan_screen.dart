@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../repositories/jabatan_repository.dart';
 import '../../../../models/jabatan.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class JabatanScreen extends StatefulWidget {
   @override
@@ -16,36 +18,43 @@ class _JabatanScreenState extends State<JabatanScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadLocalDataOnly();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadLocalDataOnly() async {
+    final repository = Provider.of<JabatanRepository>(context, listen: false);
+
+    // Ambil data lokal saja
+    final localData = await repository.dbHelper.getAllJabatan();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _jabatanFuture = Future.value(localData);
+      _isLoading = false;
+      _errorMessage =
+          localData.isEmpty ? 'Data jabatan kosong (offline)' : null;
     });
+  }
+
+  Future<void> _loadData() async {
+    final repository = Provider.of<JabatanRepository>(context, listen: false);
 
     try {
-      final repository = Provider.of<JabatanRepository>(context, listen: false);
-      _jabatanFuture = repository.getJabatan();
+      final data = await repository.getJabatan();
+      if (!mounted) return;
 
-      final data = await _jabatanFuture;
-
-      if (data.isEmpty) {
-        setState(() {
-          _errorMessage = 'Data jabatan kosong';
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error loading data: $e');
       setState(() {
-        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        _jabatanFuture = Future.value(data); // simpan future statis
         _isLoading = false;
+        if (data.isEmpty) {
+          _errorMessage = 'Data Jabatan kosong';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
       });
     }
   }
@@ -58,24 +67,43 @@ class _JabatanScreenState extends State<JabatanScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final repository = Provider.of<JabatanRepository>(context, listen: false);
-      _jabatanFuture = repository.getJabatan(forceRefresh: true);
+    final repository = Provider.of<JabatanRepository>(context, listen: false);
 
-      final data = await _jabatanFuture;
+    try {
+      // Selalu coba ambil data terbaru dari API
+      final data = await repository.getJabatan(forceRefresh: true);
 
       setState(() {
+        _jabatanFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data jabatan kosong setelah refresh';
+          _errorMessage = 'Data jabatan kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
-      debugPrint('Error refreshing: $e');
-      setState(() {
-        _errorMessage = 'Gagal refresh: ${e.toString()}';
-        _isLoading = false;
-      });
+      debugPrint('Gagal refresh dari API: $e');
+
+      try {
+        // Coba ambil dari database lokal
+        final localData = await repository.getJabatan(forceRefresh: false);
+        setState(() {
+          _jabatanFuture = Future.value(localData);
+          _isLoading = false;
+
+          if (localData.isEmpty) {
+            _errorMessage = 'Gagal ambil dari API & database lokal kosong.';
+          } else {
+            _errorMessage = 'Gagal ambil dari API, tampilkan data lokal.';
+          }
+        });
+      } catch (e2) {
+        debugPrint('Gagal ambil dari lokal juga: $e2');
+        setState(() {
+          _jabatanFuture = Future.value([]);
+          _isLoading = false;
+          _errorMessage = 'Gagal total: tidak bisa ambil data.';
+        });
+      }
     }
   }
 
@@ -83,14 +111,27 @@ class _JabatanScreenState extends State<JabatanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Jabatan'),
+        backgroundColor: const Color(0xFF0E47A1),
+        title: const Text(
+          'Daftar Jabatan',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refreshData,
             tooltip: 'Refresh Data',
+            color: Colors.white,
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: _buildBody(),
     );
@@ -141,7 +182,6 @@ class _JabatanScreenState extends State<JabatanScreen> {
                 child: ListTile(
                   title: Text(jabatan.name),
                   subtitle: Text('Kode: ${jabatan.kode}'),
-                  trailing: Icon(Icons.chevron_right),
                 ),
               );
             },

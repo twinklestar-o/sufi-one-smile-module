@@ -27,7 +27,8 @@ class HistoryEditController extends GetxController {
           'Data saved successfully',
           snackPosition: SnackPosition.BOTTOM,
         );
-        Get.back();
+        // Navigasi langsung ke HistoryVisit
+        Get.offNamed('/public/smile/history_visit');
       } catch (e) {
         Get.snackbar(
           'Error',

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:sufi_one/app/modules/public/about/controllers/contact_controller.dart';
+import 'package:sufi_one/app/modules/public/widgets/appbarWOsidebar.dart';
 import 'package:sufi_one/app/modules/public/widgets/bottomnavbar.dart';
 import 'package:sufi_one/app/theme/color_constant.dart';
 import 'package:sufi_one/app/modules/public/widgets/appbarWsidebar.dart';
 import 'package:sufi_one/app/modules/public/widgets/sidebar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ContactView extends StatefulWidget {
   const ContactView({Key? key}) : super(key: key);
@@ -17,12 +19,29 @@ class ContactView extends StatefulWidget {
 class _ContactViewState extends State<ContactView> {
   final controller = Get.find<ContactController>();
 
+  bool isLoggedIn = false;
+  @override
+  void initState() {
+    super.initState();
+    checkLoginStatus(); // ⬅️ Tambahkan pengecekan login
+  }
+
+  Future<void> checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    setState(() {
+      isLoggedIn = token != null && token.isNotEmpty;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg1,
-      appBar: SuzukiFinanceAppBarWsidebar(),
-      drawer: Drawer(child: AppSidebar()),
+      appBar: isLoggedIn
+          ? SuzukiFinanceAppBarWsidebar() // ✅ Saat sudah login
+          : SuzukiFinanceAppBarWOsidebar(),
+      drawer: isLoggedIn ? Drawer(child: AppSidebar()) : null,
       resizeToAvoidBottomInset: false,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(30),
