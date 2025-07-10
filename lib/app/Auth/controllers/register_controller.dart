@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sufi_one/app/Auth/models/register_model.dart';
-import 'package:sufi_one/app/modules/smile/constants/constants.dart';
+import 'package:sufi_one/src/constants/constants.dart';
 
 class RegisterController extends GetxController {
   final GlobalKey<FormState> _registKey = GlobalKey<FormState>();

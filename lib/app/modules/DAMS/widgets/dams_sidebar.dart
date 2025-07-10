@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:sufi_one/app/modules/DAMS/dams_route.dart';
-import 'package:sufi_one/app/modules/locationTest/location_routes.dart';
 import 'package:sufi_one/app/modules/mobcol/mobcol_routes.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
 import 'package:sufi_one/app/modules/smile/smile_route.dart';
-import 'package:sufi_one/app/modules/survey/survey_routes.dart';
-import 'package:sufi_one/app/routes/app_routes.dart';
 import 'package:sufi_one/app/theme/color_constant.dart';
 import 'package:get/get.dart';
 import 'package:sufi_one/app/theme/fontstyle.dart';
-import 'package:sufi_one/app/services/checking_installed_app.dart';
 
-class AppSidebar extends StatelessWidget {
-  const AppSidebar({super.key});
+class DamsSidebar extends StatelessWidget {
+  const DamsSidebar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -59,63 +54,31 @@ class SidebarItemData {
 
 final List<SidebarItemData> _sidebarItems = [
   SidebarItemData(
-    icon: const Icon(Icons.home, color: Colors.white),
-    title: 'Home',
-    onTap: () {
-      // CheckingInstalledAppService().checkInstalledApps(); // Scan aplikasi
-      Get.offNamed(HomeRoutes.homepage);
-    },
-  ),
-  SidebarItemData(
-    icon: const Icon(Icons.person, color: Colors.white),
-    title: 'Mobile Collection',
-    onTap: () {
-      CheckingInstalledAppService().checkInstalledApps(); // Scan aplikasi
-      Get.toNamed(AppRoutes.mobileCollection);
-    },
-  ),
-  SidebarItemData(
-    icon: const Icon(Icons.info, color: Colors.white),
-    title: 'Mobile Survey',
-    onTap: () {
-      CheckingInstalledAppService().checkInstalledApps(); // Scan aplikasi
-      Get.toNamed(AppRoutes.survey);
-    },
-  ),
-  SidebarItemData(
     icon: const Icon(Icons.qr_code, color: Colors.white),
-    title: 'DAMS',
+    title: 'Scan  QR',
     onTap: () {
-      Get.toNamed(DamsRoute.homePage);
+      Get.offNamed(SmileRoutes.directVisit);
     },
   ),
   SidebarItemData(
-    icon: const Icon(Icons.abc, color: Colors.white),
-    title: 'Zeus',
+    icon: const Icon(Icons.history, color: Colors.white),
+    title: 'History',
     onTap: () {
-      CheckingInstalledAppService().checkInstalledApps(); // Scan aplikasi
-      Get.toNamed(AppRoutes.zeus);
+      Get.toNamed(SmileRoutes.taskVisit);
     },
   ),
   SidebarItemData(
-    icon: const Icon(Icons.insert_emoticon_rounded, color: Colors.white),
-    title: 'Smile',
+    icon: const Icon(Icons.table_chart, color: Colors.white),
+    title: 'Data Master',
     onTap: () {
-      Get.toNamed(AppRoutes.smile);
+      Get.offNamed(SmileRoutes.historyVisit);
     },
   ),
   SidebarItemData(
-    icon: const Icon(Icons.location_on, color: Colors.white),
-    title: 'Track Location',
+    icon: const Icon(Icons.keyboard_backspace_sharp, color: Colors.white),
+    title: 'Kembali',
     onTap: () {
-      Get.toNamed(LocationRoutes.trackLocation);
-    },
-  ),
-  SidebarItemData(
-    icon: const Icon(Icons.home_work, color: Colors.white),
-    title: 'login/register page',
-    onTap: () {
-      Get.toNamed('/public/home');
+      Get.offNamed(HomeRoutes.homepageCust);
     },
   ),
 ];

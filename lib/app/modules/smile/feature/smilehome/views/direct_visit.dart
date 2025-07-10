@@ -53,7 +53,9 @@ class _DirectVisitState extends State<DirectVisit> {
 
   final TextEditingController _namaPicController = TextEditingController();
   final TextEditingController _telpPicController = TextEditingController();
+
   List<Map<String, String>> mainPersons = [];
+  
   final _formKey = GlobalKey<FormState>();
   final _mainPersonFormKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
@@ -1150,11 +1152,7 @@ class _DirectVisitState extends State<DirectVisit> {
                 onTap: () => _showFullScreenImage(context, _photo1!),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _photo1!,
-                    fit: BoxFit.cover,
-                    height: 350,
-                  ),
+                  child: Image.file(_photo1!, fit: BoxFit.cover, height: 350),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1162,7 +1160,8 @@ class _DirectVisitState extends State<DirectVisit> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: true, src: ImageSource.camera),
+                    onPressed:
+                        () => _pickPhoto(first: true, src: ImageSource.camera),
                     icon: const Icon(Icons.camera_alt, color: Colors.white),
                     label: const Text("Ambil Ulang"),
                     style: ElevatedButton.styleFrom(
@@ -1171,7 +1170,8 @@ class _DirectVisitState extends State<DirectVisit> {
                     ),
                   ),
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: true, src: ImageSource.gallery),
+                    onPressed:
+                        () => _pickPhoto(first: true, src: ImageSource.gallery),
                     icon: const Icon(Icons.photo, color: Colors.white),
                     label: const Text("Browse Ulang"),
                     style: ElevatedButton.styleFrom(
@@ -1206,11 +1206,7 @@ class _DirectVisitState extends State<DirectVisit> {
                 onTap: () => _showFullScreenImage(context, _photo2!),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _photo2!,
-                    fit: BoxFit.cover,
-                    height: 350,
-                  ),
+                  child: Image.file(_photo2!, fit: BoxFit.cover, height: 350),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1218,7 +1214,8 @@ class _DirectVisitState extends State<DirectVisit> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: false, src: ImageSource.camera),
+                    onPressed:
+                        () => _pickPhoto(first: false, src: ImageSource.camera),
                     icon: const Icon(Icons.camera_alt, color: Colors.white),
                     label: const Text("Retake"),
                     style: ElevatedButton.styleFrom(
@@ -1227,7 +1224,9 @@ class _DirectVisitState extends State<DirectVisit> {
                     ),
                   ),
                   ElevatedButton.icon(
-                    onPressed: () => _pickPhoto(first: false, src: ImageSource.gallery),
+                    onPressed:
+                        () =>
+                            _pickPhoto(first: false, src: ImageSource.gallery),
                     icon: const Icon(Icons.photo, color: Colors.white),
                     label: const Text("Browse"),
                     style: ElevatedButton.styleFrom(
@@ -1264,40 +1263,45 @@ class _DirectVisitState extends State<DirectVisit> {
                 controller: _pageCtrl,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 itemCount: photos.length,
-                itemBuilder: (context, i) => GestureDetector(
-                  onTap: () => _showFullScreenImage(context, photos[i]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Stack(
-                      children: [
-                        Image.file(
-                          photos[i],
-                          fit: BoxFit.cover,
-                          height: double.infinity,
-                          width: double.infinity,
-                        ),
-                        Positioned(
-                          right: 10,
-                          bottom: 10,
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.fullscreen_sharp,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 4.0,
-                                  color: Colors.black.withOpacity(1),
-                                  offset: const Offset(2, 2),
-                                ),
-                              ],
+                itemBuilder:
+                    (context, i) => GestureDetector(
+                      onTap: () => _showFullScreenImage(context, photos[i]),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Stack(
+                          children: [
+                            Image.file(
+                              photos[i],
+                              fit: BoxFit.cover,
+                              height: double.infinity,
+                              width: double.infinity,
                             ),
-                            onPressed: () => _showFullScreenImage(context, photos[i]),
-                          ),
+                            Positioned(
+                              right: 10,
+                              bottom: 10,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.fullscreen_sharp,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 4.0,
+                                      color: Colors.black.withOpacity(1),
+                                      offset: const Offset(2, 2),
+                                    ),
+                                  ],
+                                ),
+                                onPressed:
+                                    () => _showFullScreenImage(
+                                      context,
+                                      photos[i],
+                                    ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -1413,22 +1417,25 @@ class _DirectVisitState extends State<DirectVisit> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          body: Stack(
-            children: [
-              Center(
-                child: InteractiveViewer(
-                  child: Image.file(photo),
-                ),
-              ),
-              Positioned(
-                top: 40,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+        builder:
+            (_) => Scaffold(
+              backgroundColor: Colors.black,
+              body: Stack(
+                children: [
+                  Center(child: InteractiveViewer(child: Image.file(photo))),
+                  Positioned(
+                    top: 40,
+                    right: 20,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1811,6 +1818,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               _hasInteractWithProduk = true;
                             });
                           },
+
                           validator: (v) =>
                           _hasInteractWithProduk && v == null
                               ? 'Harap Pilih Produk'
@@ -1859,6 +1867,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               borderSide: BorderSide(color: dropdownLightF, width: 2.0),
                             ),
                           ),
+
                           items: _buildDropdownItems(visitTypeList, codeKey: 'name', nameKey: 'name'),
                           onChanged: (val) => setState(() {
                             selectedVisitType = val;
@@ -1869,10 +1878,12 @@ class _DirectVisitState extends State<DirectVisit> {
                               _hasInteractWithVisitType = true;
                             });
                           },
+
                           validator: (v) =>
                           _hasInteractWithVisitType && v == null
                               ? 'Harap Pilih Tipe Visit'
                               : null,
+
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Tujuan Visit'),
@@ -1893,6 +1904,7 @@ class _DirectVisitState extends State<DirectVisit> {
                               borderSide: BorderSide(color: dropdownLightF, width: 2.0),
                             ),
                           ),
+
                           items: _buildDropdownItems(tujuanVisitList, codeKey: 'name', nameKey: 'name'),
                           onChanged: (val) => setState(() {
                             selectedTujuanVisit = val;
@@ -1912,7 +1924,7 @@ class _DirectVisitState extends State<DirectVisit> {
                         _buildFieldLabel('Dari Tanggal'),
                         _buildDateField(
                           selectedTanggalMulai,
-                              () => _selectDate(
+                          () => _selectDate(
                             context,
                                 (date) {
                               setState(() {
@@ -1935,7 +1947,7 @@ class _DirectVisitState extends State<DirectVisit> {
                         _buildFieldLabel('Sampai Tanggal'),
                         _buildDateField(
                           selectedTanggalBerakhir,
-                              () => _selectDate(
+                          () => _selectDate(
                             context,
                                 (date) {
                               setState(() {
@@ -1953,7 +1965,7 @@ class _DirectVisitState extends State<DirectVisit> {
                         _buildFieldLabel('Tanggal Selesai'),
                         _buildDateField(
                           selectedTanggalPenyelesaian,
-                              () => _selectDate(
+                          () => _selectDate(
                             context,
                                 (date) => setState(() => selectedTanggalPenyelesaian = date),
                             'tanggalSelesai',
@@ -2016,6 +2028,7 @@ class _DirectVisitState extends State<DirectVisit> {
                           }),
                           validator: (v) => v == null || v.isEmpty ? 'Tema diskusi wajib diisi' : null,
                         ),
+
                         const SizedBox(height: 12),
                         _buildFieldLabel('Problem'),
                         TextFormField(
@@ -2068,6 +2081,7 @@ class _DirectVisitState extends State<DirectVisit> {
                           }),
                           validator: (v) => v == null || v.isEmpty ? 'Follow-Up wajib diisi' : null,
                         ),
+                        
                         const SizedBox(height: 12),
                         _buildFieldLabel('Description'),
                         TextFormField(
@@ -2117,6 +2131,7 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                         ),
                         const SizedBox(height: 12),
+
                         Form(
                           key: _mainPersonFormKey,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -2139,6 +2154,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                     borderSide: BorderSide(
                                       color: Color(0xFFCCCCCC),
                                       width: 0.5,
+
                                     ),
                                   ),
                                 ),

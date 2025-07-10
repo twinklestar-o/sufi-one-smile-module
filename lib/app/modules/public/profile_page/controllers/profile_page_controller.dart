@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
 import 'package:sufi_one/app/modules/public/profile_page/models/user_profile_model.dart';
-import 'package:sufi_one/app/modules/smile/constants/constants.dart';
+import 'package:sufi_one/src/constants/constants.dart';
 import 'package:sufi_one/app/modules/smile/models/user.dart';
 
 class ProfilePageController extends GetxController {
