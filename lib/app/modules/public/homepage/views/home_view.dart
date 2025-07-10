@@ -40,7 +40,7 @@ class _PublicHomePageState extends State<PublicHomePage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Get.toNamed('/public/homepage_cust_view');
+                Get.toNamed('/public/homepage_view');
               },
               child: Text('Browse Catalog'),
             ),

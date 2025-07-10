@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sufi_one/app/Auth/controllers/logout_controller.dart';
+import 'package:sufi_one/app/modules/smile/controllers/AuthController.dart';
 import 'package:sufi_one/app/modules/smile/controllers/ProfileController.dart';
 import 'package:sufi_one/app/modules/smile/models/user.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
@@ -20,7 +21,7 @@ class ProfilePageView extends StatefulWidget {
 
 class _ProfilePageViewState extends State<ProfilePageView> {
   final ProfileController _controller = ProfileController();
-  final LogoutController _logoutController = LogoutController();
+  final AuthController _logoutController = Get.find<AuthController>();
   late Future<User> futureUser;
 
   @override

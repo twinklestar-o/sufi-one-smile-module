@@ -20,7 +20,9 @@ class JabatanRepository {
       }
 
       final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime();
+      final localLastUpdate = await dbHelper.getLastUpdateTime(
+        'jabatan_last_update',
+      );
 
       if (serverLastUpdate != null &&
           (localLastUpdate == null ||
@@ -65,7 +67,7 @@ class JabatanRepository {
       }
 
       // Update timestamp
-      await dbHelper.updateCollectionTimestamp();
+      await dbHelper.updateCollectionTimestamp('jabatan_last_update');
 
       return jabatanList;
     } catch (e) {

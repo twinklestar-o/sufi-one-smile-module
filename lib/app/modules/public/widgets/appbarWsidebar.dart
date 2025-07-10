@@ -15,10 +15,10 @@ class SuzukiFinanceAppBarWsidebar extends StatelessWidget
     return AppBar(
       backgroundColor: AppColors.splashStart,
       centerTitle:
-          false, // Consider making this configurable in the constructor if needed
+      false, // Consider making this configurable in the constructor if needed
       toolbarHeight: 50,
       automaticallyImplyLeading:
-          false, //  Important:  We'll add our own leading.
+      false, //  Important:  We'll add our own leading.
       title: Row(
         children: [
           // Logo Suzuki
