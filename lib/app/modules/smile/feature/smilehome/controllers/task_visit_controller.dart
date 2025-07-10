@@ -65,6 +65,13 @@ class TaskVisitController extends GetxController {
     filteredTaskVisitData.assignAll(taskVisitData);
   }
 
+  //add visit dari direct visit
+  void addNewVisit(Visit newVisit) {
+    taskVisitData.insert(0, newVisit); // Masukkan di urutan teratas
+    filteredTaskVisitData.assignAll(taskVisitData); // Update filtered list juga
+  }
+
+
   // Update Visit
   void updateTaskVisit(Visit updatedVisit) {
     final index = taskVisitData.indexWhere((e) => e.id == updatedVisit.id);

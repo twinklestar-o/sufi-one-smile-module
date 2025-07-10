@@ -1516,10 +1516,10 @@ class _DirectVisitState extends State<DirectVisit> {
       );
 
       // ✅ Refresh data di halaman Task Visit
-      Get.find<TaskVisitController>().fetchTaskVisitData();
+      Get.find<TaskVisitController>().addNewVisit(newVisit);
 
       // ✅ Kembali ke halaman sebelumnya
-      Get.back(result: newVisit);
+      Get.back();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
