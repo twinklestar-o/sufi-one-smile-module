@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:sufi_one/app/modules/smile/constants/constants.dart';
 import 'package:sufi_one/app/modules/smile/smile_route.dart';
+import 'package:sufi_one/src/constants/constants.dart';
 
 class AuthController extends GetxController {
   var isLoggedIn = false.obs;
@@ -28,9 +28,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> checkLoginStatus() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
-  isLoggedIn.value = token != null && token.isNotEmpty;
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    isLoggedIn.value = token != null && token.isNotEmpty;
   }
 
   Future<void> logout() async {
@@ -38,13 +38,13 @@ class AuthController extends GetxController {
     final token = prefs.getString('token');
 
     if (token == null) {
-    Get.snackbar('Error', 'User tidak login');
-    return;
+      Get.snackbar('Error', 'User tidak login');
+      return;
     }
 
     try {
       final response = await http.get(
-      Uri.parse(Url + 'logout'),
+        Uri.parse(Url + 'logout'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -64,4 +64,3 @@ class AuthController extends GetxController {
     }
   }
 }
-

@@ -15,8 +15,6 @@ import 'dart:io';
 
 import '../controllers/task_visit_controller.dart';
 
-
-
 class _DirectVisitState extends State<DirectVisit> {
   // API Service
   final ApiService _apiService = ApiService();
@@ -53,9 +51,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
   final TextEditingController _namaPicController = TextEditingController();
   final TextEditingController _telpPicController = TextEditingController();
-
   List<Map<String, String>> mainPersons = [];
-  
   final _formKey = GlobalKey<FormState>();
   final _mainPersonFormKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
@@ -161,12 +157,13 @@ class _DirectVisitState extends State<DirectVisit> {
       if (query.isEmpty) {
         filteredDealerList = List.from(dealerList);
       } else {
-        filteredDealerList = dealerList.where((dealer) {
-          final name = _getStringValue(dealer['name']).toLowerCase();
-          final code = _getStringValue(dealer['code']).toLowerCase();
-          final searchQuery = query.toLowerCase();
-          return name.contains(searchQuery) || code.contains(searchQuery);
-        }).toList();
+        filteredDealerList =
+            dealerList.where((dealer) {
+              final name = _getStringValue(dealer['name']).toLowerCase();
+              final code = _getStringValue(dealer['code']).toLowerCase();
+              final searchQuery = query.toLowerCase();
+              return name.contains(searchQuery) || code.contains(searchQuery);
+            }).toList();
       }
     });
   }
@@ -201,9 +198,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading jabatan: $e'); // Debug log
       setState(() => isLoadingJabatan = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading jabatan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading jabatan: $e')));
     }
   }
 
@@ -217,7 +214,9 @@ class _DirectVisitState extends State<DirectVisit> {
         if (response is Map && response.containsKey('data')) {
           jabatanSFIList = List<Map<String, dynamic>>.from(response['data']);
         } else if (response is List) {
-          jabatanSFIList = List<Map<String, dynamic>>.from(response as Iterable);
+          jabatanSFIList = List<Map<String, dynamic>>.from(
+            response as Iterable,
+          );
         } else {
           jabatanSFIList = [];
         }
@@ -226,16 +225,17 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading jabatan: $e'); // Debug log
       setState(() => isLoadingJabatanSFI = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading jabatan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading jabatan: $e')));
     }
   }
 
   Future<void> _loadArea() async {
     try {
       setState(() => isLoadingArea = true);
-      final response = await _apiService.fetchArea(); // Returns Map<String, dynamic>
+      final response =
+          await _apiService.fetchArea(); // Returns Map<String, dynamic>
       print('Area Response: $response'); // Debug log
       print('Area Response Type: ${response.runtimeType}'); // Debug log
 
@@ -259,9 +259,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading area: $e'); // Debug log
       setState(() => isLoadingArea = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading area: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading area: $e')));
     }
   }
 
@@ -270,7 +270,9 @@ class _DirectVisitState extends State<DirectVisit> {
       setState(() => isLoadingCabang = true);
       print('Loading cabang for area code: $areaCode'); // Debug log
 
-      final response = await _apiService.fetchBranches(areaCode); // Returns List directly
+      final response = await _apiService.fetchBranches(
+        areaCode,
+      ); // Returns List directly
       print('Cabang Response: $response'); // Debug log
       print('Cabang Response Type: ${response.runtimeType}'); // Debug log
 
@@ -287,16 +289,17 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading cabang: $e'); // Debug log
       setState(() => isLoadingCabang = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading cabang: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading cabang: $e')));
     }
   }
 
   Future<void> _loadProduk() async {
     try {
       setState(() => isLoadingProduk = true);
-      final response = await _apiService.fetchProducts(); // Returns List directly
+      final response =
+          await _apiService.fetchProducts(); // Returns List directly
       print('Produk Response: $response'); // Debug log
 
       setState(() {
@@ -306,9 +309,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading produk: $e'); // Debug log
       setState(() => isLoadingProduk = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading produk: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading produk: $e')));
     }
   }
 
@@ -326,9 +329,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading dealer: $e');
       setState(() => isLoadingDealer = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading dealer: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading dealer: $e')));
     }
   }
 
@@ -351,9 +354,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading visit type: $e'); // Debug log
       setState(() => isLoadingVisitType = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading visit type: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading visit type: $e')));
     }
   }
 
@@ -367,7 +370,9 @@ class _DirectVisitState extends State<DirectVisit> {
         if (response is Map && response.containsKey('data')) {
           tujuanVisitList = List<Map<String, dynamic>>.from(response['data']);
         } else if (response is List) {
-          tujuanVisitList = List<Map<String, dynamic>>.from(response as Iterable);
+          tujuanVisitList = List<Map<String, dynamic>>.from(
+            response as Iterable,
+          );
         } else {
           tujuanVisitList = [];
         }
@@ -376,9 +381,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading tujuan visit: $e'); // Debug log
       setState(() => isLoadingTujuanVisit = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading tujuan visit: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading tujuan visit: $e')));
     }
   }
 
@@ -389,32 +394,35 @@ class _DirectVisitState extends State<DirectVisit> {
   }
 
   List<DropdownMenuItem<String>> _buildDropdownItems(
-      List<Map<String, dynamic>> list, {
-        String codeKey = 'code',
-        String nameKey = 'name',
-      }) {
+    List<Map<String, dynamic>> list, {
+    String codeKey = 'code',
+    String nameKey = 'name',
+  }) {
     final seen = <String>{};
 
-    final items = list.map((item) {
-      final val = item[codeKey]?.toString().trim();
-      print("📦 Item value: $val");
-      if (val == null || val.isEmpty || seen.contains(val)) {
-        print("⚠️ Duplikat ditemukan: $val");
-        return null;
-      }
-      seen.add(val);
-      return DropdownMenuItem<String>(
-        value: val,
-        child: Text(
-          item[nameKey]?.toString().trim().toUpperCase() ?? '',
-          style: TextStyle(color: dropdownLight),
-        ),
-      );
-    }).whereType<DropdownMenuItem<String>>().toList();
+    final items =
+        list
+            .map((item) {
+              final val = item[codeKey]?.toString().trim();
+              print("📦 Item value: $val");
+              if (val == null || val.isEmpty || seen.contains(val)) {
+                print("⚠️ Duplikat ditemukan: $val");
+                return null;
+              }
+              seen.add(val);
+              return DropdownMenuItem<String>(
+                value: val,
+                child: Text(
+                  item[nameKey]?.toString().trim().toUpperCase() ?? '',
+                  style: TextStyle(color: dropdownLight),
+                ),
+              );
+            })
+            .whereType<DropdownMenuItem<String>>()
+            .toList();
 
     return items;
   }
-
 
   void _activateDealerSearch() {
     if (selectedProduk == null) {
@@ -502,7 +510,10 @@ class _DirectVisitState extends State<DirectVisit> {
                     borderRadius: BorderRadius.circular(20),
                     onTap: _activateDealerSearch,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -529,7 +540,7 @@ class _DirectVisitState extends State<DirectVisit> {
 
         // Search interface
         if (!isDealerSearchEnabled)
-        // Inactive state
+          // Inactive state
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -544,42 +555,49 @@ class _DirectVisitState extends State<DirectVisit> {
                 Expanded(
                   child: Text(
                     'Klik tombol "Cari Dealer" untuk memulai pencarian',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   ),
                 ),
               ],
             ),
           )
         else
-        // Active search interface
+          // Active search interface
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDealerSearchExpanded ? Colors.blue.shade300 : dropdownLightNF,
+                color:
+                    isDealerSearchExpanded
+                        ? Colors.blue.shade300
+                        : dropdownLightNF,
                 width: isDealerSearchExpanded ? 2 : 1,
               ),
-              boxShadow: isDealerSearchExpanded ? [
-                BoxShadow(
-                  color: Colors.blue.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ] : null,
+              boxShadow:
+                  isDealerSearchExpanded
+                      ? [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                      : null,
             ),
             child: Column(
               children: [
                 // Search input
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.search,
-                        color: isDealerSearchExpanded ? Colors.blue : Colors.grey,
+                        color:
+                            isDealerSearchExpanded ? Colors.blue : Colors.grey,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -588,20 +606,21 @@ class _DirectVisitState extends State<DirectVisit> {
                           controller: _dealerSearchController,
                           focusNode: _dealerSearchFocus,
                           decoration: InputDecoration(
-                            hintText: selectedDealer == null
-                                ? 'Ketik nama atau kode dealer...'
-                                : 'Dealer terpilih: $selectedDealerName',
+                            hintText:
+                                selectedDealer == null
+                                    ? 'Ketik nama atau kode dealer...'
+                                    : 'Dealer terpilih: $selectedDealerName',
                             hintStyle: TextStyle(
-                              color: selectedDealer == null ? Colors.grey.shade500 : Colors.green.shade600,
+                              color:
+                                  selectedDealer == null
+                                      ? Colors.grey.shade500
+                                      : Colors.green.shade600,
                               fontSize: 14,
                             ),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.zero,
                           ),
-                          style: TextStyle(
-                            color: dropdownLight,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: dropdownLight, fontSize: 14),
                           onTap: () {
                             if (!isDealerSearchExpanded) {
                               setState(() {
@@ -609,18 +628,27 @@ class _DirectVisitState extends State<DirectVisit> {
                               });
                             }
                           },
-                          validator: (v) =>
-                          _hasInteractWithDealer && selectedDealer == null
-                              ? 'Harap Pilih Dealer'
-                              : null,
+                          validator:
+                              (v) =>
+                                  _hasInteractWithDealer &&
+                                          selectedDealer == null
+                                      ? 'Harap Pilih Dealer'
+                                      : null,
                         ),
                       ),
                       if (selectedDealer != null)
                         IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey.shade600, size: 18),
+                          icon: Icon(
+                            Icons.clear,
+                            color: Colors.grey.shade600,
+                            size: 18,
+                          ),
                           onPressed: _clearDealerSelection,
                           padding: EdgeInsets.zero,
-                          constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                          constraints: BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
                         ),
                       if (isLoadingDealer)
                         SizedBox(
@@ -628,7 +656,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.blue,
+                            ),
                           ),
                         ),
                     ],
@@ -644,99 +674,128 @@ class _DirectVisitState extends State<DirectVisit> {
                         top: BorderSide(color: Colors.grey.shade200),
                       ),
                     ),
-                    child: filteredDealerList.isEmpty
-                        ? Container(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(Icons.search_off, color: Colors.grey.shade400),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _dealerSearchController.text.isEmpty
-                                  ? 'Mulai mengetik untuk mencari dealer...'
-                                  : 'Tidak ada dealer yang cocok dengan "${_dealerSearchController.text}"',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                        : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: filteredDealerList.length,
-                      itemBuilder: (context, index) {
-                        final dealer = filteredDealerList[index];
-                        final code = _getStringValue(dealer['code']);
-                        final name = _getStringValue(dealer['name']);
-                        final isSelected = selectedDealer == code;
-
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _selectDealer(code, name),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.blue.shade50
-                                    : Colors.transparent,
-                                border: index < filteredDealerList.length - 1
-                                    ? Border(bottom: BorderSide(color: Colors.grey.shade100))
-                                    : null,
-                              ),
+                    child:
+                        filteredDealerList.isEmpty
+                            ? Container(
+                              padding: const EdgeInsets.all(16),
                               child: Row(
                                 children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? Colors.blue : Colors.grey.shade300,
-                                      shape: BoxShape.circle,
-                                    ),
+                                  Icon(
+                                    Icons.search_off,
+                                    color: Colors.grey.shade400,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          name,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.blue.shade700 : dropdownLight,
-                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                            fontSize: 14,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        if (code.isNotEmpty)
-                                          Text(
-                                            'Kode: $code',
-                                            style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                      ],
+                                    child: Text(
+                                      _dealerSearchController.text.isEmpty
+                                          ? 'Mulai mengetik untuk mencari dealer...'
+                                          : 'Tidak ada dealer yang cocok dengan "${_dealerSearchController.text}"',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
                                 ],
                               ),
+                            )
+                            : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filteredDealerList.length,
+                              itemBuilder: (context, index) {
+                                final dealer = filteredDealerList[index];
+                                final code = _getStringValue(dealer['code']);
+                                final name = _getStringValue(dealer['name']);
+                                final isSelected = selectedDealer == code;
+
+                                return Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _selectDealer(code, name),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isSelected
+                                                ? Colors.blue.shade50
+                                                : Colors.transparent,
+                                        border:
+                                            index <
+                                                    filteredDealerList.length -
+                                                        1
+                                                ? Border(
+                                                  bottom: BorderSide(
+                                                    color: Colors.grey.shade100,
+                                                  ),
+                                                )
+                                                : null,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  isSelected
+                                                      ? Colors.blue
+                                                      : Colors.grey.shade300,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  name,
+                                                  style: TextStyle(
+                                                    color:
+                                                        isSelected
+                                                            ? Colors
+                                                                .blue
+                                                                .shade700
+                                                            : dropdownLight,
+                                                    fontWeight:
+                                                        isSelected
+                                                            ? FontWeight.w600
+                                                            : FontWeight.normal,
+                                                    fontSize: 14,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                if (code.isNotEmpty)
+                                                  Text(
+                                                    'Kode: $code',
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (isSelected)
+                                            Icon(
+                                              Icons.check_circle,
+                                              color: Colors.blue,
+                                              size: 20,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-                        );
-                      },
-                    ),
                   ),
               ],
             ),
@@ -746,10 +805,10 @@ class _DirectVisitState extends State<DirectVisit> {
   }
 
   Future<void> _selectDate(
-      BuildContext context,
-      Function(DateTime?) setDate,
-      String fieldType,
-      ) async {
+    BuildContext context,
+    Function(DateTime?) setDate,
+    String fieldType,
+  ) async {
     DateTime initialDate = DateTime.now();
     DateTime firstDate = DateTime(2000);
     DateTime lastDate = DateTime(2100);
@@ -760,11 +819,14 @@ class _DirectVisitState extends State<DirectVisit> {
         lastDate = DateTime.now();
         break;
       case 'sampaiTanggal':
-        initialDate = selectedTanggalBerakhir ?? (selectedTanggalMulai ?? DateTime.now());
+        initialDate =
+            selectedTanggalBerakhir ?? (selectedTanggalMulai ?? DateTime.now());
         firstDate = selectedTanggalMulai ?? DateTime(2000);
         break;
       case 'tanggalSelesai':
-        initialDate = selectedTanggalPenyelesaian ?? (selectedTanggalMulai ?? DateTime.now());
+        initialDate =
+            selectedTanggalPenyelesaian ??
+            (selectedTanggalMulai ?? DateTime.now());
         firstDate = selectedTanggalMulai ?? DateTime(2000);
         lastDate = selectedTanggalBerakhir ?? DateTime(2100);
         break;
@@ -785,16 +847,23 @@ class _DirectVisitState extends State<DirectVisit> {
       if (fieldType == 'dariTanggal' && picked.isAfter(DateTime.now())) {
         isValid = false;
         errorMessage = 'Dari Tanggal tidak boleh melebihi hari ini';
-      } else if (fieldType == 'sampaiTanggal' && selectedTanggalMulai != null && picked.isBefore(selectedTanggalMulai!)) {
+      } else if (fieldType == 'sampaiTanggal' &&
+          selectedTanggalMulai != null &&
+          picked.isBefore(selectedTanggalMulai!)) {
         isValid = false;
-        errorMessage = 'Sampai Tanggal harus setelah atau sama dengan Dari Tanggal';
+        errorMessage =
+            'Sampai Tanggal harus setelah atau sama dengan Dari Tanggal';
       } else if (fieldType == 'tanggalSelesai') {
-        if (selectedTanggalMulai != null && picked.isBefore(selectedTanggalMulai!)) {
+        if (selectedTanggalMulai != null &&
+            picked.isBefore(selectedTanggalMulai!)) {
           isValid = false;
-          errorMessage = 'Tanggal Selesai harus setelah atau sama dengan Dari Tanggal';
-        } else if (selectedTanggalBerakhir != null && picked.isAfter(selectedTanggalBerakhir!)) {
+          errorMessage =
+              'Tanggal Selesai harus setelah atau sama dengan Dari Tanggal';
+        } else if (selectedTanggalBerakhir != null &&
+            picked.isAfter(selectedTanggalBerakhir!)) {
           isValid = false;
-          errorMessage = 'Tanggal Selesai harus sebelum atau sama dengan Sampai Tanggal';
+          errorMessage =
+              'Tanggal Selesai harus sebelum atau sama dengan Sampai Tanggal';
         }
       }
 
@@ -853,9 +922,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       setState(() => isLoadingLocation = false);
       debugPrint('Location error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil lokasi: $e'))
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil lokasi: $e')));
     }
   }
 
@@ -869,7 +938,9 @@ class _DirectVisitState extends State<DirectVisit> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Input tanggal tidak valid. Semua tanggal direset. Silakan masukkan ulang.'),
+        content: Text(
+          'Input tanggal tidak valid. Semua tanggal direset. Silakan masukkan ulang.',
+        ),
       ),
     );
   }
@@ -914,9 +985,9 @@ class _DirectVisitState extends State<DirectVisit> {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil foto: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil foto: $e')));
     }
   }
 
@@ -940,9 +1011,9 @@ class _DirectVisitState extends State<DirectVisit> {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil foto: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil foto: $e')));
     }
   }
 
@@ -951,7 +1022,9 @@ class _DirectVisitState extends State<DirectVisit> {
       children: [
         Center(
           child: Text(
-            file == null ? 'Pilih ${first ? "Foto 1" : "Foto 2"}' : 'Foto ${first ? "1" : "2"} terunggah',
+            file == null
+                ? 'Pilih ${first ? "Foto 1" : "Foto 2"}'
+                : 'Foto ${first ? "1" : "2"} terunggah',
             style: TextStyle(
               color: headerBlue,
               fontSize: 16,
@@ -1042,10 +1115,16 @@ class _DirectVisitState extends State<DirectVisit> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    date != null ? DateFormat('yyyy-MM-dd').format(date) : 'Pilih tanggal',
+                    date != null
+                        ? DateFormat('yyyy-MM-dd').format(date)
+                        : 'Pilih tanggal',
                     style: TextStyle(color: dropdownLight, fontSize: 16),
                   ),
-                  const Icon(Icons.calendar_today, color: Colors.blue, size: 20),
+                  const Icon(
+                    Icons.calendar_today,
+                    color: Colors.blue,
+                    size: 20,
+                  ),
                 ],
               ),
             ),
@@ -1056,7 +1135,9 @@ class _DirectVisitState extends State<DirectVisit> {
   }
 
   String? _validateDateField(String fieldType) {
-    if (selectedTanggalMulai == null && selectedTanggalBerakhir == null && selectedTanggalPenyelesaian == null) {
+    if (selectedTanggalMulai == null &&
+        selectedTanggalBerakhir == null &&
+        selectedTanggalPenyelesaian == null) {
       return null;
     }
 
@@ -1072,7 +1153,8 @@ class _DirectVisitState extends State<DirectVisit> {
       case 'sampaiTanggal':
         if (selectedTanggalBerakhir == null) {
           return 'Sampai Tanggal wajib diisi';
-        } else if (selectedTanggalMulai != null && selectedTanggalBerakhir!.isBefore(selectedTanggalMulai!)) {
+        } else if (selectedTanggalMulai != null &&
+            selectedTanggalBerakhir!.isBefore(selectedTanggalMulai!)) {
           _resetAllDates();
           return null;
         }
@@ -1080,10 +1162,12 @@ class _DirectVisitState extends State<DirectVisit> {
       case 'tanggalSelesai':
         if (selectedTanggalPenyelesaian == null) {
           return 'Tanggal Selesai wajib diisi';
-        } else if (selectedTanggalMulai != null && selectedTanggalPenyelesaian!.isBefore(selectedTanggalMulai!)) {
+        } else if (selectedTanggalMulai != null &&
+            selectedTanggalPenyelesaian!.isBefore(selectedTanggalMulai!)) {
           _resetAllDates();
           return null;
-        } else if (selectedTanggalBerakhir != null && selectedTanggalPenyelesaian!.isAfter(selectedTanggalBerakhir!)) {
+        } else if (selectedTanggalBerakhir != null &&
+            selectedTanggalPenyelesaian!.isAfter(selectedTanggalBerakhir!)) {
           _resetAllDates();
           return null;
         }
@@ -1300,7 +1384,7 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
               ),
             ),
@@ -1345,10 +1429,11 @@ class _DirectVisitState extends State<DirectVisit> {
             controller: _pageCtrl,
             onPageChanged: (i) => setState(() => _currentPage = i),
             itemCount: photos.length,
-            itemBuilder: (context, i) => ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(photos[i], fit: BoxFit.cover),
-            ),
+            itemBuilder:
+                (context, i) => ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(photos[i], fit: BoxFit.cover),
+                ),
           ),
         ),
         const SizedBox(height: 16),
@@ -1384,14 +1469,14 @@ class _DirectVisitState extends State<DirectVisit> {
     }
 
     if (mainPersons.any(
-          (e) =>
-      e['jabatan'] == selectedJabatan &&
+      (e) =>
+          e['jabatan'] == selectedJabatan &&
           e['nama'] == _namaPicController.text &&
           e['telp'] == selectedMainTelp,
     )) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data PIC ini sudah ada')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Data PIC ini sudah ada')));
       return;
     }
 
@@ -1437,9 +1522,7 @@ class _DirectVisitState extends State<DirectVisit> {
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
@@ -1447,15 +1530,17 @@ class _DirectVisitState extends State<DirectVisit> {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon lengkapi semua field yang wajib diisi')),
+        const SnackBar(
+          content: Text('Mohon lengkapi semua field yang wajib diisi'),
+        ),
       );
       return;
     }
 
     if (_photo1 == null || _photo2 == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon upload kedua foto')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Mohon upload kedua foto')));
       return;
     }
 
@@ -1478,8 +1563,12 @@ class _DirectVisitState extends State<DirectVisit> {
         tipeVisit: selectedVisitType!,
         tujuanVisit: selectedTujuanVisit!,
         dariTanggal: DateFormat('yyyy-MM-dd').format(selectedTanggalMulai!),
-        sampaiTanggal: DateFormat('yyyy-MM-dd').format(selectedTanggalBerakhir!),
-        tanggalSelesai: DateFormat('yyyy-MM-dd').format(selectedTanggalPenyelesaian!),
+        sampaiTanggal: DateFormat(
+          'yyyy-MM-dd',
+        ).format(selectedTanggalBerakhir!),
+        tanggalSelesai: DateFormat(
+          'yyyy-MM-dd',
+        ).format(selectedTanggalPenyelesaian!),
         namaPic: selectedNamaPIC!,
         themeOfDiscussion: temaDiskusi ?? '',
         problem: problem ?? '',
@@ -1529,10 +1618,7 @@ class _DirectVisitState extends State<DirectVisit> {
       Get.back();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() => isSubmitting = false);
@@ -1587,44 +1673,50 @@ class _DirectVisitState extends State<DirectVisit> {
                         isLoadingJabatanSFI
                             ? const CircularProgressIndicator()
                             : DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedJabatanSFI,
-                          hint: Text(
-                            '-- Pilih Jabatan --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Color(0xFFCCCCCC),
-                                width: 0.5,
+                              isExpanded: true,
+                              value: selectedJabatanSFI,
+                              hint: Text(
+                                '-- Pilih Jabatan --',
+                                style: TextStyle(color: dropdownLight),
                               ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 2.0,
+                              icon: const Icon(Icons.expand_more),
+                              iconEnabledColor: dropdownLight,
+                              style: TextStyle(color: dropdownLight),
+                              decoration: const InputDecoration(
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color(0xFFCCCCCC),
+                                    width: 0.5,
+                                  ),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: dropdownLightF,
+                                    width: 2.0,
+                                  ),
+                                ),
                               ),
+                              items: _buildDropdownItems(
+                                jabatanSFIList,
+                                codeKey: 'name',
+                                nameKey: 'name',
+                              ),
+                              onChanged:
+                                  (v) => setState(() {
+                                    selectedJabatanSFI = v;
+                                    _hasInteractedWithJabatanSFI = true;
+                                  }),
+                              onTap: () {
+                                setState(() {
+                                  _hasInteractedWithJabatanSFI = true;
+                                });
+                              },
+                              validator:
+                                  (v) =>
+                                      _hasInteractedWithJabatanSFI && v == null
+                                          ? 'Harap pilih jabatan'
+                                          : null,
                             ),
-                          ),
-                          items: _buildDropdownItems(jabatanSFIList, codeKey: 'name', nameKey: 'name'),
-                          onChanged: (v) => setState(() {
-                            selectedJabatanSFI = v;
-                            _hasInteractedWithJabatanSFI = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractedWithJabatanSFI = true;
-                            });
-                          },
-                          validator: (v) =>
-                          _hasInteractedWithJabatanSFI && v == null
-                              ? 'Harap pilih jabatan'
-                              : null,
-                        ),
                         const SizedBox(height: 16),
                       ],
                     ),
@@ -1672,32 +1764,40 @@ class _DirectVisitState extends State<DirectVisit> {
                               ),
                             ),
                           ),
-                          items: areaList.isEmpty ? [] : _buildDropdownItems(areaList),
-                          onChanged: areaList.isEmpty ? null : (val) {
-                            print('Area selected: $val');
-                            setState(() {
-                              selectedArea = val;
-                              selectedCabang = null;
-                              cabangList.clear();
-                              _hasInteractWithArea = true;
-                              // Reset dealer search when area changes
-                              isDealerSearchEnabled = false;
-                              isDealerSearchExpanded = false;
-                              selectedDealer = null;
-                              selectedDealerName = null;
-                              dealerList.clear();
-                              filteredDealerList.clear();
-                              _dealerSearchController.clear();
-                            });
-                            if (val != null && val.isNotEmpty) {
-                              _loadCabang(val);
-                            }
-                          },
+                          items:
+                              areaList.isEmpty
+                                  ? []
+                                  : _buildDropdownItems(areaList),
+                          onChanged:
+                              areaList.isEmpty
+                                  ? null
+                                  : (val) {
+                                    print('Area selected: $val');
+                                    setState(() {
+                                      selectedArea = val;
+                                      selectedCabang = null;
+                                      cabangList.clear();
+                                      _hasInteractWithArea = true;
+                                      // Reset dealer search when area changes
+                                      isDealerSearchEnabled = false;
+                                      isDealerSearchExpanded = false;
+                                      selectedDealer = null;
+                                      selectedDealerName = null;
+                                      dealerList.clear();
+                                      filteredDealerList.clear();
+                                      _dealerSearchController.clear();
+                                    });
+                                    if (val != null && val.isNotEmpty) {
+                                      _loadCabang(val);
+                                    }
+                                  },
                           onTap: () {
                             if (areaList.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Data area sedang dimuat, mohon tunggu...'),
+                                  content: Text(
+                                    'Data area sedang dimuat, mohon tunggu...',
+                                  ),
                                   backgroundColor: Colors.orange,
                                 ),
                               );
@@ -1707,10 +1807,11 @@ class _DirectVisitState extends State<DirectVisit> {
                               });
                             }
                           },
-                          validator: (v) =>
-                          _hasInteractWithArea && v == null
-                              ? 'Harap Pilih Area'
-                              : null,
+                          validator:
+                              (v) =>
+                                  _hasInteractWithArea && v == null
+                                      ? 'Harap Pilih Area'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Cabang'),
@@ -1746,13 +1847,18 @@ class _DirectVisitState extends State<DirectVisit> {
                               ),
                             ),
                             items: _buildDropdownItems(cabangList),
-                            onChanged: selectedArea == null || cabangList.isEmpty ? null : (val) {
-                              print('Cabang selected: $val'); // Debug log
-                              setState(() {
-                                selectedCabang = val;
-                                _hasInteractWithCabang = true;
-                              });
-                            },
+                            onChanged:
+                                selectedArea == null || cabangList.isEmpty
+                                    ? null
+                                    : (val) {
+                                      print(
+                                        'Cabang selected: $val',
+                                      ); // Debug log
+                                      setState(() {
+                                        selectedCabang = val;
+                                        _hasInteractWithCabang = true;
+                                      });
+                                    },
                             onTap: () {
                               if (selectedArea == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1767,63 +1873,65 @@ class _DirectVisitState extends State<DirectVisit> {
                                 });
                               }
                             },
-                            validator: (v) =>
-                            _hasInteractWithCabang && v == null
-                                ? 'Harap Pilih Cabang'
-                                : null,
+                            validator:
+                                (v) =>
+                                    _hasInteractWithCabang && v == null
+                                        ? 'Harap Pilih Cabang'
+                                        : null,
                           ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Produk'),
                         isLoadingProduk
                             ? const CircularProgressIndicator()
                             : DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedProduk,
-                          hint: Text(
-                            '-- Pilih Produk --',
-                            style: TextStyle(color: dropdownLight),
-                          ),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: const TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightNF,
-                                width: 0.5,
+                              isExpanded: true,
+                              value: selectedProduk,
+                              hint: Text(
+                                '-- Pilih Produk --',
+                                style: TextStyle(color: dropdownLight),
                               ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: dropdownLightF,
-                                width: 2.0,
+                              icon: const Icon(Icons.expand_more),
+                              iconEnabledColor: dropdownLight,
+                              style: const TextStyle(color: dropdownLight),
+                              decoration: const InputDecoration(
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: dropdownLightNF,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: dropdownLightF,
+                                    width: 2.0,
+                                  ),
+                                ),
                               ),
+                              items: _buildDropdownItems(produkList),
+                              onChanged:
+                                  (val) => setState(() {
+                                    selectedProduk = val;
+                                    _hasInteractWithProduk = true;
+                                    // Reset dealer search when product changes
+                                    isDealerSearchEnabled = false;
+                                    isDealerSearchExpanded = false;
+                                    selectedDealer = null;
+                                    selectedDealerName = null;
+                                    dealerList.clear();
+                                    filteredDealerList.clear();
+                                    _dealerSearchController.clear();
+                                  }),
+                              onTap: () {
+                                setState(() {
+                                  _hasInteractWithProduk = true;
+                                });
+                              },
+                              validator:
+                                  (v) =>
+                                      _hasInteractWithProduk && v == null
+                                          ? 'Harap Pilih Produk'
+                                          : null,
                             ),
-                          ),
-                          items: _buildDropdownItems(produkList),
-                          onChanged: (val) => setState(() {
-                            selectedProduk = val;
-                            _hasInteractWithProduk = true;
-                            // Reset dealer search when product changes
-                            isDealerSearchEnabled = false;
-                            isDealerSearchExpanded = false;
-                            selectedDealer = null;
-                            selectedDealerName = null;
-                            dealerList.clear();
-                            filteredDealerList.clear();
-                            _dealerSearchController.clear();
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithProduk = true;
-                            });
-                          },
-
-                          validator: (v) =>
-                          _hasInteractWithProduk && v == null
-                              ? 'Harap Pilih Produk'
-                              : null,
-                        ),
                         const SizedBox(height: 16),
 
                         // Advanced Dealer Search
@@ -1853,112 +1961,136 @@ class _DirectVisitState extends State<DirectVisit> {
                         isLoadingVisitType
                             ? const CircularProgressIndicator()
                             : DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedVisitType,
-                          hint: Text('-- Pilih Tipe Visit --', style: TextStyle(color: dropdownLight)),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: const TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
+                              isExpanded: true,
+                              value: selectedVisitType,
+                              hint: Text(
+                                '-- Pilih Tipe Visit --',
+                                style: TextStyle(color: dropdownLight),
+                              ),
+                              icon: const Icon(Icons.expand_more),
+                              iconEnabledColor: dropdownLight,
+                              style: const TextStyle(color: dropdownLight),
+                              decoration: const InputDecoration(
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: dropdownLightNF,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: dropdownLightF,
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),
+                              items: _buildDropdownItems(
+                                visitTypeList,
+                                codeKey: 'name',
+                                nameKey: 'name',
+                              ),
+                              onChanged:
+                                  (val) => setState(() {
+                                    selectedVisitType = val;
+                                    _hasInteractWithVisitType = true;
+                                  }),
+                              onTap: () {
+                                setState(() {
+                                  _hasInteractWithVisitType = true;
+                                });
+                              },
+                              validator:
+                                  (v) =>
+                                      _hasInteractWithVisitType && v == null
+                                          ? 'Harap Pilih Tipe Visit'
+                                          : null,
                             ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
-                            ),
-                          ),
-
-                          items: _buildDropdownItems(visitTypeList, codeKey: 'name', nameKey: 'name'),
-                          onChanged: (val) => setState(() {
-                            selectedVisitType = val;
-                            _hasInteractWithVisitType = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithVisitType = true;
-                            });
-                          },
-
-                          validator: (v) =>
-                          _hasInteractWithVisitType && v == null
-                              ? 'Harap Pilih Tipe Visit'
-                              : null,
-
-                        ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Tujuan Visit'),
                         isLoadingTujuanVisit
                             ? const CircularProgressIndicator()
                             : DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: selectedTujuanVisit,
-                          hint: Text('-- Pilih Tujuan Visit --', style: TextStyle(color: dropdownLight)),
-                          icon: const Icon(Icons.expand_more),
-                          iconEnabledColor: dropdownLight,
-                          style: const TextStyle(color: dropdownLight),
-                          decoration: const InputDecoration(
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
+                              isExpanded: true,
+                              value: selectedTujuanVisit,
+                              hint: Text(
+                                '-- Pilih Tujuan Visit --',
+                                style: TextStyle(color: dropdownLight),
+                              ),
+                              icon: const Icon(Icons.expand_more),
+                              iconEnabledColor: dropdownLight,
+                              style: const TextStyle(color: dropdownLight),
+                              decoration: const InputDecoration(
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: dropdownLightNF,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: dropdownLightF,
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),
+                              items: _buildDropdownItems(
+                                tujuanVisitList,
+                                codeKey: 'name',
+                                nameKey: 'name',
+                              ),
+                              onChanged:
+                                  (val) => setState(() {
+                                    selectedTujuanVisit = val;
+                                    _hasInteractWithTujuanVisit = true;
+                                  }),
+                              onTap: () {
+                                setState(() {
+                                  _hasInteractWithTujuanVisit = true;
+                                });
+                              },
+                              validator:
+                                  (v) =>
+                                      _hasInteractWithTujuanVisit && v == null
+                                          ? 'Harap Pilih Tujuan Visit'
+                                          : null,
                             ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
-                            ),
-                          ),
-
-                          items: _buildDropdownItems(tujuanVisitList, codeKey: 'name', nameKey: 'name'),
-                          onChanged: (val) => setState(() {
-                            selectedTujuanVisit = val;
-                            _hasInteractWithTujuanVisit = true;
-                          }),
-                          onTap: () {
-                            setState(() {
-                              _hasInteractWithTujuanVisit = true;
-                            });
-                          },
-                          validator: (v) =>
-                          _hasInteractWithTujuanVisit && v == null
-                              ? 'Harap Pilih Tujuan Visit'
-                              : null,
-                        ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Dari Tanggal'),
                         _buildDateField(
                           selectedTanggalMulai,
-                          () => _selectDate(
-                            context,
-                                (date) {
-                              setState(() {
-                                selectedTanggalMulai = date;
-                                if (date != null) {
-                                  if (selectedTanggalBerakhir != null && selectedTanggalBerakhir!.isBefore(date)) {
-                                    selectedTanggalBerakhir = null;
-                                  }
-                                  if (selectedTanggalPenyelesaian != null && selectedTanggalPenyelesaian!.isBefore(date)) {
-                                    selectedTanggalPenyelesaian = null;
-                                  }
+                          () => _selectDate(context, (date) {
+                            setState(() {
+                              selectedTanggalMulai = date;
+                              if (date != null) {
+                                if (selectedTanggalBerakhir != null &&
+                                    selectedTanggalBerakhir!.isBefore(date)) {
+                                  selectedTanggalBerakhir = null;
                                 }
-                              });
-                            },
-                            'dariTanggal',
-                          ),
+                                if (selectedTanggalPenyelesaian != null &&
+                                    selectedTanggalPenyelesaian!.isBefore(
+                                      date,
+                                    )) {
+                                  selectedTanggalPenyelesaian = null;
+                                }
+                              }
+                            });
+                          }, 'dariTanggal'),
                           'dariTanggal',
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Sampai Tanggal'),
                         _buildDateField(
                           selectedTanggalBerakhir,
-                          () => _selectDate(
-                            context,
-                                (date) {
-                              setState(() {
-                                selectedTanggalBerakhir = date;
-                                if (date != null && selectedTanggalPenyelesaian != null && selectedTanggalPenyelesaian!.isAfter(date)) {
-                                  selectedTanggalPenyelesaian = null;
-                                }
-                              });
-                            },
-                            'sampaiTanggal',
-                          ),
+                          () => _selectDate(context, (date) {
+                            setState(() {
+                              selectedTanggalBerakhir = date;
+                              if (date != null &&
+                                  selectedTanggalPenyelesaian != null &&
+                                  selectedTanggalPenyelesaian!.isAfter(date)) {
+                                selectedTanggalPenyelesaian = null;
+                              }
+                            });
+                          }, 'sampaiTanggal'),
                           'sampaiTanggal',
                         ),
                         const SizedBox(height: 12),
@@ -1967,7 +2099,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           selectedTanggalPenyelesaian,
                           () => _selectDate(
                             context,
-                                (date) => setState(() => selectedTanggalPenyelesaian = date),
+                            (date) => setState(
+                              () => selectedTanggalPenyelesaian = date,
+                            ),
                             'tanggalSelesai',
                           ),
                           'tanggalSelesai',
@@ -1983,24 +2117,41 @@ class _DirectVisitState extends State<DirectVisit> {
                             hintText: 'Masukkan nama PIC',
                             hintStyle: TextStyle(color: dropdownLightNF),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 1.5),
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 1.5,
+                              ),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 3.0),
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 3.0,
+                              ),
                             ),
                             counterText: '$namaPICLength/50',
-                            counterStyle: TextStyle(color: dropdownLight, fontSize: 12),
-                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                            counterStyle: TextStyle(
+                              color: dropdownLight,
+                              fontSize: 12,
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
                           ),
                           keyboardType: TextInputType.text,
                           inputFormatters: [
                             FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
                           ],
-                          onChanged: (val) => setState(() {
-                            selectedNamaPIC = val;
-                            namaPICLength = val.length;
-                          }),
-                          validator: (v) => v == null || v.isEmpty ? 'Nama PIC wajib diisi' : null,
+                          onChanged:
+                              (val) => setState(() {
+                                selectedNamaPIC = val;
+                                namaPICLength = val.length;
+                              }),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Nama PIC wajib diisi'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Theme of Discussion'),
@@ -2015,20 +2166,33 @@ class _DirectVisitState extends State<DirectVisit> {
                             hintText: 'Masukkan tema diskusi',
                             hintStyle: TextStyle(color: dropdownLightNF),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
                             ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
                           ),
-                          onChanged: (val) => setState(() {
-                            temaDiskusi = val;
-                            temaDiskusiLength = val.length;
-                          }),
-                          validator: (v) => v == null || v.isEmpty ? 'Tema diskusi wajib diisi' : null,
+                          onChanged:
+                              (val) => setState(() {
+                                temaDiskusi = val;
+                                temaDiskusiLength = val.length;
+                              }),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Tema diskusi wajib diisi'
+                                      : null,
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Problem'),
                         TextFormField(
@@ -2042,18 +2206,32 @@ class _DirectVisitState extends State<DirectVisit> {
                             hintText: 'Masukkan Problem',
                             hintStyle: TextStyle(color: dropdownLightNF),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
                             ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
                           ),
-                          onChanged: (val) => setState(() {
-                            problem = val;
-                            problemLength = val.length;
-                          }),
-                          validator: (v) => v == null || v.isEmpty ? 'Problem wajib diisi' : null,
+                          onChanged:
+                              (val) => setState(() {
+                                problem = val;
+                                problemLength = val.length;
+                              }),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Problem wajib diisi'
+                                      : null,
                         ),
                         const SizedBox(height: 12),
                         _buildFieldLabel('Follow-Up'),
@@ -2068,20 +2246,33 @@ class _DirectVisitState extends State<DirectVisit> {
                             hintText: 'Masukkan Follow-Up',
                             hintStyle: TextStyle(color: dropdownLightNF),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
                             ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
                           ),
-                          onChanged: (val) => setState(() {
-                            followUp = val;
-                            followUpLength = val.length;
-                          }),
-                          validator: (v) => v == null || v.isEmpty ? 'Follow-Up wajib diisi' : null,
+                          onChanged:
+                              (val) => setState(() {
+                                followUp = val;
+                                followUpLength = val.length;
+                              }),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Follow-Up wajib diisi'
+                                      : null,
                         ),
-                        
                         const SizedBox(height: 12),
                         _buildFieldLabel('Description'),
                         TextFormField(
@@ -2095,18 +2286,32 @@ class _DirectVisitState extends State<DirectVisit> {
                             hintText: 'Masukkan deskripsi',
                             hintStyle: TextStyle(color: dropdownLightNF),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightNF, width: 0.5),
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: dropdownLightF, width: 2.0),
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
                             ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
                           ),
-                          onChanged: (val) => setState(() {
-                            description = val;
-                            descriptionLength = val.length;
-                          }),
-                          validator: (v) => v == null || v.isEmpty ? 'Deskripsi wajib diisi' : null,
+                          onChanged:
+                              (val) => setState(() {
+                                description = val;
+                                descriptionLength = val.length;
+                              }),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Deskripsi wajib diisi'
+                                      : null,
                         ),
                       ],
                     ),
@@ -2131,7 +2336,6 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
                         Form(
                           key: _mainPersonFormKey,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -2154,15 +2358,23 @@ class _DirectVisitState extends State<DirectVisit> {
                                     borderSide: BorderSide(
                                       color: Color(0xFFCCCCCC),
                                       width: 0.5,
-
                                     ),
                                   ),
                                 ),
-                                items: _buildDropdownItems(jabatanList, codeKey: 'name', nameKey: 'name'),
-                                onChanged: (v) => setState(() {
-                                  selectedJabatan = v;
-                                }),
-                                validator: (v) => v == null ? 'Harap Pilih Jabatan' : null,
+                                items: _buildDropdownItems(
+                                  jabatanList,
+                                  codeKey: 'name',
+                                  nameKey: 'name',
+                                ),
+                                onChanged:
+                                    (v) => setState(() {
+                                      selectedJabatan = v;
+                                    }),
+                                validator:
+                                    (v) =>
+                                        v == null
+                                            ? 'Harap Pilih Jabatan'
+                                            : null,
                               ),
                               const SizedBox(height: 12),
                               _buildFieldLabel('Nama PIC'),
@@ -2176,10 +2388,16 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ),
                                 keyboardType: TextInputType.text,
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                                  FilteringTextInputFormatter.deny(
+                                    RegExp(r'[0-9]'),
+                                  ),
                                 ],
                                 onChanged: (_) => setState(() {}),
-                                validator: (v) => (v == null || v.isEmpty) ? 'Nama wajib diisi' : null,
+                                validator:
+                                    (v) =>
+                                        (v == null || v.isEmpty)
+                                            ? 'Nama wajib diisi'
+                                            : null,
                               ),
                               const SizedBox(height: 12),
                               _buildFieldLabel('No Telpon PIC'),
@@ -2196,16 +2414,20 @@ class _DirectVisitState extends State<DirectVisit> {
                                 ],
                                 onChanged: (phone) {},
                                 onSaved: (phone) {
-                                  if (phone != null && phone.number.isNotEmpty && phone.number.length >= 6) {
+                                  if (phone != null &&
+                                      phone.number.isNotEmpty &&
+                                      phone.number.length >= 6) {
                                     selectedMainTelp = phone.completeNumber;
                                   } else {
                                     selectedMainTelp = null;
                                   }
                                 },
                                 validator: (phone) {
-                                  if (phone == null || phone.number.isEmpty) return 'Nomor telepon wajib diisi';
+                                  if (phone == null || phone.number.isEmpty)
+                                    return 'Nomor telepon wajib diisi';
                                   final number = phone.number;
-                                  if (number.length < 6) return 'Nomor telepon tidak valid';
+                                  if (number.length < 6)
+                                    return 'Nomor telepon tidak valid';
                                   return null;
                                 },
                               ),
@@ -2222,7 +2444,10 @@ class _DirectVisitState extends State<DirectVisit> {
                                   ),
                                   child: Text(
                                     'Tambahkan',
-                                    style: TextStyle(color: textButton, fontSize: 16),
+                                    style: TextStyle(
+                                      color: textButton,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -2235,12 +2460,13 @@ class _DirectVisitState extends State<DirectVisit> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: mainPersons.length,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 3 / 3,
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 3 / 3,
+                                ),
                             itemBuilder: (context, i) {
                               final pic = mainPersons[i];
                               return Card(
@@ -2252,13 +2478,16 @@ class _DirectVisitState extends State<DirectVisit> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: SingleChildScrollView(
-                                          physics: const BouncingScrollPhysics(),
+                                          physics:
+                                              const BouncingScrollPhysics(),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 pic['jabatan']!,
@@ -2299,41 +2528,57 @@ class _DirectVisitState extends State<DirectVisit> {
                                           onPressed: () {
                                             showDialog(
                                               context: context,
-                                              builder: (context) => AlertDialog(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
-                                                ),
-                                                title: Text(
-                                                  'Konfirmasi Hapus',
-                                                  style: TextStyle(
-                                                    color: headerBlue,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                content: Text(
-                                                  'Apakah Anda yakin ingin menghapus ${pic['nama']} dari daftar PIC?',
-                                                  style: const TextStyle(color: textButton),
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(context),
-                                                    child: Text(
-                                                      'Batal',
-                                                      style: TextStyle(color: textButton),
+                                              builder:
+                                                  (context) => AlertDialog(
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
                                                     ),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      _removeMainPerson(i);
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: const Text(
-                                                      'Hapus',
-                                                      style: TextStyle(color: Colors.red),
+                                                    title: Text(
+                                                      'Konfirmasi Hapus',
+                                                      style: TextStyle(
+                                                        color: headerBlue,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
                                                     ),
+                                                    content: Text(
+                                                      'Apakah Anda yakin ingin menghapus ${pic['nama']} dari daftar PIC?',
+                                                      style: const TextStyle(
+                                                        color: textButton,
+                                                      ),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed:
+                                                            () => Navigator.pop(
+                                                              context,
+                                                            ),
+                                                        child: Text(
+                                                          'Batal',
+                                                          style: TextStyle(
+                                                            color: textButton,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          _removeMainPerson(i);
+                                                          Navigator.pop(
+                                                            context,
+                                                          );
+                                                        },
+                                                        child: const Text(
+                                                          'Hapus',
+                                                          style: TextStyle(
+                                                            color: Colors.red,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ],
-                                              ),
                                             );
                                           },
                                           tooltip: 'Hapus PIC',
@@ -2425,7 +2670,10 @@ class _DirectVisitState extends State<DirectVisit> {
                                       ? selectedLatitude!.toStringAsFixed(6)
                                       : 'Belum diambil',
                                   style: TextStyle(
-                                    color: selectedLatitude != null ? Colors.green.shade700 : Colors.grey.shade600,
+                                    color:
+                                        selectedLatitude != null
+                                            ? Colors.green.shade700
+                                            : Colors.grey.shade600,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -2451,7 +2699,10 @@ class _DirectVisitState extends State<DirectVisit> {
                                       ? selectedLongitude!.toStringAsFixed(6)
                                       : 'Belum diambil',
                                   style: TextStyle(
-                                    color: selectedLongitude != null ? Colors.green.shade700 : Colors.grey.shade600,
+                                    color:
+                                        selectedLongitude != null
+                                            ? Colors.green.shade700
+                                            : Colors.grey.shade600,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -2477,19 +2728,25 @@ class _DirectVisitState extends State<DirectVisit> {
                     ),
                   ),
                   onPressed: isSubmitting ? null : _submitForm,
-                  child: isSubmitting
-                      ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      strokeWidth: 2,
-                    ),
-                  )
-                      : const Text(
-                    'Submit Direct Visit',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
+                  child:
+                      isSubmitting
+                          ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                              strokeWidth: 2,
+                            ),
+                          )
+                          : const Text(
+                            'Submit Direct Visit',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                 ),
                 const SizedBox(height: 16),
               ],
