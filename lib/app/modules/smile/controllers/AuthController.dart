@@ -4,7 +4,6 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:sufi_one/src/constants/constants.dart';
-import 'package:sufi_one/app/modules/smile/constants/constants.dart';
 import 'package:sufi_one/app/modules/smile/smile_route.dart';
 
 class AuthController extends GetxController {
