@@ -25,7 +25,7 @@ class DamsRoute {
     GetPage(
       name: historyPage,
       transition: Transition.zoom,
-      page: () => AssetHistory(),
+      page: () => HistoryStockPage(),
     ),
   ];
 }

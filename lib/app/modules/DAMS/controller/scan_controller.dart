@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/modules/DAMS/model/asset.dart';
+import 'package:sufi_one/app/modules/DAMS/model/stockOpname.dart';
 import 'package:sufi_one/src/constants/constants.dart';
 
 class ScanController extends GetxController {
@@ -51,6 +52,20 @@ class ScanController extends GetxController {
     }
   }
 
+  Future<List<HistoryStockOpname>> fetchHistoryStock(String token) async {
+    final response = await http.get(
+      Uri.parse(Url + 'asset-branches'), // Fixed: Added Url prefix
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = json.decode(response.body);
+      return body.map((e) => HistoryStockOpname.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load history stock');
+    }
+  }
+
   Future<void> updateAssetAndDetail(Asset asset, AssetDetail detail) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -65,14 +80,13 @@ class ScanController extends GetxController {
         "KODE_ASET": asset.kodeAset,
         "DIVISION": asset.division ?? '',
         "FLOOR": asset.floor ?? '',
-
         "ITEM": detail.item ?? '',
         "TANGGAL_PEMBELIAN":
             detail.tanggalPembelian != null
                 ? DateFormat('yyyy-MM-dd').format(detail.tanggalPembelian!)
                 : '',
-        "COST_AC": detail.costAc ?? '',
-        "BOK_VAL": detail.bokVal ?? '',
+        "COST_AC": detail.costAc != null ? detail.costAc.toString() : '0',
+        "BOK_VAL": detail.bokVal != null ? detail.bokVal.toString() : '0',
         "NAMA_USER_ASET": detail.username ?? '',
         "KETERANGAN": detail.description?.trim() ?? '-',
         "STATUS_ASET": detail.status ?? '',
@@ -91,15 +105,16 @@ class ScanController extends GetxController {
         },
         body: jsonEncode(body),
       );
+
       print('===[DEBUG] BODY UPDATE==');
       print(jsonEncode(body));
-
       print('Response Code: ${response.statusCode}');
       print('Response Body: ${response.body}');
+
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        // Update token baru jika ada
+        // Update new token if exists
         if (responseData['token'] != null) {
           await prefs.setString('token', responseData['token']);
         }

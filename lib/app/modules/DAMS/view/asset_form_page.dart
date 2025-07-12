@@ -407,6 +407,19 @@ class _AssetFormPageState extends State<AssetFormPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _tanggalBeliController,
+              validator: (value) {
+                if (value!.isNotEmpty) {
+                  try {
+                    final date = DateFormat('dd/MM/yyyy').parse(value);
+                    if (date.isAfter(DateTime.now())) {
+                      return 'Tanggal tidak boleh melebihi hari ini';
+                    }
+                  } catch (e) {
+                    return 'Format tanggal tidak valid';
+                  }
+                }
+                return null;
+              },
               decoration: InputDecoration(
                 labelText: 'Tanggal Beli',
                 border: OutlineInputBorder(
