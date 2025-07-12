@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:sufi_one/app/modules/DAMS/controller/history_controller.dart';
 import 'package:sufi_one/app/modules/DAMS/model/stockOpname.dart';
+import 'package:sufi_one/app/modules/DAMS/view/edit_screen.dart';
+import 'package:sufi_one/app/modules/DAMS/view/view_screen.dart';
 
 class HistoryStockPage extends StatelessWidget {
   final HistoryController controller = Get.put(HistoryController());
@@ -112,13 +114,32 @@ class HistoryStockPage extends StatelessWidget {
     );
   }
 
-  void _onEditPressed(HistoryStockOpname item) {
-    // Implement edit functionality
-    Get.snackbar('Edit', 'Mengedit ${item.trxNo}');
+  // In the _onViewPressed method:
+  void _onViewPressed(HistoryStockOpname item) async {
+    try {
+      final detail = await controller.getStockDetail(item.id);
+      Get.to(() => ViewScreen(data: detail));
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    }
   }
 
-  void _onViewPressed(HistoryStockOpname item) {
-    // Implement view functionality
-    Get.snackbar('View', 'Melihat detail ${item.trxNo}');
+  // In the _onEditPressed method:
+  void _onEditPressed(HistoryStockOpname item) async {
+    try {
+      // First get the detailed data
+      final detail = await controller.getStockDetail(item.id);
+
+      // Then navigate to edit screen with the data
+      Get.to(() => EditScreen(assetId: item.id, initialData: detail));
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 }
