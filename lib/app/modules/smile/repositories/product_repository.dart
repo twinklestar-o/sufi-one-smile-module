@@ -1,6 +1,8 @@
 import 'package:sufi_one/src/services/api_services.dart';
-import '../../../../src/database/database_helper.dart';
-import '../models/product.dart';
+import 'package:sufi_one/src/database/database_helper.dart';
+import 'package:sufi_one/app/modules/smile/models/product.dart';
+import 'package:sufi_one/src/utils/app_constants.dart'; // Import AppConstants
+import 'package:flutter/foundation.dart'; // Untuk debugPrint
 
 class ProductRepository {
   final DatabaseHelper dbHelper;
@@ -8,147 +10,95 @@ class ProductRepository {
 
   ProductRepository({required this.dbHelper, required this.apiService});
 
-  // lib/app/modules/smile/repositories/product_repository.dart
-  // lib/app/modules/smile/repositories/product_repository.dart
-// ... (bagian atas tidak berubah)
+  Future<List<Product>> getProducts({bool forceRefresh = false}) async { // Mengubah nama metode ke plural
+    debugPrint('🚀 getProducts called with forceRefresh: $forceRefresh');
+    List<Product> localData = [];
 
-  Future<List<Product>> getProduct({bool forceRefresh = false}) async {
     try {
-      print('🚀 getProduct called with forceRefresh: $forceRefresh');
-
-      if (forceRefresh) {
-        print('🔄 Force refresh requested - calling API');
-        return await _fetchFromApiAndSave();
-      }
-
-      final localData = await dbHelper.getAllProduct();
-      print('📱 Local data count: ${localData.length}');
-
-      if (localData.isEmpty) {
-        print('📱 No local data found - calling API');
-        return await _fetchFromApiAndSave();
-      }
-
-      // Debug: Print local data
-      for (int i = 0; i < localData.length; i++) {
-        print('📱 Local product $i: ${localData[i].code} - ${localData[i].name}'); // Ganti .kode menjadi .code
-      }
-
-      // Cek server update
-      print('🔍 Checking server update...');
-      final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime('product_last_update');
-
-      print('🔍 Server last update: $serverLastUpdate');
-      print('🔍 Local last update: $localLastUpdate');
-
-      if (serverLastUpdate != null &&
-          (localLastUpdate == null ||
-              serverLastUpdate.isAfter(localLastUpdate))) {
-        print('🔄 Server has newer data - calling API');
-        return await _fetchFromApiAndSave();
-      }
-
-      print('📱 Using local data (up to date)');
-      return localData;
+      localData = await dbHelper.getAllProducts(); // Menggunakan getAllProducts
+      debugPrint('📱 Fetched ${localData.length} products from SQLite');
     } catch (e) {
-      print('❌ Error in getProduct: $e');
-      // Fallback to local data if error occurs
-      final localData = await dbHelper.getAllProduct();
-      if (localData.isNotEmpty) {
-        print('📱 Fallback to local data: ${localData.length} products');
-        return localData;
+      debugPrint('❌ Error fetching local products: $e');
+      forceRefresh = true;
+    }
+
+    final lastUpdate = await dbHelper.getLastUpdate(AppConstants.productCacheKey); // Menggunakan getLastUpdate
+    final bool shouldFetch = forceRefresh ||
+        localData.isEmpty ||
+        (lastUpdate == null || DateTime.now().difference(lastUpdate).inHours > AppConstants.cacheDurationHours);
+
+    debugPrint('📱 Local data count: ${localData.length}');
+    debugPrint('📱 Last update for products: $lastUpdate');
+    debugPrint('📱 Should fetch from API for products: $shouldFetch');
+
+    if (shouldFetch) {
+      debugPrint('📱 No local data or cache expired - calling API');
+      try {
+        return await _fetchFromApiAndSave();
+      } catch (e) {
+        debugPrint('❌ Error in Product _fetchFromApiAndSave: $e');
+        debugPrint('📱 Trying to fallback to local data...');
+        if (localData.isNotEmpty) {
+          debugPrint('📱 Fallback successful, returning ${localData.length} local products.');
+          return localData;
+        } else {
+          debugPrint('📱 No local data available for fallback.');
+          rethrow;
+        }
       }
-      rethrow;
+    } else {
+      debugPrint('✅ Returning ${localData.length} products from cache.');
+      return localData;
     }
   }
 
   Future<List<Product>> _fetchFromApiAndSave() async {
+    debugPrint('🚀 Starting _fetchFromApiAndSave for products...');
     try {
-      print('🚀 Starting _fetchFromApiAndSave for products...');
+      final response = await apiService.fetchProduct(); // Asumsi ada fetchProduct di ApiService
+      debugPrint('🔍 Product Repository - Raw API Response: $response');
 
-      final response = await apiService.fetchProduct();
+      if (response['status'] == true && response['data'] is List) {
+        final List<dynamic> productData = response['data'];
+        debugPrint('🔍 Product Data: $productData');
+        debugPrint('🔍 Product Data Type: ${productData.runtimeType}');
+        debugPrint('🔍 Number of products from API: ${productData.length}');
 
-      print('🔍 Product Repository - Raw API Response: $response');
-      print('🔍 Response Type: ${response.runtimeType}');
+        final List<Product> productList = productData.map((json) {
+          final product = Product.fromJson(json);
+          debugPrint('✅ Successfully parsed product: $product');
+          return product;
+        }).toList();
 
-      if (response is! Map<String, dynamic>) {
-        throw Exception('Invalid API response format: Expected Map, got ${response.runtimeType}');
-      }
-
-      if (!response.containsKey('data')) {
-        throw Exception('Invalid API response format: Missing "data" field');
-      }
-
-      final dynamic productData = response['data'];
-      print('🔍 Product Data: $productData');
-      print('🔍 Product Data Type: ${productData.runtimeType}');
-
-      if (productData is! List) {
-        throw Exception('Invalid API response format: "data" field is not a List, got ${productData.runtimeType}');
-      }
-
-      print('🔍 Number of products from API: ${productData.length}');
-
-      final List<Product> productList = [];
-
-      for (int i = 0; i < productData.length; i++) {
-        try {
-          final json = productData[i];
-          print('🔍 Processing product $i: $json');
-          print('🔍 Product $i type: ${json.runtimeType}');
-
-          if (json is Map<String, dynamic>) {
-            final product = Product.fromJson(json);
-            productList.add(product);
-            print('✅ Successfully parsed product $i: ${product.toString()}');
-          } else {
-            print('❌ Product $i is not a Map: ${json.runtimeType}');
-            continue;
-          }
-        } catch (e) {
-          print('❌ Error parsing product JSON at index $i: ${productData[i]}, Error: $e');
-          continue;
+        debugPrint('✅ Successfully parsed ${productList.length} products total');
+        for (var p in productList) {
+          debugPrint('📦 Product: ${p.code} - ${p.name}'); // Menggunakan .code
         }
+
+        debugPrint('🗑️ Cleared old product data');
+        await dbHelper.clearProducts(); // Menggunakan clearProducts
+        await dbHelper.insertProducts(productList); // Menggunakan insertProducts
+        debugPrint('💾 Inserted ${productList.length} products to SQLite');
+
+        await dbHelper.updateLastUpdate(AppConstants.productCacheKey); // Menggunakan updateLastUpdate
+        debugPrint('⏰ Updated last update timestamp for products');
+
+        return productList;
+      } else {
+        throw Exception('Unexpected response format for products: $response');
       }
-
-      print('✅ Successfully parsed ${productList.length} products total');
-
-      // Debug: Print semua product yang berhasil di-parse
-      for (int i = 0; i < productList.length; i++) {
-        print('📦 Product $i: ${productList[i].code} - ${productList[i].name}'); // Ganti .kode menjadi .code
-      }
-
-      // Clear old data
-      final db = await dbHelper.database;
-      await db.delete('product');
-      print('🗑️ Cleared old product data');
-
-      // Insert new data
-      for (var product in productList) {
-        await dbHelper.insertProduct(product);
-        print('💾 Inserted product: ${product.code} - ${product.name}'); // Ganti .kode menjadi .code
-      }
-
-      // Update timestamp
-      await dbHelper.updateCollectionTimestamp('product_last_update');
-      print('⏰ Updated product timestamp');
-
-      return productList;
     } catch (e) {
-      print('❌ Error in Product _fetchFromApiAndSave: $e');
-      print('📱 Trying to fallback to local data...');
-
-      final localData = await dbHelper.getAllProduct();
-      print('📱 Local data count: ${localData.length}');
-
-      if (localData.isNotEmpty) {
-        for (var product in localData) {
-          print('📱 Local product: ${product.code} - ${product.name}'); // Ganti .kode menjadi .code
-        }
-        return localData;
-      }
+      debugPrint('❌ Error fetching products from API: $e');
       rethrow;
     }
+  }
+
+  // Tambahkan metode clearAndRefresh jika Anda ingin memilikinya di repository
+  Future<void> _clearAndRefreshProducts() async {
+    debugPrint('🗑️ Clearing local product data');
+    await dbHelper.clearProducts();
+    await dbHelper.deleteLastUpdate(AppConstants.productCacheKey);
+    debugPrint('🔄 Force refreshing products from API...');
+    await getProducts(forceRefresh: true);
   }
 }

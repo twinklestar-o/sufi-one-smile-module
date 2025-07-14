@@ -25,7 +25,7 @@ class _DealerScreenState extends State<DealerScreen> {
     final repository = Provider.of<DealerRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllDealer();
+    final localData = await repository.dbHelper.getAllDealers();
 
     if (!mounted) return;
 
@@ -40,7 +40,7 @@ class _DealerScreenState extends State<DealerScreen> {
     final repository = Provider.of<DealerRepository>(context, listen: false);
 
     try {
-      final data = await repository.getDealer();
+      final data = await repository.getDealers();
       if (!mounted) return;
 
       setState(() {
@@ -70,7 +70,7 @@ class _DealerScreenState extends State<DealerScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getDealer(forceRefresh: true);
+      final data = await repository.getDealers(forceRefresh: true);
 
       setState(() {
         _dealerFuture = Future.value(data);
@@ -84,7 +84,7 @@ class _DealerScreenState extends State<DealerScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getDealer(forceRefresh: false);
+        final localData = await repository.getDealers(forceRefresh: false);
         setState(() {
           _dealerFuture = Future.value(localData);
           _isLoading = false;

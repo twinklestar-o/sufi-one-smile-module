@@ -25,7 +25,7 @@ class _AreaScreenState extends State<AreaScreen> {
     final repository = Provider.of<AreaRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllArea();
+    final localData = await repository.dbHelper.getAllAreas();
 
     if (!mounted) return;
 
@@ -40,7 +40,7 @@ class _AreaScreenState extends State<AreaScreen> {
     final repository = Provider.of<AreaRepository>(context, listen: false);
 
     try {
-      final data = await repository.getArea();
+      final data = await repository.getAreas();
       if (!mounted) return;
 
       setState(() {
@@ -70,7 +70,7 @@ class _AreaScreenState extends State<AreaScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getArea(forceRefresh: true);
+      final data = await repository.getAreas(forceRefresh: true);
 
       setState(() {
         _areaFuture = Future.value(data);
@@ -84,7 +84,7 @@ class _AreaScreenState extends State<AreaScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getArea(forceRefresh: false);
+        final localData = await repository.getAreas(forceRefresh: false);
         setState(() {
           _areaFuture = Future.value(localData);
           _isLoading = false;

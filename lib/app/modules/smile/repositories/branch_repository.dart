@@ -1,8 +1,8 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:sufi_one/src/services/api_services.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/models/branch.dart';
-import 'dart:convert';
+import 'package:sufi_one/src/utils/app_constants.dart'; // Import AppConstants
+import 'package:flutter/foundation.dart'; // Untuk debugPrint
 
 class BranchRepository {
   final DatabaseHelper dbHelper;
@@ -10,98 +10,98 @@ class BranchRepository {
 
   BranchRepository({required this.dbHelper, required this.apiService});
 
-  Future<List<Branch>> getBranch({bool forceRefresh = false}) async {
+  Future<List<Branch>> getBranches({bool forceRefresh = false}) async { // Mengubah nama metode ke plural
+    debugPrint('🚀 getBranches called with forceRefresh: $forceRefresh');
+    List<Branch> localData = [];
+
     try {
-      if (forceRefresh) {
-        return await _fetchFromApiAndSave();
-      }
-
-      final localData = await dbHelper.getAllBranches();
-      if (localData.isEmpty) {
-        return await _fetchFromApiAndSave();
-      }
-
-      final serverLastUpdate = await apiService.fetchLastUpdateTime();
-      final localLastUpdate = await dbHelper.getLastUpdateTime(
-        'cabang_last_update',
-      );
-
-      if (serverLastUpdate != null &&
-          (localLastUpdate == null ||
-              serverLastUpdate.isAfter(localLastUpdate))) {
-        return await _fetchFromApiAndSave();
-      }
-
-      return localData;
+      localData = await dbHelper.getAllBranches(); // Menggunakan getAllBranches
+      debugPrint('📱 Fetched ${localData.length} branches from SQLite');
     } catch (e) {
-      print('Error fetching branch: $e');
-      final localData = await dbHelper.getAllBranches();
-      if (localData.isNotEmpty) {
-        return localData;
+      debugPrint('❌ Error fetching local branches: $e');
+      forceRefresh = true;
+    }
+
+    final lastUpdate = await dbHelper.getLastUpdate(AppConstants.branchCacheKey); // Menggunakan getLastUpdate
+    final bool shouldFetch = forceRefresh ||
+        localData.isEmpty ||
+        (lastUpdate == null || DateTime.now().difference(lastUpdate).inHours > AppConstants.cacheDurationHours);
+
+    debugPrint('📱 Local data count: ${localData.length}');
+    debugPrint('📱 Last update for branches: $lastUpdate');
+    debugPrint('📱 Should fetch from API for branches: $shouldFetch');
+
+    if (shouldFetch) {
+      debugPrint('📱 No local data or cache expired - calling API for branches');
+      try {
+        return await _fetchFromApiAndSave();
+      } catch (e) {
+        debugPrint('❌ Error in Branch _fetchFromApiAndSave: $e');
+        debugPrint('📱 Trying to fallback to local data...');
+        if (localData.isNotEmpty) {
+          debugPrint('📱 Fallback successful, returning ${localData.length} local branches.');
+          return localData;
+        } else {
+          debugPrint('📱 No local data available for fallback.');
+          rethrow;
+        }
       }
-      rethrow;
+    } else {
+      debugPrint('✅ Returning ${localData.length} branches from cache.');
+      return localData;
     }
   }
 
   Future<List<Branch>> _fetchFromApiAndSave() async {
+    debugPrint('🚀 Starting _fetchFromApiAndSave for branches...');
     try {
-      final dynamic rawResponse = await apiService.fetchBranches();
+      final dynamic rawResponse = await apiService.fetchBranches(); // Asumsi ada fetchBranches di ApiService
+      debugPrint('🔍 Branch Repository - Raw API Response: $rawResponse');
 
       List<dynamic> branchData;
-
-      if (rawResponse is List) {
-        branchData = rawResponse;
-      } else if (rawResponse is Map<String, dynamic> &&
-          rawResponse.containsKey('data')) {
+      if (rawResponse is Map<String, dynamic> && rawResponse.containsKey('data')) {
         branchData = rawResponse['data'];
-      } else if (rawResponse is String) {
-        final decodedResponse = json.decode(rawResponse);
-        if (decodedResponse is List) {
-          branchData = decodedResponse;
-        } else if (decodedResponse is Map<String, dynamic> &&
-            decodedResponse.containsKey('data')) {
-          branchData = decodedResponse['data'];
-        } else {
-          throw Exception('Format respons API tidak didukung setelah decode');
-        }
+      } else if (rawResponse is List) { // Jika API langsung mengembalikan List
+        branchData = rawResponse;
       } else {
-        throw Exception(
-          'Format respons API tidak valid: Tidak berupa List, Map, atau String JSON',
-        );
+        throw Exception('Invalid API response format: Expected Map with "data" or direct List, got ${rawResponse.runtimeType}');
       }
 
       if (branchData is! List) {
         throw Exception('Data cabang dari API bukan berupa daftar');
       }
+      debugPrint('🔍 Branch Data: $branchData');
+      debugPrint('🔍 Number of branches from API: ${branchData.length}');
 
-      final List<Branch> branchList =
-          branchData
-              .map((json) => Branch.fromJson(json as Map<String, dynamic>))
-              .toList();
+      final List<Branch> branchList = branchData.map((json) {
+        final branch = Branch.fromJson(json as Map<String, dynamic>);
+        debugPrint('✅ Successfully parsed branch: $branch');
+        return branch;
+      }).toList();
 
-      final db = await dbHelper.database;
-      await db.delete('branches');
+      debugPrint('✅ Successfully parsed ${branchList.length} branches total');
 
-      Batch batch = db.batch();
-      for (var branch in branchList) {
-        batch.insert(
-          'branches',
-          branch.toJson(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-      await batch.commit();
+      debugPrint('🗑️ Cleared old branch data');
+      await dbHelper.clearBranches(); // Menggunakan clearBranches
+      await dbHelper.insertBranches(branchList); // Menggunakan insertBranches
+      debugPrint('💾 Inserted ${branchList.length} branches to SQLite');
 
-      await dbHelper.updateCollectionTimestamp('cabang_last_update');
+      await dbHelper.updateLastUpdate(AppConstants.branchCacheKey); // Menggunakan updateLastUpdate
+      debugPrint('⏰ Updated last update timestamp for branches');
 
       return branchList;
     } catch (e) {
-      print('Error fetching branches from API: $e');
-      final localData = await dbHelper.getAllBranches();
-      if (localData.isNotEmpty) {
-        return localData;
-      }
+      debugPrint('❌ Error fetching branches from API: $e');
       rethrow;
     }
+  }
+
+  // Tambahkan metode clearAndRefresh jika Anda ingin memilikinya di repository
+  Future<void> _clearAndRefreshBranches() async {
+    debugPrint('🗑️ Clearing local branch data');
+    await dbHelper.clearBranches();
+    await dbHelper.deleteLastUpdate(AppConstants.branchCacheKey);
+    debugPrint('🔄 Force refreshing branches from API...');
+    await getBranches(forceRefresh: true);
   }
 }

@@ -24,7 +24,7 @@ class _ProductScreenState extends State<ProductScreen> {
     final repository = Provider.of<ProductRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllProduct();
+    final localData = await repository.dbHelper.getAllProducts();
 
     if (!mounted) return;
 
@@ -40,7 +40,7 @@ class _ProductScreenState extends State<ProductScreen> {
     final repository = Provider.of<ProductRepository>(context, listen: false);
 
     try {
-      final data = await repository.getProduct();
+      final data = await repository.getProducts();
       if (!mounted) return;
 
       setState(() {
@@ -70,7 +70,7 @@ class _ProductScreenState extends State<ProductScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getProduct(forceRefresh: true);
+      final data = await repository.getProducts(forceRefresh: true);
 
       setState(() {
         _productFuture = Future.value(data);
@@ -84,7 +84,7 @@ class _ProductScreenState extends State<ProductScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getProduct(forceRefresh: false);
+        final localData = await repository.getProducts(forceRefresh: false);
         setState(() {
           _productFuture = Future.value(localData);
           _isLoading = false;

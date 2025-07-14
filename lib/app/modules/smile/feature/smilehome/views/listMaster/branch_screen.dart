@@ -38,7 +38,7 @@ class _BranchScreenState extends State<BranchScreen> {
     final repository = Provider.of<BranchRepository>(context, listen: false);
 
     try {
-      final data = await repository.getBranch();
+      final data = await repository.getBranches();
       if (!mounted) return;
 
       setState(() {
@@ -68,7 +68,7 @@ class _BranchScreenState extends State<BranchScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getBranch(forceRefresh: true);
+      final data = await repository.getBranches(forceRefresh: true);
 
       setState(() {
         _branchFuture = Future.value(data);
@@ -82,7 +82,7 @@ class _BranchScreenState extends State<BranchScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getBranch(forceRefresh: false);
+        final localData = await repository.getBranches(forceRefresh: false);
         setState(() {
           _branchFuture = Future.value(localData);
           _isLoading = false;

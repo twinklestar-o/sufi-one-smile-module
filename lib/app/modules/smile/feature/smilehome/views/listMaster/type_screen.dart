@@ -26,7 +26,7 @@ class _TypeScreenState extends State<TypeScreen> {
     final repository = Provider.of<TypeRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllType();
+    final localData = await repository.dbHelper.getAllTypes();
 
     if (!mounted) return;
 
@@ -42,7 +42,7 @@ class _TypeScreenState extends State<TypeScreen> {
     final repository = Provider.of<TypeRepository>(context, listen: false);
 
     try {
-      final data = await repository.getType();
+      final data = await repository.getTypes();
       if (!mounted) return;
 
       setState(() {
@@ -72,7 +72,7 @@ class _TypeScreenState extends State<TypeScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getType(forceRefresh: true);
+      final data = await repository.getTypes(forceRefresh: true);
 
       setState(() {
         _typeFuture = Future.value(data);
@@ -86,7 +86,7 @@ class _TypeScreenState extends State<TypeScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getType(forceRefresh: false);
+        final localData = await repository.getTypes(forceRefresh: false);
         setState(() {
           _typeFuture = Future.value(localData);
           _isLoading = false;

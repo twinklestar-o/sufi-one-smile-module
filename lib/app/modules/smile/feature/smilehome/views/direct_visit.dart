@@ -204,7 +204,7 @@ class _DirectVisitState extends State<DirectVisit> {
     try {
       setState(() => isLoadingJabatan = true);
       final repository = Provider.of<JabatanRepository>(context, listen: false);
-      final data = await repository.getJabatan(); // Offline-first
+      final data = await repository.getJabatans(); // Offline-first
       setState(() {
         jabatanList = data;
         isLoadingJabatan = false;
@@ -223,7 +223,7 @@ class _DirectVisitState extends State<DirectVisit> {
     try {
       setState(() => isLoadingJabatanSFI = true);
       final repository = Provider.of<JabatanSFIRepository>(context, listen: false);
-      final data = await repository.getJabatanSFI(); // Offline-first
+      final data = await repository.getJabatanSFIs(); // Offline-first
       setState(() {
         jabatanSFIList = data;
         isLoadingJabatanSFI = false;
@@ -241,7 +241,7 @@ class _DirectVisitState extends State<DirectVisit> {
     try {
       setState(() => isLoadingArea = true);
       final repository = Provider.of<AreaRepository>(context, listen: false);
-      final data = await repository.getArea(); // Offline-first
+      final data = await repository.getAreas(); // Offline-first
       setState(() {
         areaList = data;
         isLoadingArea = false;
@@ -259,7 +259,7 @@ class _DirectVisitState extends State<DirectVisit> {
     try {
       setState(() => isLoadingCabang = true);
       final repository = Provider.of<BranchRepository>(context, listen: false);
-      final allBranches = await repository.getBranch(); // Offline-first
+      final allBranches = await repository.getBranches(); // Offline-first
 
       // Filter branches by area code
       final filteredBranches = allBranches.where((branch) =>
@@ -286,7 +286,7 @@ class _DirectVisitState extends State<DirectVisit> {
       setState(() => isLoadingProduk = true);
 
       final repository = Provider.of<ProductRepository>(context, listen: false);
-      final data = await repository.getProduct(); // Offline-first
+      final data = await repository.getProducts(); // Offline-first
 
       print('✅ _loadProduk completed. Products count: ${data.length}');
 
@@ -313,7 +313,7 @@ class _DirectVisitState extends State<DirectVisit> {
     try {
       setState(() => isLoadingDealer = true);
       final repository = Provider.of<DealerRepository>(context, listen: false);
-      final data = await repository.getDealer(); // Offline-first
+      final data = await repository.getDealers(); // Offline-first
 
       // Filter by query if provided
       List<Dealer> filteredData = data;
@@ -344,7 +344,7 @@ class _DirectVisitState extends State<DirectVisit> {
     try {
       setState(() => isLoadingVisitType = true);
       final repository = Provider.of<TypeRepository>(context, listen: false);
-      final data = await repository.getType(); // Offline-first
+      final data = await repository.getTypes(); // Offline-first
       setState(() {
         visitTypeList = data;
         isLoadingVisitType = false;
@@ -367,7 +367,7 @@ class _DirectVisitState extends State<DirectVisit> {
       setState(() => isLoadingProduk = true);
 
       final repository = Provider.of<ProductRepository>(context, listen: false);
-      final products = await repository.getProduct(forceRefresh: true);
+      final products = await repository.getProducts(forceRefresh: true);
 
       setState(() {
         produkList = products;
@@ -394,7 +394,7 @@ class _DirectVisitState extends State<DirectVisit> {
     try {
       setState(() => isLoadingTujuanVisit = true);
       final repository = Provider.of<PurposeRepository>(context, listen: false);
-      final data = await repository.getPurpose(); // Offline-first
+      final data = await repository.getPurposes(); // Offline-first
       setState(() {
         tujuanVisitList = data;
         isLoadingTujuanVisit = false;

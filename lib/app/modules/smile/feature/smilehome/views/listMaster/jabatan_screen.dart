@@ -25,7 +25,7 @@ class _JabatanScreenState extends State<JabatanScreen> {
     final repository = Provider.of<JabatanRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllJabatan();
+    final localData = await repository.dbHelper.getAllJabatans();
 
     if (!mounted) return;
 
@@ -41,7 +41,7 @@ class _JabatanScreenState extends State<JabatanScreen> {
     final repository = Provider.of<JabatanRepository>(context, listen: false);
 
     try {
-      final data = await repository.getJabatan();
+      final data = await repository.getJabatans();
       if (!mounted) return;
 
       setState(() {
@@ -71,7 +71,7 @@ class _JabatanScreenState extends State<JabatanScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getJabatan(forceRefresh: true);
+      final data = await repository.getJabatans(forceRefresh: true);
 
       setState(() {
         _jabatanFuture = Future.value(data);
@@ -85,7 +85,7 @@ class _JabatanScreenState extends State<JabatanScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getJabatan(forceRefresh: false);
+        final localData = await repository.getJabatans(forceRefresh: false);
         setState(() {
           _jabatanFuture = Future.value(localData);
           _isLoading = false;

@@ -28,7 +28,7 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
     );
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllJabatanSFI();
+    final localData = await repository.dbHelper.getAllJabatanSFIs();
 
     if (!mounted) return;
 
@@ -47,7 +47,7 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
     );
 
     try {
-      final data = await repository.getJabatanSFI();
+      final data = await repository.getJabatanSFIs();
       if (!mounted) return;
 
       setState(() {
@@ -80,7 +80,7 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getJabatanSFI(forceRefresh: true);
+      final data = await repository.getJabatanSFIs(forceRefresh: true);
 
       setState(() {
         _jabatanSFIFuture = Future.value(data);
@@ -94,7 +94,7 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getJabatanSFI(forceRefresh: false);
+        final localData = await repository.getJabatanSFIs(forceRefresh: false);
         setState(() {
           _jabatanSFIFuture = Future.value(localData);
           _isLoading = false;

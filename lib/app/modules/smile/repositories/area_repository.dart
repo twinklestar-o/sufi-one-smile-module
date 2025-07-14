@@ -1,6 +1,8 @@
 import 'package:sufi_one/app/modules/smile/models/area.dart';
 import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/src/services/api_services.dart';
+import 'package:sufi_one/src/utils/app_constants.dart'; // Import AppConstants
+import 'package:flutter/foundation.dart'; // Untuk debugPrint
 
 class AreaRepository {
   final DatabaseHelper dbHelper;
@@ -8,75 +10,90 @@ class AreaRepository {
 
   AreaRepository({required this.dbHelper, required this.apiService});
 
-  Future<List<Area>> getArea({bool forceRefresh = false}) async {
+  Future<List<Area>> getAreas({bool forceRefresh = false}) async { // Mengubah nama metode ke plural
+    debugPrint('🚀 getAreas called with forceRefresh: $forceRefresh');
+    List<Area> localData = [];
+
     try {
-      if (forceRefresh) {
-        return await _fetchFromApiAndSave();
-      }
-
-      final localData = await dbHelper.getAllArea();
-      if (localData.isEmpty) {
-        return await _fetchFromApiAndSave();
-      }
-
-      final localLastUpdate = await dbHelper.getLastUpdateTime(
-        'area_last_update',
-      );
-
-      final serverLastUpdate = await apiService.fetchLastUpdateTime();
-
-      if (serverLastUpdate != null &&
-          (localLastUpdate == null ||
-              serverLastUpdate.isAfter(localLastUpdate))) {
-        return await _fetchFromApiAndSave();
-      }
-      return localData;
+      localData = await dbHelper.getAllAreas(); // Menggunakan getAllAreas
+      debugPrint('📱 Fetched ${localData.length} areas from SQLite');
     } catch (e) {
-      // Fallback to local data if error occurs
-      final localData = await dbHelper.getAllArea();
-      if (localData.isNotEmpty) {
-        return localData;
+      debugPrint('❌ Error fetching local areas: $e');
+      forceRefresh = true;
+    }
+
+    final lastUpdate = await dbHelper.getLastUpdate(AppConstants.areaCacheKey); // Menggunakan getLastUpdate
+    final bool shouldFetch = forceRefresh ||
+        localData.isEmpty ||
+        (lastUpdate == null || DateTime.now().difference(lastUpdate).inHours > AppConstants.cacheDurationHours);
+
+    debugPrint('📱 Local data count: ${localData.length}');
+    debugPrint('📱 Last update for areas: $lastUpdate');
+    debugPrint('📱 Should fetch from API for areas: $shouldFetch');
+
+    if (shouldFetch) {
+      debugPrint('📱 No local data or cache expired - calling API for areas');
+      try {
+        return await _fetchFromApiAndSave();
+      } catch (e) {
+        debugPrint('❌ Error in Area _fetchFromApiAndSave: $e');
+        debugPrint('📱 Trying to fallback to local data...');
+        if (localData.isNotEmpty) {
+          debugPrint('📱 Fallback successful, returning ${localData.length} local areas.');
+          return localData;
+        } else {
+          debugPrint('📱 No local data available for fallback.');
+          rethrow;
+        }
       }
-      rethrow;
+    } else {
+      debugPrint('✅ Returning ${localData.length} areas from cache.');
+      return localData;
     }
   }
 
   Future<List<Area>> _fetchFromApiAndSave() async {
+    debugPrint('🚀 Starting _fetchFromApiAndSave for areas...');
     try {
-      final response = await apiService.fetchArea();
+      final response = await apiService.fetchArea(); // Asumsi ada fetchArea di ApiService
 
-      // Pastikan response adalah Map dan memiliki field 'data'
-      if (response is! Map<String, dynamic> || !response.containsKey('data')) {
-        throw Exception('Invalid API response format');
+      if (response['status'] == true && response['data'] is List) {
+        final List<dynamic> areaData = response['data'];
+        debugPrint('🔍 Area Data: $areaData');
+        debugPrint('🔍 Number of areas from API: ${areaData.length}');
+
+        final List<Area> areaList = areaData.map((json) {
+          final area = Area.fromJson(json);
+          debugPrint('✅ Successfully parsed area: $area');
+          return area;
+        }).toList();
+
+        debugPrint('✅ Successfully parsed ${areaList.length} areas total');
+
+        debugPrint('🗑️ Cleared old area data');
+        await dbHelper.clearAreas(); // Menggunakan clearAreas
+        await dbHelper.insertAreas(areaList); // Menggunakan insertAreas
+        debugPrint('💾 Inserted ${areaList.length} areas to SQLite');
+
+        await dbHelper.updateLastUpdate(AppConstants.areaCacheKey); // Menggunakan updateLastUpdate
+        debugPrint('⏰ Updated last update timestamp for areas');
+
+        return areaList;
+      } else {
+        throw Exception('Unexpected response format for areas: $response');
       }
-
-      // Ekstrak list area dari field 'data'
-      final List<dynamic> areaData = response['data'];
-
-      // Konversi ke List<Area>
-      final List<Area> areaList =
-          areaData.map((json) => Area.fromJson(json)).toList();
-
-      // Clear old data
-      final db = await dbHelper.database;
-      await db.delete('area');
-
-      // Insert new data
-      for (var area in areaList) {
-        await dbHelper.insertArea(area);
-      }
-
-      // Update timestamp
-      await dbHelper.updateCollectionTimestamp('area_last_update');
-
-      return areaList;
     } catch (e) {
-      // If API fails, try to return local data
-      final localData = await dbHelper.getAllArea();
-      if (localData.isNotEmpty) {
-        return localData;
-      }
+      debugPrint('❌ Error fetching areas from API: $e');
       rethrow;
     }
+  }
+
+  // Tambahkan metode clearAndRefresh jika Anda ingin memilikinya di repository
+  Future<void> _clearAndRefreshAreas() async {
+    debugPrint('🗑️ Clearing local area data');
+    await dbHelper.clearAreas();
+    await dbHelper.deleteLastUpdate(AppConstants.areaCacheKey);
+    debugPrint('🔄 Force refreshing areas from API...');
+    await getAreas(forceRefresh: true);
   }
 }

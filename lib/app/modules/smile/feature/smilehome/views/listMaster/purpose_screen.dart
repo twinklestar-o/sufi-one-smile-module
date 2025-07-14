@@ -25,7 +25,7 @@ class _PurposeScreenState extends State<PurposeScreen> {
     final repository = Provider.of<PurposeRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllPurpose();
+    final localData = await repository.dbHelper.getAllPurposes();
 
     if (!mounted) return;
 
@@ -41,7 +41,7 @@ class _PurposeScreenState extends State<PurposeScreen> {
     final repository = Provider.of<PurposeRepository>(context, listen: false);
 
     try {
-      final data = await repository.getPurpose();
+      final data = await repository.getPurposes();
       if (!mounted) return;
 
       setState(() {
@@ -71,7 +71,7 @@ class _PurposeScreenState extends State<PurposeScreen> {
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getPurpose(forceRefresh: true);
+      final data = await repository.getPurposes(forceRefresh: true);
 
       setState(() {
         _purposeFuture = Future.value(data);
@@ -85,7 +85,7 @@ class _PurposeScreenState extends State<PurposeScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getPurpose(forceRefresh: false);
+        final localData = await repository.getPurposes(forceRefresh: false);
         setState(() {
           _purposeFuture = Future.value(localData);
           _isLoading = false;
