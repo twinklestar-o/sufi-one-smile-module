@@ -179,7 +179,7 @@ class _ProductScreenState extends State<ProductScreen> {
                 margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 child: ListTile(
                   title: Text(product.name),
-                  subtitle: Text('Kode: ${product.kode}'),
+                  subtitle: Text('Kode: ${product.code}'),
                 ),
               );
             },

@@ -18,6 +18,7 @@ import 'package:sufi_one/app/modules/smile/repositories/branch_repository.dart';
 import 'package:sufi_one/app/modules/smile/repositories/jabatanSFI_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Get.put(AuthController());
@@ -84,7 +85,7 @@ void main() async {
         Provider<ProductRepository>(create: (_) => productRepository),
         Provider<DealerRepository>(create: (_) => dealerRepository),
          Provider<JabatanSFIRepository>(create: (_) => jabatanSFIRepository),
-        //
+
       ],
       child: const MyApp(),
     ),

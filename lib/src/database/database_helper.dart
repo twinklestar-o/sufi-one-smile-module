@@ -9,9 +9,10 @@ import 'package:sufi_one/app/modules/smile/models/branch.dart';
 import 'package:sufi_one/app/modules/smile/models/product.dart';
 import 'package:sufi_one/app/modules/smile/models/jabatanSFI.dart';
 
+
 class DatabaseHelper {
   static const _databaseName = 'app_database.db';
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
 
   // Table names
   static const tableJabatan = 'jabatan';
@@ -107,11 +108,12 @@ class DatabaseHelper {
       CREATE TABLE $tableProduct (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
-        kode TEXT NOT NULL,
+        code TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
     ''');
+
 
     await db.execute('''
   CREATE TABLE $tableBranch (
@@ -123,6 +125,16 @@ class DatabaseHelper {
     FOREIGN KEY (area_code) REFERENCES $tableArea (code)
   )
 ''');
+
+    await db.execute('''
+      CREATE TABLE collection(
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        kode TEXT, -- Sesuaikan dengan model Dart dan data API
+        created_at TEXT,
+        updated_at TEXT
+      )
+    ''');
 
     await db.execute('''
       CREATE TABLE $tableMetadata (
@@ -206,20 +218,33 @@ class DatabaseHelper {
     });
   }
 
-  Future<int> insertProduct(Product product) async {
+  Future<void> insertProduct(Product product) async {
     final db = await database;
-    return await db.insert(tableProduct, product.toJson());
+    await db.insert(
+      'product', // Nama tabel di SQLite
+      {
+        'name': product.name,
+        'code': product.code, // Simpan ke kolom 'code' di SQLite
+        'created_at': product.createdAt,
+        'updated_at': product.updatedAt,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    print('💾 Inserted product to SQLite: ${product.code} - ${product.name}');
   }
-
   Future<List<Product>> getAllProduct() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(tableProduct);
+    final List<Map<String, dynamic>> maps = await db.query('product');
+
+    print('📱 Fetched ${maps.length} products from SQLite');
+
     return List.generate(maps.length, (i) {
+      print('📱 Raw SQLite data for product $i: ${maps[i]}');
       return Product(
-        name: maps[i]['name'],
-        kode: maps[i]['kode'],
-        createdAt: maps[i]['created_at'],
-        updatedAt: maps[i]['updated_at'],
+        name: maps[i]['name']?.toString() ?? 'Unknown',
+        code: maps[i]['code']?.toString() ?? 'N/A', // Baca dari kolom 'code' di SQLite
+        createdAt: maps[i]['created_at']?.toString() ?? '',
+        updatedAt: maps[i]['updated_at']?.toString() ?? '',
       );
     });
   }

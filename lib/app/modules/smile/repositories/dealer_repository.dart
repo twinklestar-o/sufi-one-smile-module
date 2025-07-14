@@ -8,6 +8,8 @@ class DealerRepository {
 
   DealerRepository({required this.dbHelper, required this.apiService});
 
+  // lib/app/modules/smile/repositories/dealer_repository.dart
+// Update method getDealer
   Future<List<Dealer>> getDealer({bool forceRefresh = false}) async {
     try {
       if (forceRefresh) {
@@ -19,15 +21,31 @@ class DealerRepository {
         return await _fetchFromApiAndSave();
       }
 
-      final serverLastUpdate = await apiService.fetchLastUpdateTime();
+      // Kurangi frekuensi pengecekan server update
       final localLastUpdate = await dbHelper.getLastUpdateTime(
-        'dealer_last_update',
-      );
+          'dealer_last_update');
+      if (localLastUpdate != null) {
+        final now = DateTime.now();
+        final difference = now.difference(localLastUpdate);
 
-      if (serverLastUpdate != null &&
-          (localLastUpdate == null ||
-              serverLastUpdate.isAfter(localLastUpdate))) {
-        return await _fetchFromApiAndSave();
+        // Hanya cek server update jika data lokal sudah lebih dari 1 jam
+        if (difference.inHours < 1) {
+          print(
+              'Using cached dealer data (${difference.inMinutes} minutes old)');
+          return localData;
+        }
+      }
+
+      // Cek server update hanya jika perlu
+      try {
+        final serverLastUpdate = await apiService.fetchLastUpdateTime();
+        if (serverLastUpdate != null &&
+            (localLastUpdate == null ||
+                serverLastUpdate.isAfter(localLastUpdate))) {
+          return await _fetchFromApiAndSave();
+        }
+      } catch (e) {
+        print('Failed to check server update, using local data: $e');
       }
 
       return localData;
@@ -45,25 +63,45 @@ class DealerRepository {
     try {
       final response = await apiService.fetchDealer();
 
+      print('Dealer Repository - API Response: $response');
+
       // Pastikan response adalah Map dan memiliki field 'data'
-      if (response is! Map<String, dynamic> || !response.containsKey('data')) {
-        throw Exception('Invalid API response format');
+      if (response is! Map<String, dynamic>) {
+        throw Exception(
+            'Invalid API response format: Expected Map, got ${response
+                .runtimeType}');
+      }
+
+      if (!response.containsKey('data')) {
+        throw Exception('Invalid API response format: Missing "data" field');
       }
 
       // Ekstrak list Dealer dari field 'data'
-      final List<dynamic> dealerData = response['data'];
+      final dynamic dealerData = response['data'];
+      if (dealerData is! List) {
+        throw Exception(
+            'Invalid API response format: "data" field is not a List');
+      }
 
       // Konversi ke List<Dealer>
-      final List<Dealer> dealerList =
-          dealerData.map((json) => Dealer.fromJson(json)).toList();
+      final List<Dealer> dealerList = dealerData.map((json) {
+        try {
+          return Dealer.fromJson(json as Map<String, dynamic>);
+        } catch (e) {
+          print('Error parsing dealer JSON: $json, Error: $e');
+          rethrow;
+        }
+      }).toList();
+
+      print('Successfully parsed ${dealerList.length} dealers');
 
       // Clear old data
       final db = await dbHelper.database;
       await db.delete('dealers');
 
       // Insert new data
-      for (var Dealer in dealerList) {
-        await dbHelper.insertDealer(Dealer);
+      for (var dealer in dealerList) {
+        await dbHelper.insertDealer(dealer);
       }
 
       // Update timestamp
@@ -71,6 +109,7 @@ class DealerRepository {
 
       return dealerList;
     } catch (e) {
+      print('Error in _fetchFromApiAndSave: $e');
       // If API fails, try to return local data
       final localData = await dbHelper.getAllDealer();
       if (localData.isNotEmpty) {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
@@ -147,20 +148,41 @@ class ApiService {
   }
 
   // Product endpoint - returns Map (colleague's version)
+  // lib/src/services/api_services.dart
+// Update method fetchProduct
+  // lib/src/services/api_services.dart
+// Update method fetchProduct dengan debug yang lebih detail
+// lib/src/services/api_services.dart
   Future<Map<String, dynamic>> fetchProduct() async {
+    print('🌐 fetchProduct API called');
+
     final token = await _getToken();
+    final url = Url + 'product';
+
+    print('🌐 Product API URL: $url');
+    print('🌐 Token: ${token?.substring(0, 20)}...');
+
     final response = await http.get(
-      Uri.parse(
-        Url + 'product',
-      ), // Using singular 'product' as per colleague's version
+      Uri.parse(url),
       headers: _getHeaders(token),
     );
 
-    print('Product API Response Status: ${response.statusCode}');
-    print('Product API Response Body: ${response.body}');
+    print('🌐 Product API Response Status: ${response.statusCode}');
+    print('🌐 Product API Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final jsonData = json.decode(response.body);
+
+      print('🌐 Decoded JSON Type: ${jsonData.runtimeType}');
+      print('🌐 Decoded JSON Content: $jsonData');
+
+      if (jsonData is Map<String, dynamic>) {
+        return jsonData;
+      } else if (jsonData is List) {
+        return {'data': jsonData};
+      } else {
+        throw Exception('Unexpected product response format: ${jsonData.runtimeType}');
+      }
     } else if (response.statusCode == 401) {
       Get.offAll(() => LoginPage());
       throw Exception('Sesi telah berakhir, silakan login kembali');
@@ -186,6 +208,41 @@ class ApiService {
       throw Exception('Gagal memuat data jabatanSFI');
     }
   }
+
+  Future<Map<String, dynamic>> fetchCollection() async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final url = Uri.parse('$baseUrl/collection'); // Pastikan URL ini benar
+    debugPrint('🌐 Collection API URL: $url');
+    debugPrint('🌐 Token: ${token.substring(0, 20)}...');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('🌐 Collection API Response Status: ${response.statusCode}');
+      debugPrint('🌐 Collection API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedJson = json.decode(response.body);
+        return decodedJson;
+      } else {
+        throw Exception('Failed to load collection data: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error fetching collection: $e');
+      rethrow;
+    }
+  }
+
 
   // Products endpoint - returns List (for direct visit compatibility)
   Future<List<dynamic>> fetchProducts() async {
@@ -217,6 +274,8 @@ class ApiService {
   }
 
   // Dealer endpoint - returns Map (colleague's version)
+  // lib/src/services/api_services.dart
+// Update method fetchDealer
   Future<Map<String, dynamic>> fetchDealer() async {
     final token = await _getToken();
     final response = await http.get(
@@ -229,10 +288,24 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
+
+      // Debug: Print the actual structure
+      print('Dealer Response Type: ${jsonData.runtimeType}');
+      print('Dealer Response Keys: ${jsonData is Map ? jsonData.keys : 'Not a Map'}');
+
       if (jsonData is Map<String, dynamic>) {
-        return jsonData; // Expected by DealerRepository
+        // Jika response sudah dalam format yang benar
+        if (jsonData.containsKey('data')) {
+          return jsonData;
+        } else {
+          // Jika response langsung berupa array, wrap dalam 'data'
+          return {'data': jsonData};
+        }
+      } else if (jsonData is List) {
+        // Jika response langsung berupa List, wrap dalam Map
+        return {'data': jsonData};
       } else {
-        throw Exception('Unexpected response format');
+        throw Exception('Unexpected dealer response format: ${jsonData.runtimeType}');
       }
     } else if (response.statusCode == 401) {
       Get.offAll(() => LoginPage());
@@ -412,18 +485,39 @@ class ApiService {
   }
 
   // Last update time for collection sync
+// lib/src/services/api_services.dart
+// Update method fetchLastUpdateTime
   Future<DateTime?> fetchLastUpdateTime() async {
     try {
       final token = await _getToken();
       final response = await http.get(
-        Uri.parse(baseUrl + 'collection'),
+        Uri.parse(baseUrl + 'collection'), // Pastikan endpoint benar
         headers: _getHeaders(token),
       );
 
+      print('Collection API Response Status: ${response.statusCode}');
+      print('Collection API Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data.containsKey('last_update') && data['last_update'] != null) {
-          return DateTime.parse(data['last_update']);
+
+        // Sesuaikan dengan response dari CollectionController
+        if (data is Map<String, dynamic> && data.containsKey('data')) {
+          // Jika ada field last_update di data
+          final collections = data['data'] as List;
+          if (collections.isNotEmpty) {
+            // Ambil timestamp terbaru dari updated_at
+            DateTime? latestUpdate;
+            for (var collection in collections) {
+              if (collection['updated_at'] != null) {
+                final updateTime = DateTime.parse(collection['updated_at']);
+                if (latestUpdate == null || updateTime.isAfter(latestUpdate)) {
+                  latestUpdate = updateTime;
+                }
+              }
+            }
+            return latestUpdate;
+          }
         }
         return null;
       } else if (response.statusCode == 401) {
