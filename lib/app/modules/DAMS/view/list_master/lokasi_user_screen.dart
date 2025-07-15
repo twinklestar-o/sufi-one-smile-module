@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
-import 'package:sufi_one/app/modules/smile/models/area.dart';
-import 'package:sufi_one/app/modules/smile/repositories/area_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/model/lokasi_user.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/lokasi_user_repository.dart';
 
-class AreaScreen extends StatefulWidget {
+class LokasiUserPage extends StatefulWidget {
   @override
-  _AreaScreenState createState() => _AreaScreenState();
+  _LokasiUserPageState createState() => _LokasiUserPageState();
 }
 
-class _AreaScreenState extends State<AreaScreen> {
-  late Future<List<Area>> _areaFuture;
+class _LokasiUserPageState extends State<LokasiUserPage> {
+  late Future<List<LokasiUser>> _lokasiUserFuture;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -22,32 +22,39 @@ class _AreaScreenState extends State<AreaScreen> {
   }
 
   Future<void> _loadLocalDataOnly() async {
-    final repository = Provider.of<AreaRepository>(context, listen: false);
+    final repository = Provider.of<LokasiUserRepository>(
+      context,
+      listen: false,
+    );
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllArea();
+    final localData = await repository.dbHelper.getAllLokasiUser();
 
     if (!mounted) return;
 
     setState(() {
-      _areaFuture = Future.value(localData);
+      _lokasiUserFuture = Future.value(localData);
       _isLoading = false;
-      _errorMessage = localData.isEmpty ? 'Data area kosong (offline)' : null;
+      _errorMessage =
+          localData.isEmpty ? 'Data lokasi asset kosong (offline)' : null;
     });
   }
 
   Future<void> _loadData() async {
-    final repository = Provider.of<AreaRepository>(context, listen: false);
+    final repository = Provider.of<LokasiUserRepository>(
+      context,
+      listen: false,
+    );
 
     try {
-      final data = await repository.getAreas();
+      final data = await repository.getLokasiUser();
       if (!mounted) return;
 
       setState(() {
-        _areaFuture = Future.value(data); // simpan future statis
+        _lokasiUserFuture = Future.value(data); // simpan future statis
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data Area kosong';
+          _errorMessage = 'Data Status Asset kosong';
         }
       });
     } catch (e) {
@@ -66,17 +73,20 @@ class _AreaScreenState extends State<AreaScreen> {
       _errorMessage = null;
     });
 
-    final repository = Provider.of<AreaRepository>(context, listen: false);
+    final repository = Provider.of<LokasiUserRepository>(
+      context,
+      listen: false,
+    );
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getAreas(forceRefresh: true);
+      final data = await repository.getLokasiUser(forceRefresh: true);
 
       setState(() {
-        _areaFuture = Future.value(data);
+        _lokasiUserFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data area kosong setelah refresh dari API.';
+          _errorMessage = 'Data lokasi asset kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
@@ -84,9 +94,9 @@ class _AreaScreenState extends State<AreaScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getAreas(forceRefresh: false);
+        final localData = await repository.getLokasiUser(forceRefresh: false);
         setState(() {
-          _areaFuture = Future.value(localData);
+          _lokasiUserFuture = Future.value(localData);
           _isLoading = false;
 
           if (localData.isEmpty) {
@@ -98,7 +108,7 @@ class _AreaScreenState extends State<AreaScreen> {
       } catch (e2) {
         debugPrint('Gagal ambil dari lokal juga: $e2');
         setState(() {
-          _areaFuture = Future.value([]);
+          _lokasiUserFuture = Future.value([]);
           _isLoading = false;
           _errorMessage = 'Gagal total: tidak bisa ambil data.';
         });
@@ -112,7 +122,7 @@ class _AreaScreenState extends State<AreaScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E47A1),
         title: const Text(
-          'Daftar Area',
+          'Daftar Lokasi User ',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -158,8 +168,8 @@ class _AreaScreenState extends State<AreaScreen> {
       );
     }
 
-    return FutureBuilder<List<Area>>(
-      future: _areaFuture,
+    return FutureBuilder<List<LokasiUser>>(
+      future: _lokasiUserFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -170,21 +180,55 @@ class _AreaScreenState extends State<AreaScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('Tidak ada data area tersedia'));
+          return Center(child: Text('Tidak ada data lokasi user tersedia'));
         }
 
-        final areaList = snapshot.data!;
+        final lokasiUserList = snapshot.data!;
         return RefreshIndicator(
           onRefresh: _refreshData,
           child: ListView.builder(
-            itemCount: areaList.length,
+            itemCount: lokasiUserList.length,
             itemBuilder: (context, index) {
-              final area = areaList[index];
+              final lokasiUser = lokasiUserList[index];
+
               return Card(
-                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                 child: ListTile(
-                  title: Text(area.name),
-                  subtitle: Text('Kode: ${area.code}'),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  title: Text(
+                    lokasiUser.name ?? '-',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text(
+                        'Created: ${lokasiUser.createdAt.split('T').first}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        'Updated: ${lokasiUser.updatedAt.split('T').first}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

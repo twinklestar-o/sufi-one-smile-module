@@ -26,7 +26,7 @@ class _TypeScreenState extends State<TypeScreen> {
     final repository = Provider.of<TypeRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllTypes();
+    final localData = await repository.dbHelper.getAllType();
 
     if (!mounted) return;
 

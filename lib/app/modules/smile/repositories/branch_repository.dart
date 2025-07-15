@@ -1,12 +1,13 @@
+import 'package:sufi_one/src/database/SMILE/database_helper.dart';
+import 'package:sufi_one/src/services/SMILE/api_services.dart';
 import 'package:sufi_one/src/services/api_services.dart';
-import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/models/branch.dart';
 import 'package:sufi_one/src/utils/app_constants.dart'; // Import AppConstants
 import 'package:flutter/foundation.dart'; // Untuk debugPrint
 
 class BranchRepository {
-  final DatabaseHelper dbHelper;
-  final ApiService apiService;
+  final DatabaseHelperSmile dbHelper;
+  final ApiServiceSmile apiService;
 
   BranchRepository({required this.dbHelper, required this.apiService});
 
@@ -15,20 +16,27 @@ class BranchRepository {
     List<Branch> localData = [];
 
     try {
-      localData = await dbHelper.getAllBranches();
+      localData = await dbHelper.getAllBranch();
       debugPrint('📱 Fetched ${localData.length} branches from SQLite');
     } catch (e) {
       debugPrint('❌ Error fetching local branches: $e');
       forceRefresh = true; // Force refresh if local data fetch fails
     }
 
-    final lastUpdate = await dbHelper.getLastUpdate(AppConstants.branchCacheKey);
-    debugPrint('🔍 AppConstants.cacheDurationHours (Branch): ${AppConstants.cacheDurationHours} hours');
+    final lastUpdate = await dbHelper.getLastUpdate(
+      AppConstants.branchCacheKey,
+    );
+    debugPrint(
+      '🔍 AppConstants.cacheDurationHours (Branch): ${AppConstants.cacheDurationHours} hours',
+    );
     debugPrint('🔍 Last update for branches: $lastUpdate');
 
-    final bool shouldFetch = forceRefresh ||
+    final bool shouldFetch =
+        forceRefresh ||
         localData.isEmpty ||
-        (lastUpdate == null || DateTime.now().difference(lastUpdate).inHours > AppConstants.cacheDurationHours);
+        (lastUpdate == null ||
+            DateTime.now().difference(lastUpdate).inHours >
+                AppConstants.cacheDurationHours);
 
     debugPrint('📱 Local data count (Branch): ${localData.length}');
     debugPrint('📱 Should fetch from API for branches: $shouldFetch');
@@ -41,7 +49,9 @@ class BranchRepository {
         debugPrint('❌ Error in Branch _fetchFromApiAndSave: $e');
         debugPrint('📱 Trying to fallback to local data (Branch)...');
         if (localData.isNotEmpty) {
-          debugPrint('📱 Fallback successful, returning ${localData.length} local branches.');
+          debugPrint(
+            '📱 Fallback successful, returning ${localData.length} local branches.',
+          );
           return localData;
         } else {
           debugPrint('📱 No local data available for fallback (Branch).');
@@ -59,35 +69,43 @@ class BranchRepository {
     try {
       final dynamic rawResponse = await apiService.fetchBranches();
       debugPrint('🔍 Branch Repository - Raw API Response: $rawResponse');
-      debugPrint('🔍 Branch Repository - Raw API Response Type: ${rawResponse.runtimeType}');
+      debugPrint(
+        '🔍 Branch Repository - Raw API Response Type: ${rawResponse.runtimeType}',
+      );
 
       List<dynamic> branchData;
-      if (rawResponse is Map<String, dynamic> && rawResponse.containsKey('data')) {
+      if (rawResponse is Map<String, dynamic> &&
+          rawResponse.containsKey('data')) {
         branchData = rawResponse['data'];
         debugPrint('🔍 Response is a Map with "data" key (Branch).');
       } else if (rawResponse is List) {
         branchData = rawResponse;
         debugPrint('🔍 Response is a direct List (Branch).');
       } else {
-        throw Exception('Invalid API response format for branches: Expected Map with "data" or direct List, got ${rawResponse.runtimeType}');
+        throw Exception(
+          'Invalid API response format for branches: Expected Map with "data" or direct List, got ${rawResponse.runtimeType}',
+        );
       }
 
       if (branchData is! List) {
-        throw Exception('Invalid API response format: "data" field is not a List (Branch), got ${branchData.runtimeType}');
+        throw Exception(
+          'Invalid API response format: "data" field is not a List (Branch), got ${branchData.runtimeType}',
+        );
       }
       debugPrint('🔍 Branch Data (extracted): $branchData');
       debugPrint('🔍 Number of branches from API: ${branchData.length}');
 
-      final List<Branch> branchList = branchData.map((json) {
-        try {
-          final branch = Branch.fromJson(json as Map<String, dynamic>);
-          debugPrint('✅ Successfully parsed branch: $branch');
-          return branch;
-        } catch (e) {
-          debugPrint('❌ Error parsing branch JSON: $json, Error: $e');
-          rethrow;
-        }
-      }).toList();
+      final List<Branch> branchList =
+          branchData.map((json) {
+            try {
+              final branch = Branch.fromJson(json as Map<String, dynamic>);
+              debugPrint('✅ Successfully parsed branch: $branch');
+              return branch;
+            } catch (e) {
+              debugPrint('❌ Error parsing branch JSON: $json, Error: $e');
+              rethrow;
+            }
+          }).toList();
 
       debugPrint('✅ Successfully parsed ${branchList.length} branches total');
 

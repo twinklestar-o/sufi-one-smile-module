@@ -25,7 +25,7 @@ class _DealerScreenState extends State<DealerScreen> {
     final repository = Provider.of<DealerRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllDealers();
+    final localData = await repository.dbHelper.getAllDealer();
 
     if (!mounted) return;
 

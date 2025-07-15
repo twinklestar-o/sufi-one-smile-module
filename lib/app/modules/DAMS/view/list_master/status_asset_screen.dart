@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
-import 'package:sufi_one/app/modules/smile/models/area.dart';
-import 'package:sufi_one/app/modules/smile/repositories/area_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/model/status_asset.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/status_asset_repository.dart';
 
-class AreaScreen extends StatefulWidget {
+class StatusAssetPage extends StatefulWidget {
   @override
-  _AreaScreenState createState() => _AreaScreenState();
+  _StatusAssetPageState createState() => _StatusAssetPageState();
 }
 
-class _AreaScreenState extends State<AreaScreen> {
-  late Future<List<Area>> _areaFuture;
+class _StatusAssetPageState extends State<StatusAssetPage> {
+  late Future<List<StatusAsset>> _statusAssetFuture;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -22,32 +22,39 @@ class _AreaScreenState extends State<AreaScreen> {
   }
 
   Future<void> _loadLocalDataOnly() async {
-    final repository = Provider.of<AreaRepository>(context, listen: false);
+    final repository = Provider.of<StatusAssetRepository>(
+      context,
+      listen: false,
+    );
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllArea();
+    final localData = await repository.dbHelper.getAllStatusAsset();
 
     if (!mounted) return;
 
     setState(() {
-      _areaFuture = Future.value(localData);
+      _statusAssetFuture = Future.value(localData);
       _isLoading = false;
-      _errorMessage = localData.isEmpty ? 'Data area kosong (offline)' : null;
+      _errorMessage =
+          localData.isEmpty ? 'Data status asset kosong (offline)' : null;
     });
   }
 
   Future<void> _loadData() async {
-    final repository = Provider.of<AreaRepository>(context, listen: false);
+    final repository = Provider.of<StatusAssetRepository>(
+      context,
+      listen: false,
+    );
 
     try {
-      final data = await repository.getAreas();
+      final data = await repository.getStatusAsset();
       if (!mounted) return;
 
       setState(() {
-        _areaFuture = Future.value(data); // simpan future statis
+        _statusAssetFuture = Future.value(data); // simpan future statis
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data Area kosong';
+          _errorMessage = 'Data Status Asset kosong';
         }
       });
     } catch (e) {
@@ -66,17 +73,20 @@ class _AreaScreenState extends State<AreaScreen> {
       _errorMessage = null;
     });
 
-    final repository = Provider.of<AreaRepository>(context, listen: false);
+    final repository = Provider.of<StatusAssetRepository>(
+      context,
+      listen: false,
+    );
 
     try {
       // Selalu coba ambil data terbaru dari API
-      final data = await repository.getAreas(forceRefresh: true);
+      final data = await repository.getStatusAsset(forceRefresh: true);
 
       setState(() {
-        _areaFuture = Future.value(data);
+        _statusAssetFuture = Future.value(data);
         _isLoading = false;
         if (data.isEmpty) {
-          _errorMessage = 'Data area kosong setelah refresh dari API.';
+          _errorMessage = 'Data status asset kosong setelah refresh dari API.';
         }
       });
     } catch (e) {
@@ -84,9 +94,9 @@ class _AreaScreenState extends State<AreaScreen> {
 
       try {
         // Coba ambil dari database lokal
-        final localData = await repository.getAreas(forceRefresh: false);
+        final localData = await repository.getStatusAsset(forceRefresh: false);
         setState(() {
-          _areaFuture = Future.value(localData);
+          _statusAssetFuture = Future.value(localData);
           _isLoading = false;
 
           if (localData.isEmpty) {
@@ -98,7 +108,7 @@ class _AreaScreenState extends State<AreaScreen> {
       } catch (e2) {
         debugPrint('Gagal ambil dari lokal juga: $e2');
         setState(() {
-          _areaFuture = Future.value([]);
+          _statusAssetFuture = Future.value([]);
           _isLoading = false;
           _errorMessage = 'Gagal total: tidak bisa ambil data.';
         });
@@ -112,7 +122,7 @@ class _AreaScreenState extends State<AreaScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E47A1),
         title: const Text(
-          'Daftar Area',
+          'Daftar Status Asset ',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -158,8 +168,8 @@ class _AreaScreenState extends State<AreaScreen> {
       );
     }
 
-    return FutureBuilder<List<Area>>(
-      future: _areaFuture,
+    return FutureBuilder<List<StatusAsset>>(
+      future: _statusAssetFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -170,21 +180,55 @@ class _AreaScreenState extends State<AreaScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('Tidak ada data area tersedia'));
+          return Center(child: Text('Tidak ada data status asset tersedia'));
         }
 
-        final areaList = snapshot.data!;
+        final statusAssetList = snapshot.data!;
         return RefreshIndicator(
           onRefresh: _refreshData,
           child: ListView.builder(
-            itemCount: areaList.length,
+            itemCount: statusAssetList.length,
             itemBuilder: (context, index) {
-              final area = areaList[index];
+              final statusAsset = statusAssetList[index];
+
               return Card(
-                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                 child: ListTile(
-                  title: Text(area.name),
-                  subtitle: Text('Kode: ${area.code}'),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  title: Text(
+                    statusAsset.name ?? '-',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text(
+                        'Created: ${statusAsset.createdAt.split('T').first}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        'Updated: ${statusAsset.updatedAt.split('T').first}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

@@ -24,7 +24,7 @@ class _ProductScreenState extends State<ProductScreen> {
     final repository = Provider.of<ProductRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllProducts();
+    final localData = await repository.dbHelper.getAllProduct();
 
     if (!mounted) return;
 

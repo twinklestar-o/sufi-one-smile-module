@@ -73,7 +73,7 @@ class DamsHomePage extends StatelessWidget {
                   _menuCard(
                     icon: Icons.table_chart,
                     label: 'Data Master',
-                    onTap: () => Get.toNamed(DamsRoute.homePage),
+                    onTap: () => Get.toNamed(DamsRoute.listMaster),
                   ),
                 ],
               ),

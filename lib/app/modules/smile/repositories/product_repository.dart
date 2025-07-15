@@ -1,31 +1,38 @@
+import 'package:sufi_one/src/database/SMILE/database_helper.dart';
+import 'package:sufi_one/src/services/SMILE/api_services.dart';
 import 'package:sufi_one/src/services/api_services.dart';
-import 'package:sufi_one/src/database/database_helper.dart';
 import 'package:sufi_one/app/modules/smile/models/product.dart';
 import 'package:sufi_one/src/utils/app_constants.dart'; // Import AppConstants
 import 'package:flutter/foundation.dart'; // Untuk debugPrint
 
 class ProductRepository {
-  final DatabaseHelper dbHelper;
-  final ApiService apiService;
+  final DatabaseHelperSmile dbHelper;
+  final ApiServiceSmile apiService;
 
   ProductRepository({required this.dbHelper, required this.apiService});
 
-  Future<List<Product>> getProducts({bool forceRefresh = false}) async { // Mengubah nama metode ke plural
+  Future<List<Product>> getProducts({bool forceRefresh = false}) async {
+    // Mengubah nama metode ke plural
     debugPrint('🚀 getProducts called with forceRefresh: $forceRefresh');
     List<Product> localData = [];
 
     try {
-      localData = await dbHelper.getAllProducts(); // Menggunakan getAllProducts
+      localData = await dbHelper.getAllProduct(); // Menggunakan getAllProducts
       debugPrint('📱 Fetched ${localData.length} products from SQLite');
     } catch (e) {
       debugPrint('❌ Error fetching local products: $e');
       forceRefresh = true;
     }
 
-    final lastUpdate = await dbHelper.getLastUpdate(AppConstants.productCacheKey); // Menggunakan getLastUpdate
-    final bool shouldFetch = forceRefresh ||
+    final lastUpdate = await dbHelper.getLastUpdate(
+      AppConstants.productCacheKey,
+    ); // Menggunakan getLastUpdate
+    final bool shouldFetch =
+        forceRefresh ||
         localData.isEmpty ||
-        (lastUpdate == null || DateTime.now().difference(lastUpdate).inHours > AppConstants.cacheDurationHours);
+        (lastUpdate == null ||
+            DateTime.now().difference(lastUpdate).inHours >
+                AppConstants.cacheDurationHours);
 
     debugPrint('📱 Local data count: ${localData.length}');
     debugPrint('📱 Last update for products: $lastUpdate');
@@ -39,7 +46,9 @@ class ProductRepository {
         debugPrint('❌ Error in Product _fetchFromApiAndSave: $e');
         debugPrint('📱 Trying to fallback to local data...');
         if (localData.isNotEmpty) {
-          debugPrint('📱 Fallback successful, returning ${localData.length} local products.');
+          debugPrint(
+            '📱 Fallback successful, returning ${localData.length} local products.',
+          );
           return localData;
         } else {
           debugPrint('📱 No local data available for fallback.');
@@ -55,7 +64,9 @@ class ProductRepository {
   Future<List<Product>> _fetchFromApiAndSave() async {
     debugPrint('🚀 Starting _fetchFromApiAndSave for products...');
     try {
-      final response = await apiService.fetchProduct(); // Asumsi ada fetchProduct di ApiService
+      final response =
+          await apiService
+              .fetchProduct(); // Asumsi ada fetchProduct di ApiService
       debugPrint('🔍 Product Repository - Raw API Response: $response');
 
       if (response['status'] == true && response['data'] is List) {
@@ -64,23 +75,30 @@ class ProductRepository {
         debugPrint('🔍 Product Data Type: ${productData.runtimeType}');
         debugPrint('🔍 Number of products from API: ${productData.length}');
 
-        final List<Product> productList = productData.map((json) {
-          final product = Product.fromJson(json);
-          debugPrint('✅ Successfully parsed product: $product');
-          return product;
-        }).toList();
+        final List<Product> productList =
+            productData.map((json) {
+              final product = Product.fromJson(json);
+              debugPrint('✅ Successfully parsed product: $product');
+              return product;
+            }).toList();
 
-        debugPrint('✅ Successfully parsed ${productList.length} products total');
+        debugPrint(
+          '✅ Successfully parsed ${productList.length} products total',
+        );
         for (var p in productList) {
           debugPrint('📦 Product: ${p.code} - ${p.name}'); // Menggunakan .code
         }
 
         debugPrint('🗑️ Cleared old product data');
         await dbHelper.clearProducts(); // Menggunakan clearProducts
-        await dbHelper.insertProducts(productList); // Menggunakan insertProducts
+        await dbHelper.insertProducts(
+          productList,
+        ); // Menggunakan insertProducts
         debugPrint('💾 Inserted ${productList.length} products to SQLite');
 
-        await dbHelper.updateLastUpdate(AppConstants.productCacheKey); // Menggunakan updateLastUpdate
+        await dbHelper.updateLastUpdate(
+          AppConstants.productCacheKey,
+        ); // Menggunakan updateLastUpdate
         debugPrint('⏰ Updated last update timestamp for products');
 
         return productList;

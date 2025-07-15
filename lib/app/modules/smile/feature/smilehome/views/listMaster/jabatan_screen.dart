@@ -25,7 +25,7 @@ class _JabatanScreenState extends State<JabatanScreen> {
     final repository = Provider.of<JabatanRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllJabatans();
+    final localData = await repository.dbHelper.getAllJabatan();
 
     if (!mounted) return;
 

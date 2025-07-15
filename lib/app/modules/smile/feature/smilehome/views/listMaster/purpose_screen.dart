@@ -25,7 +25,7 @@ class _PurposeScreenState extends State<PurposeScreen> {
     final repository = Provider.of<PurposeRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllPurposes();
+    final localData = await repository.dbHelper.getAllPurpose();
 
     if (!mounted) return;
 

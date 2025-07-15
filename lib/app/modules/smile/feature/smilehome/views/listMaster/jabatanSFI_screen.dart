@@ -28,7 +28,7 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
     );
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllJabatanSFIs();
+    final localData = await repository.dbHelper.getAllJabatanSFI();
 
     if (!mounted) return;
 
@@ -36,7 +36,7 @@ class _JabatanSFIScreenState extends State<JabatanSFIScreen> {
       _jabatanSFIFuture = Future.value(localData);
       _isLoading = false;
       _errorMessage =
-      localData.isEmpty ? 'Data jabatan SFI kosong (offline)' : null;
+          localData.isEmpty ? 'Data jabatan SFI kosong (offline)' : null;
     });
   }
 

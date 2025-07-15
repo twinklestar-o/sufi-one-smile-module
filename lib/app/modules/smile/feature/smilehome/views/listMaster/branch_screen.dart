@@ -23,7 +23,7 @@ class _BranchScreenState extends State<BranchScreen> {
     final repository = Provider.of<BranchRepository>(context, listen: false);
 
     // Ambil data lokal saja
-    final localData = await repository.dbHelper.getAllBranches();
+    final localData = await repository.dbHelper.getAllBranch();
 
     if (!mounted) return;
 

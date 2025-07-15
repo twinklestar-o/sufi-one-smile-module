@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sufi_one/app/modules/mobcol/mobcol_routes.dart';
+import 'package:sufi_one/app/modules/DAMS/dams_route.dart';
 import 'package:sufi_one/app/modules/public/home_routes.dart';
-import 'package:sufi_one/app/modules/smile/smile_route.dart';
 import 'package:sufi_one/app/theme/color_constant.dart';
 import 'package:get/get.dart';
 import 'package:sufi_one/app/theme/fontstyle.dart';
@@ -57,21 +56,21 @@ final List<SidebarItemData> _sidebarItems = [
     icon: const Icon(Icons.qr_code, color: Colors.white),
     title: 'Scan  QR',
     onTap: () {
-      Get.offNamed(SmileRoutes.directVisit);
+      Get.offNamed(DamsRoute.scanCode);
     },
   ),
   SidebarItemData(
     icon: const Icon(Icons.history, color: Colors.white),
     title: 'History',
     onTap: () {
-      Get.toNamed(SmileRoutes.taskVisit);
+      Get.toNamed(DamsRoute.historyPage);
     },
   ),
   SidebarItemData(
     icon: const Icon(Icons.table_chart, color: Colors.white),
     title: 'Data Master',
     onTap: () {
-      Get.offNamed(SmileRoutes.historyVisit);
+      Get.offNamed(DamsRoute.listMaster);
     },
   ),
   SidebarItemData(

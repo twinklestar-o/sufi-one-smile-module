@@ -2,24 +2,16 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:sufi_one/app/modules/smile/models/area.dart';
 import 'package:sufi_one/app/modules/smile/models/dealer.dart';
-import '../../app/modules/smile/models/jabatan.dart';
-import '../../app/modules/smile/models/type.dart';
+import 'package:sufi_one/app/modules/smile/models/jabatan.dart';
 import 'package:sufi_one/app/modules/smile/models/purpose.dart';
 import 'package:sufi_one/app/modules/smile/models/branch.dart';
 import 'package:sufi_one/app/modules/smile/models/product.dart';
 import 'package:sufi_one/app/modules/smile/models/jabatanSFI.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sufi_one/app/modules/smile/models/area.dart';
-import 'package:sufi_one/app/modules/smile/models/dealer.dart';
-import 'package:sufi_one/app/modules/smile/models/type.dart'; // Asumsi ini adalah VisitType
-import 'package:sufi_one/app/modules/smile/models/purpose.dart';
-import 'package:sufi_one/app/modules/smile/models/branch.dart';
-import 'package:sufi_one/app/modules/smile/models/product.dart';
+import 'package:sufi_one/app/modules/smile/models/type.dart';
 import 'package:sufi_one/app/modules/smile/models/collection.dart';
 
-
-
-class DatabaseHelper {
+class DatabaseHelperSmile {
   static const _databaseName = 'app_database.db';
   static const _databaseVersion = 4;
 
@@ -36,8 +28,8 @@ class DatabaseHelper {
   static const tableCollection = 'collection'; // Tambahkan konstanta ini
 
   // Singleton instance
-  static final DatabaseHelper instance = DatabaseHelper._init();
-  DatabaseHelper._init();
+  static final DatabaseHelperSmile instance = DatabaseHelperSmile._init();
+  DatabaseHelperSmile._init();
 
   Database? _database;
 
@@ -110,7 +102,7 @@ class DatabaseHelper {
       CREATE TABLE $tableDealer (
        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        code TEXT NOT NULL UNIQUE, -- Tambahkan UNIQUE jika code harus unik
+        code TEXT NOT NULL UNIQUE,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -120,12 +112,11 @@ class DatabaseHelper {
       CREATE TABLE $tableProduct (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
-        code TEXT NOT NULL UNIQUE, -- Tambahkan UNIQUE jika code harus unik
+        code TEXT NOT NULL UNIQUE, 
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
     ''');
-
 
     await db.execute('''
   CREATE TABLE $tableBranch (
@@ -155,6 +146,7 @@ class DatabaseHelper {
     ''');
     debugPrint('Database tables created.');
   }
+
   // --- Fungsi onUpgrade untuk migrasi database ---
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     debugPrint('Upgrading database from version $oldVersion to $newVersion...');
@@ -177,11 +169,15 @@ class DatabaseHelper {
           updated_at TEXT NOT NULL
         )
       ''');
-      debugPrint('Database upgraded to v3: Added collection_timestamps, recreated product table.');
+      debugPrint(
+        'Database upgraded to v3: Added collection_timestamps, recreated product table.',
+      );
     }
     // Migrasi dari versi 3 ke 4 (menambahkan tabel collection dengan kode)
     if (oldVersion < 4) {
-      await db.execute('DROP TABLE IF EXISTS $tableCollection'); // Drop jika sudah ada
+      await db.execute(
+        'DROP TABLE IF EXISTS $tableCollection',
+      ); // Drop jika sudah ada
       await db.execute('''
         CREATE TABLE $tableCollection(
           id INTEGER PRIMARY KEY,
@@ -191,11 +187,15 @@ class DatabaseHelper {
           updated_at TEXT NOT NULL
         )
       ''');
-      debugPrint('Database upgraded to v4: Recreated collection table with "kode".');
+      debugPrint(
+        'Database upgraded to v4: Recreated collection table with "kode".',
+      );
     }
     // Migrasi dari versi 4 ke 5 (menghapus kolom 'kode' dari tabel 'collection')
     if (oldVersion < 5) {
-      await db.execute('DROP TABLE IF EXISTS $tableCollection'); // Drop tabel collection
+      await db.execute(
+        'DROP TABLE IF EXISTS $tableCollection',
+      ); // Drop tabel collection
       await db.execute('''
         CREATE TABLE $tableCollection(
           id INTEGER PRIMARY KEY,
@@ -204,13 +204,17 @@ class DatabaseHelper {
           updated_at TEXT NOT NULL
         )
       ''');
-      debugPrint('Database upgraded to v5: Recreated collection table WITHOUT "kode".');
+      debugPrint(
+        'Database upgraded to v5: Recreated collection table WITHOUT "kode".',
+      );
 
       // Mengubah nama tabel Branches menjadi branches (jika sebelumnya ada Branches)
       // Ini penting jika Anda punya tabel bernama Branches, tapi konstanta Anda adalah tableBranch = 'branches'
       // Untuk memastikan konsistensi, jika ada tabel 'Branches' di DB lama, rename ke 'branches'.
       // Cek dulu apakah tabel 'Branches' ada, untuk menghindari error.
-      final tableExists = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='Branches'");
+      final tableExists = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='Branches'",
+      );
       if (tableExists.isNotEmpty) {
         await db.execute('ALTER TABLE Branches RENAME TO branches;');
         debugPrint('Renamed table "Branches" to "branches".');
@@ -245,23 +249,15 @@ class DatabaseHelper {
 
   Future<void> updateLastUpdate(String key) async {
     final db = await database;
-    await db.insert(
-      tableMetadata,
-      {
-        'key': key,
-        'value': DateTime.now().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert(tableMetadata, {
+      'key': key,
+      'value': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> deleteLastUpdate(String key) async {
     final db = await database;
-    await db.delete(
-      tableMetadata,
-      where: 'key = ?',
-      whereArgs: [key],
-    );
+    await db.delete(tableMetadata, where: 'key = ?', whereArgs: [key]);
   }
 
   // --- Metode untuk Jabatan ---
@@ -278,7 +274,8 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Jabatan>> getAllJabatans() async { // Menggunakan Jabatans (plural) untuk konsistensi
+  Future<List<Jabatan>> getAllJabatan() async {
+    // Menggunakan Jabatans (plural) untuk konsistensi
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableJabatan);
     return List.generate(maps.length, (i) {
@@ -286,13 +283,15 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> clearJabatans() async { // Clear Jabatans
+  Future<void> clearJabatans() async {
+    // Clear Jabatans
     final db = await database;
     await db.delete(tableJabatan);
   }
 
   // --- Metode untuk JabatanSFI ---
-  Future<void> insertJabatanSFIs(List<JabatanSFI> jabatanSFIs) async { // Menggunakan JabatansSFIs (plural)
+  Future<void> insertJabatanSFIs(List<JabatanSFI> jabatanSFIs) async {
+    // Menggunakan JabatansSFIs (plural)
     final db = await database;
     await db.transaction((txn) async {
       for (var jabatanSFI in jabatanSFIs) {
@@ -305,7 +304,8 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<JabatanSFI>> getAllJabatanSFIs() async { // Menggunakan JabatansSFIs (plural)
+  Future<List<JabatanSFI>> getAllJabatanSFI() async {
+    // Menggunakan JabatansSFIs (plural)
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableJabatanSFI);
     return List.generate(maps.length, (i) {
@@ -313,7 +313,8 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> clearJabatanSFIs() async { // Clear JabatanSFIs
+  Future<void> clearJabatanSFIs() async {
+    // Clear JabatanSFIs
     final db = await database;
     await db.delete(tableJabatanSFI);
   }
@@ -332,7 +333,7 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Dealer>> getAllDealers() async {
+  Future<List<Dealer>> getAllDealer() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableDealer);
     return List.generate(maps.length, (i) {
@@ -359,7 +360,7 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Branch>> getAllBranches() async {
+  Future<List<Branch>> getAllBranch() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableBranch);
     return List.generate(maps.length, (i) {
@@ -373,7 +374,8 @@ class DatabaseHelper {
   }
 
   // --- Metode untuk Product ---
-  Future<void> insertProducts(List<Product> products) async { // Menggunakan Products (plural)
+  Future<void> insertProducts(List<Product> products) async {
+    // Menggunakan Products (plural)
     final db = await database;
     await db.transaction((txn) async {
       for (var product in products) {
@@ -386,7 +388,8 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Product>> getAllProducts() async { // Menggunakan Products (plural)
+  Future<List<Product>> getAllProduct() async {
+    // Menggunakan Products (plural)
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableProduct);
     return List.generate(maps.length, (i) {
@@ -394,7 +397,8 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> clearProducts() async { // Clear Products
+  Future<void> clearProducts() async {
+    // Clear Products
     final db = await database;
     await db.delete(tableProduct);
   }
@@ -413,7 +417,7 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Area>> getAllAreas() async {
+  Future<List<Area>> getAllArea() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableArea);
     return List.generate(maps.length, (i) {
@@ -440,7 +444,7 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Purpose>> getAllPurposes() async {
+  Future<List<Purpose>> getAllPurpose() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tablePurpose);
     return List.generate(maps.length, (i) {
@@ -454,7 +458,8 @@ class DatabaseHelper {
   }
 
   // --- Metode untuk Type (VisitType) ---
-  Future<void> insertTypes(List<Type> types) async { // Menggunakan VisitType
+  Future<void> insertTypes(List<Type> types) async {
+    // Menggunakan VisitType
     final db = await database;
     await db.transaction((txn) async {
       for (var type in types) {
@@ -467,7 +472,8 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Type>> getAllTypes() async { // Menggunakan VisitType
+  Future<List<Type>> getAllType() async {
+    // Menggunakan VisitType
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableType);
     return List.generate(maps.length, (i) {
@@ -494,11 +500,13 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Collection>> getAllCollections() async {
+  Future<List<Collection>> getAllCollection() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableCollection);
     return List.generate(maps.length, (i) {
-      return Collection.fromJson(maps[i]); // Menggunakan fromJson dari Collection
+      return Collection.fromJson(
+        maps[i],
+      ); // Menggunakan fromJson dari Collection
     });
   }
 
@@ -507,6 +515,3 @@ class DatabaseHelper {
     await db.delete(tableCollection);
   }
 }
-
-
-
