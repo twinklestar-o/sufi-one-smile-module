@@ -18,34 +18,34 @@ class DealerRepository {
       localData = await dbHelper.getAllDealers();
       debugPrint('📱 Fetched ${localData.length} dealers from SQLite');
     } catch (e) {
-      debugPrint('❌ Error fetching local dealers: $e');
+      debugPrint('❌ Error fetching local dealers from SQLite: $e');
       forceRefresh = true; // Force refresh if local data fetch fails
     }
 
     final lastUpdate = await dbHelper.getLastUpdate(AppConstants.dealerCacheKey);
-    debugPrint('🔍 AppConstants.cacheDurationHours: ${AppConstants.cacheDurationHours} hours');
+    debugPrint('🔍 AppConstants.cacheDurationHours (Dealer): ${AppConstants.cacheDurationHours} hours');
     debugPrint('🔍 Last update for dealers: $lastUpdate');
 
     final bool shouldFetch = forceRefresh ||
         localData.isEmpty ||
         (lastUpdate == null || DateTime.now().difference(lastUpdate).inHours > AppConstants.cacheDurationHours);
 
-    debugPrint('📱 Local data count: ${localData.length}');
+    debugPrint('📱 Local data count (Dealer): ${localData.length}');
     debugPrint('📱 Should fetch from API for dealers: $shouldFetch');
 
     if (shouldFetch) {
-      debugPrint('📱 No local data or cache expired - calling API for dealers');
+      debugPrint('📱 No local data or cache expired (Dealer) - calling API');
       try {
         return await _fetchFromApiAndSave();
       } catch (e) {
         debugPrint('❌ Error in Dealer _fetchFromApiAndSave: $e');
-        debugPrint('📱 Trying to fallback to local data...');
+        debugPrint('📱 Trying to fallback to local data (Dealer)...');
         if (localData.isNotEmpty) {
           debugPrint('📱 Fallback successful, returning ${localData.length} local dealers.');
           return localData;
         } else {
-          debugPrint('📱 No local data available for fallback.');
-          rethrow;
+          debugPrint('📱 No local data available for fallback (Dealer).');
+          rethrow; // Lempar error lagi jika tidak ada data lokal untuk fallback
         }
       }
     } else {
@@ -57,34 +57,32 @@ class DealerRepository {
   Future<List<Dealer>> _fetchFromApiAndSave() async {
     debugPrint('🚀 Starting _fetchFromApiAndSave for dealers...');
     try {
-      final dynamic rawResponse = await apiService.fetchDealer();
+      final Map<String, dynamic> rawResponse = await apiService.fetchDealer();
       debugPrint('🔍 Dealer Repository - Raw API Response: $rawResponse');
       debugPrint('🔍 Dealer Repository - Raw API Response Type: ${rawResponse.runtimeType}');
 
-      List<dynamic> dealerData;
-
-      // Check if the rawResponse is a Map and has a 'data' key (standard API response)
-      if (rawResponse is Map<String, dynamic> && rawResponse.containsKey('data')) {
-        dealerData = rawResponse['data'];
-        debugPrint('🔍 Response is a Map with "data" key.');
-      }
-      // Check if the rawResponse is directly a List (API returns list directly)
-      else if (rawResponse is List) {
-        dealerData = rawResponse;
-        debugPrint('🔍 Response is a direct List.');
-      } else {
-        throw Exception('Invalid API response format: Expected Map with "data" key or direct List, got ${rawResponse.runtimeType}');
+      if (!rawResponse.containsKey('data')) {
+        throw Exception('Invalid API response format for dealers: Missing "data" key.');
       }
 
-      if (dealerData is! List) {
-        throw Exception('Invalid API response format: "data" field is not a List, got ${dealerData.runtimeType}');
+      // Ambil data dari kunci 'data'
+      final dynamic dealerDataRaw = rawResponse['data'];
+      debugPrint('🔍 Type of rawResponse[\'data\']: ${dealerDataRaw.runtimeType}');
+
+      // Lakukan casting yang lebih kuat di sini
+      if (dealerDataRaw is! List) {
+        throw Exception('Invalid API response format for dealers: "data" field is not a List. Actual type: ${dealerDataRaw.runtimeType}');
       }
-      debugPrint('🔍 Dealer Data (extracted): $dealerData');
+
+      // Cast List<dynamic> menjadi List<Map<String, dynamic>>
+      final List<Map<String, dynamic>> dealerData = List<Map<String, dynamic>>.from(dealerDataRaw);
+
+      debugPrint('🔍 Dealer Data (extracted and casted): $dealerData');
       debugPrint('🔍 Number of dealers from API: ${dealerData.length}');
 
       final List<Dealer> dealerList = dealerData.map((json) {
         try {
-          return Dealer.fromJson(json as Map<String, dynamic>);
+          return Dealer.fromJson(json); // json sudah Map<String, dynamic>
         } catch (e) {
           debugPrint('❌ Error parsing dealer JSON: $json, Error: $e');
           rethrow;
@@ -108,7 +106,6 @@ class DealerRepository {
     }
   }
 
-  // Tambahkan metode clearAndRefresh jika Anda ingin memilikinya di repository
   Future<void> _clearAndRefreshDealers() async {
     debugPrint('🗑️ Clearing local dealer data');
     await dbHelper.clearDealers();
