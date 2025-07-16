@@ -215,32 +215,6 @@ class ApiServiceSmile {
     }
   }
 
-  // Dealer endpoint - returns Map (colleague's version)
-  Future<Map<String, dynamic>> fetchDealer() async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse(Url + 'dealer'),
-      headers: _getHeaders(token),
-    );
-
-    print('Dealer API Response Status: ${response.statusCode}');
-    print('Dealer API Response Body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final jsonData = json.decode(response.body);
-      if (jsonData is Map<String, dynamic>) {
-        return jsonData;
-      } else {
-        throw Exception('Unexpected response format');
-      }
-    } else if (response.statusCode == 401) {
-      Get.offAll(() => LoginPage());
-      throw Exception('Sesi telah berakhir, silakan login kembali');
-    } else {
-      throw Exception('Gagal memuat data dealer: ${response.statusCode}');
-    }
-  }
-
   // Dealers endpoint - returns List with optional query (for direct visit compatibility)
   Future<List<dynamic>> fetchDealers({String? query}) async {
     final token = await _getToken();

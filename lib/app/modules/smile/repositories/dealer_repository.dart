@@ -1,6 +1,5 @@
 import 'package:sufi_one/src/database/SMILE/database_helper.dart';
 import 'package:sufi_one/src/services/SMILE/api_services.dart';
-import 'package:sufi_one/src/services/api_services.dart';
 import 'package:sufi_one/app/modules/smile/models/dealer.dart';
 import 'package:sufi_one/src/utils/app_constants.dart'; // Import AppConstants
 import 'package:flutter/foundation.dart'; // Untuk debugPrint
@@ -67,42 +66,26 @@ class DealerRepository {
   Future<List<Dealer>> _fetchFromApiAndSave() async {
     debugPrint('🚀 Starting _fetchFromApiAndSave for dealers...');
     try {
-      final Map<String, dynamic> rawResponse = await apiService.fetchDealer();
+      final dynamic rawResponse = await apiService.fetchDealers();
       debugPrint('🔍 Dealer Repository - Raw API Response: $rawResponse');
       debugPrint(
         '🔍 Dealer Repository - Raw API Response Type: ${rawResponse.runtimeType}',
       );
 
-      if (!rawResponse.containsKey('data')) {
-        throw Exception(
-          'Invalid API response format for dealers: Missing "data" key.',
-        );
+      if (rawResponse is! List) {
+        throw Exception('Invalid API response format: expected a JSON array.');
       }
 
-      // Ambil data dari kunci 'data'
-      final dynamic dealerDataRaw = rawResponse['data'];
-      debugPrint(
-        '🔍 Type of rawResponse[\'data\']: ${dealerDataRaw.runtimeType}',
-      );
-
-      // Lakukan casting yang lebih kuat di sini
-      if (dealerDataRaw is! List) {
-        throw Exception(
-          'Invalid API response format for dealers: "data" field is not a List. Actual type: ${dealerDataRaw.runtimeType}',
-        );
-      }
-
-      // Cast List<dynamic> menjadi List<Map<String, dynamic>>
       final List<Map<String, dynamic>> dealerData =
-          List<Map<String, dynamic>>.from(dealerDataRaw);
+          rawResponse.map((e) => Map<String, dynamic>.from(e)).toList();
 
-      debugPrint('🔍 Dealer Data (extracted and casted): $dealerData');
-      debugPrint('🔍 Number of dealers from API: ${dealerData.length}');
+      debugPrint('🔍 Parsed dealer data: $dealerData');
+      debugPrint('🔍 Number of dealers: ${dealerData.length}');
 
       final List<Dealer> dealerList =
           dealerData.map((json) {
             try {
-              return Dealer.fromJson(json); // json sudah Map<String, dynamic>
+              return Dealer.fromJson(json);
             } catch (e) {
               debugPrint('❌ Error parsing dealer JSON: $json, Error: $e');
               rethrow;
@@ -111,13 +94,12 @@ class DealerRepository {
 
       debugPrint('✅ Successfully parsed ${dealerList.length} dealers');
 
-      debugPrint('🗑️ Cleared old dealer data');
       await dbHelper.clearDealers();
       await dbHelper.insertDealers(dealerList);
-      debugPrint('💾 Inserted ${dealerList.length} dealers to SQLite');
+      debugPrint('💾 Saved ${dealerList.length} dealers to SQLite');
 
       await dbHelper.updateLastUpdate(AppConstants.dealerCacheKey);
-      debugPrint('⏰ Updated last update timestamp for dealers');
+      debugPrint('⏰ Updated last update timestamp');
 
       return dealerList;
     } catch (e) {

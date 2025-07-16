@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart' show Country;
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../../../src/services/api_services.dart';
+import 'package:sufi_one/src/services/SMILE/api_services.dart';
 import '../../../models/area.dart';
 import '../../../models/branch.dart';
 import '../../../models/dealer.dart';
@@ -34,8 +34,6 @@ import '../../../repositories/type_repository.dart';
 import '../controllers/task_visit_controller.dart';
 
 class _DirectVisitState extends State<DirectVisit> {
-
-
   // Dynamic dropdown values from API
   List<Area> areaList = [];
   List<Branch> cabangList = [];
@@ -48,7 +46,7 @@ class _DirectVisitState extends State<DirectVisit> {
   List<models.Type> visitTypeList = [];
 
   // API Service
-  final ApiService _apiService = ApiService();
+  final ApiServiceSmile _apiService = ApiServiceSmile();
   // Loading states
   bool isLoadingJabatan = true;
   bool isLoadingJabatanSFI = true;
@@ -179,12 +177,13 @@ class _DirectVisitState extends State<DirectVisit> {
       if (query.isEmpty) {
         filteredDealerList = List.from(dealerList);
       } else {
-        filteredDealerList = dealerList.where((dealer) {
-          final name = dealer.name.toLowerCase();
-          final code = dealer.code.toLowerCase();
-          final searchQuery = query.toLowerCase();
-          return name.contains(searchQuery) || code.contains(searchQuery);
-        }).toList();
+        filteredDealerList =
+            dealerList.where((dealer) {
+              final name = dealer.name.toLowerCase();
+              final code = dealer.code.toLowerCase();
+              final searchQuery = query.toLowerCase();
+              return name.contains(searchQuery) || code.contains(searchQuery);
+            }).toList();
       }
     });
   }
@@ -212,17 +211,19 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading jabatan: $e');
       setState(() => isLoadingJabatan = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading jabatan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading jabatan: $e')));
     }
   }
-
 
   Future<void> _loadJabatanSFI() async {
     try {
       setState(() => isLoadingJabatanSFI = true);
-      final repository = Provider.of<JabatanSFIRepository>(context, listen: false);
+      final repository = Provider.of<JabatanSFIRepository>(
+        context,
+        listen: false,
+      );
       final data = await repository.getJabatanSFIs(); // Offline-first
       setState(() {
         jabatanSFIList = data;
@@ -231,9 +232,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading jabatan SFI: $e');
       setState(() => isLoadingJabatanSFI = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading jabatan SFI: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading jabatan SFI: $e')));
     }
   }
 
@@ -249,9 +250,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading area: $e');
       setState(() => isLoadingArea = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading area: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading area: $e')));
     }
   }
 
@@ -262,8 +263,8 @@ class _DirectVisitState extends State<DirectVisit> {
       final allBranches = await repository.getBranches(); // Offline-first
 
       // Filter branches by area code
-      final filteredBranches = allBranches.where((branch) =>
-      branch.areaCode == areaCode).toList();
+      final filteredBranches =
+          allBranches.where((branch) => branch.areaCode == areaCode).toList();
 
       setState(() {
         cabangList = filteredBranches;
@@ -273,9 +274,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading cabang: $e');
       setState(() => isLoadingCabang = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading cabang: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading cabang: $e')));
     }
   }
 
@@ -299,13 +300,12 @@ class _DirectVisitState extends State<DirectVisit> {
         produkList = data;
         isLoadingProduk = false;
       });
-
     } catch (e) {
       print('❌ Error loading produk: $e');
       setState(() => isLoadingProduk = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading produk: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading produk: $e')));
     }
   }
 
@@ -318,12 +318,13 @@ class _DirectVisitState extends State<DirectVisit> {
       // Filter by query if provided
       List<Dealer> filteredData = data;
       if (query != null && query.isNotEmpty) {
-        filteredData = data.where((dealer) {
-          final name = dealer.name.toLowerCase();
-          final code = dealer.code.toLowerCase();
-          final searchQuery = query.toLowerCase();
-          return name.contains(searchQuery) || code.contains(searchQuery);
-        }).toList();
+        filteredData =
+            data.where((dealer) {
+              final name = dealer.name.toLowerCase();
+              final code = dealer.code.toLowerCase();
+              final searchQuery = query.toLowerCase();
+              return name.contains(searchQuery) || code.contains(searchQuery);
+            }).toList();
       }
 
       setState(() {
@@ -334,9 +335,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading dealer: $e');
       setState(() => isLoadingDealer = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading dealer: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading dealer: $e')));
     }
   }
 
@@ -352,14 +353,14 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading visit type: $e');
       setState(() => isLoadingVisitType = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading visit type: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading visit type: $e')));
     }
   }
 
   // lib/app/modules/smile/feature/smilehome/views/direct_visit.dart
-// Tambahkan di initState atau onPressed button
+  // Tambahkan di initState atau onPressed button
   // lib/app/modules/smile/feature/smilehome/views/direct_visit.dart
   Future<void> _forceRefreshProducts() async {
     try {
@@ -378,15 +379,16 @@ class _DirectVisitState extends State<DirectVisit> {
 
       // Debug: Print semua product yang di-load
       for (int i = 0; i < products.length; i++) {
-        print('📦 Loaded product $i: ${products[i].code} - ${products[i].name}');
+        print(
+          '📦 Loaded product $i: ${products[i].code} - ${products[i].name}',
+        );
       }
-
     } catch (e) {
       print('❌ Force refresh failed: $e');
       setState(() => isLoadingProduk = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Force refresh failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Force refresh failed: $e')));
     }
   }
 
@@ -402,9 +404,9 @@ class _DirectVisitState extends State<DirectVisit> {
     } catch (e) {
       print('Error loading tujuan visit: $e');
       setState(() => isLoadingTujuanVisit = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading tujuan visit: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading tujuan visit: $e')));
     }
   }
 
@@ -414,61 +416,69 @@ class _DirectVisitState extends State<DirectVisit> {
     return value.toString();
   }
 
-
   // Update method untuk build dropdown items:
   List<DropdownMenuItem<String>> _buildAreaDropdownItems() {
     final seen = <String>{};
-    return areaList.map((area) {
-      if (seen.contains(area.code)) return null;
-      seen.add(area.code);
-      return DropdownMenuItem<String>(
-        value: area.code,
-        child: Text(
-          area.name.toUpperCase(),
-          style: TextStyle(color: dropdownLight),
-        ),
-      );
-    }).whereType<DropdownMenuItem<String>>().toList();
+    return areaList
+        .map((area) {
+          if (seen.contains(area.code)) return null;
+          seen.add(area.code);
+          return DropdownMenuItem<String>(
+            value: area.code,
+            child: Text(
+              area.name.toUpperCase(),
+              style: TextStyle(color: dropdownLight),
+            ),
+          );
+        })
+        .whereType<DropdownMenuItem<String>>()
+        .toList();
   }
 
   List<DropdownMenuItem<String>> _buildCabangDropdownItems() {
     final seen = <String>{};
-    return cabangList.map((cabang) {
-      if (seen.contains(cabang.code)) return null;
-      seen.add(cabang.code);
-      return DropdownMenuItem<String>(
-        value: cabang.code,
-        child: Text(
-          cabang.name.toUpperCase(),
-          style: TextStyle(color: dropdownLight),
-        ),
-      );
-    }).whereType<DropdownMenuItem<String>>().toList();
+    return cabangList
+        .map((cabang) {
+          if (seen.contains(cabang.code)) return null;
+          seen.add(cabang.code);
+          return DropdownMenuItem<String>(
+            value: cabang.code,
+            child: Text(
+              cabang.name.toUpperCase(),
+              style: TextStyle(color: dropdownLight),
+            ),
+          );
+        })
+        .whereType<DropdownMenuItem<String>>()
+        .toList();
   }
 
   // lib/app/modules/smile/feature/smilehome/views/direct_visit.dart
-// Update method _buildProdukDropdownItems
+  // Update method _buildProdukDropdownItems
   // lib/app/modules/smile/feature/smilehome/views/direct_visit.dart
   List<DropdownMenuItem<String>> _buildProdukDropdownItems() {
-    print('🔍 _buildProdukDropdownItems called with ${produkList.length} products');
+    print(
+      '🔍 _buildProdukDropdownItems called with ${produkList.length} products',
+    );
 
     final items = <DropdownMenuItem<String>>[];
 
     // Tambahkan option "Pilih Product" di awal
-    items.add(DropdownMenuItem<String>(
-      value: null,
-      child: Text(
-        'Pilih Product',
-        style: TextStyle(color: Colors.grey),
+    items.add(
+      DropdownMenuItem<String>(
+        value: null,
+        child: Text('Pilih Product', style: TextStyle(color: Colors.grey)),
       ),
-    ));
+    );
 
     for (int i = 0; i < produkList.length; i++) {
       final produk = produkList[i];
       final code = produk.code.trim(); // Ganti .kode menjadi .code
       final name = produk.name.trim();
 
-      print('🔍 Processing product $i: code="$code" (${code.length} chars), name="$name"');
+      print(
+        '🔍 Processing product $i: code="$code" (${code.length} chars), name="$name"',
+      );
 
       // Skip jika kode kosong atau N/A
       if (code.isEmpty || code == 'N/A') {
@@ -477,84 +487,103 @@ class _DirectVisitState extends State<DirectVisit> {
       }
 
       // Validasi panjang kode
-      if (code.length != 4) { // Pastikan panjangnya 4 karakter sesuai Laravel
-        print("⚠️ Product code length is not 4: $code (${code.length} chars) - $name");
+      if (code.length != 4) {
+        // Pastikan panjangnya 4 karakter sesuai Laravel
+        print(
+          "⚠️ Product code length is not 4: $code (${code.length} chars) - $name",
+        );
         continue;
       }
 
-      items.add(DropdownMenuItem<String>(
-        value: code,
-        child: Text(
-          '$code - ${name.toUpperCase()}',
-          style: TextStyle(color: dropdownLight),
+      items.add(
+        DropdownMenuItem<String>(
+          value: code,
+          child: Text(
+            '$code - ${name.toUpperCase()}',
+            style: TextStyle(color: dropdownLight),
+          ),
         ),
-      ));
+      );
 
       print("✅ Added product to dropdown: $code - $name");
     }
 
-    print("📦 Built ${items.length - 1} product dropdown items from ${produkList.length} products");
+    print(
+      "📦 Built ${items.length - 1} product dropdown items from ${produkList.length} products",
+    );
     return items;
   }
 
   List<DropdownMenuItem<String>> _buildJabatanSFIDropdownItems() {
     final seen = <String>{};
-    return jabatanSFIList.map((jabatan) {
-      if (seen.contains(jabatan.name)) return null;
-      seen.add(jabatan.name);
-      return DropdownMenuItem<String>(
-        value: jabatan.name,
-        child: Text(
-          jabatan.name.toUpperCase(),
-          style: TextStyle(color: dropdownLight),
-        ),
-      );
-    }).whereType<DropdownMenuItem<String>>().toList();
+    return jabatanSFIList
+        .map((jabatan) {
+          if (seen.contains(jabatan.name)) return null;
+          seen.add(jabatan.name);
+          return DropdownMenuItem<String>(
+            value: jabatan.name,
+            child: Text(
+              jabatan.name.toUpperCase(),
+              style: TextStyle(color: dropdownLight),
+            ),
+          );
+        })
+        .whereType<DropdownMenuItem<String>>()
+        .toList();
   }
 
   List<DropdownMenuItem<String>> _buildJabatanDropdownItems() {
     final seen = <String>{};
-    return jabatanList.map((jabatan) {
-      if (seen.contains(jabatan.name)) return null;
-      seen.add(jabatan.name);
-      return DropdownMenuItem<String>(
-        value: jabatan.name,
-        child: Text(
-          jabatan.name.toUpperCase(),
-          style: TextStyle(color: dropdownLight),
-        ),
-      );
-    }).whereType<DropdownMenuItem<String>>().toList();
+    return jabatanList
+        .map((jabatan) {
+          if (seen.contains(jabatan.name)) return null;
+          seen.add(jabatan.name);
+          return DropdownMenuItem<String>(
+            value: jabatan.name,
+            child: Text(
+              jabatan.name.toUpperCase(),
+              style: TextStyle(color: dropdownLight),
+            ),
+          );
+        })
+        .whereType<DropdownMenuItem<String>>()
+        .toList();
   }
 
   List<DropdownMenuItem<String>> _buildVisitTypeDropdownItems() {
     final seen = <String>{};
-    return visitTypeList.map((type) {
-      if (seen.contains(type.name)) return null;
-      seen.add(type.name);
-      return DropdownMenuItem<String>(
-        value: type.name,
-        child: Text(
-          type.name.toUpperCase(),
-          style: TextStyle(color: dropdownLight),
-        ),
-      );
-    }).whereType<DropdownMenuItem<String>>().toList();
+    return visitTypeList
+        .map((type) {
+          if (seen.contains(type.name)) return null;
+          seen.add(type.name);
+          return DropdownMenuItem<String>(
+            value: type.name,
+            child: Text(
+              type.name.toUpperCase(),
+              style: TextStyle(color: dropdownLight),
+            ),
+          );
+        })
+        .whereType<DropdownMenuItem<String>>()
+        .toList();
   }
 
   List<DropdownMenuItem<String>> _buildTujuanVisitDropdownItems() {
     final seen = <String>{};
-    return tujuanVisitList.map((purpose) {
-      if (seen.contains(purpose.name)) return null;
-      seen.add(purpose.name);
-      return DropdownMenuItem<String>(
-        value: purpose.name,
-        child: Text(
-          purpose.name.toUpperCase(),
-          style: TextStyle(color: dropdownLight),
-        ),
-      );
-    }).whereType<DropdownMenuItem<String>>().toList();
+    return tujuanVisitList
+        .map((purpose) {
+          if (seen.contains(purpose.name)) return null;
+          seen.add(purpose.name);
+          return DropdownMenuItem<String>(
+            value: purpose.name,
+            child: Text(
+              purpose.name.toUpperCase(),
+              style: TextStyle(color: dropdownLight),
+            ),
+          );
+        })
+        .whereType<DropdownMenuItem<String>>()
+        .toList();
   }
 
   void _activateDealerSearch() {
@@ -643,7 +672,10 @@ class _DirectVisitState extends State<DirectVisit> {
                     borderRadius: BorderRadius.circular(20),
                     onTap: _activateDealerSearch,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -667,10 +699,9 @@ class _DirectVisitState extends State<DirectVisit> {
         ),
         const SizedBox(height: 12),
 
-
         // Search interface
         if (!isDealerSearchEnabled)
-        // Inactive state
+          // Inactive state
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -685,42 +716,49 @@ class _DirectVisitState extends State<DirectVisit> {
                 Expanded(
                   child: Text(
                     'Klik tombol "Cari Dealer" untuk memulai pencarian',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   ),
                 ),
               ],
             ),
           )
         else
-        // Active search interface
+          // Active search interface
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDealerSearchExpanded ? Colors.blue.shade300 : dropdownLightNF,
+                color:
+                    isDealerSearchExpanded
+                        ? Colors.blue.shade300
+                        : dropdownLightNF,
                 width: isDealerSearchExpanded ? 2 : 1,
               ),
-              boxShadow: isDealerSearchExpanded ? [
-                BoxShadow(
-                  color: Colors.blue.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ] : null,
+              boxShadow:
+                  isDealerSearchExpanded
+                      ? [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                      : null,
             ),
             child: Column(
               children: [
                 // Search input
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.search,
-                        color: isDealerSearchExpanded ? Colors.blue : Colors.grey,
+                        color:
+                            isDealerSearchExpanded ? Colors.blue : Colors.grey,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -729,20 +767,21 @@ class _DirectVisitState extends State<DirectVisit> {
                           controller: _dealerSearchController,
                           focusNode: _dealerSearchFocus,
                           decoration: InputDecoration(
-                            hintText: selectedDealer == null
-                                ? 'Ketik nama atau kode dealer...'
-                                : 'Dealer terpilih: $selectedDealerName',
+                            hintText:
+                                selectedDealer == null
+                                    ? 'Ketik nama atau kode dealer...'
+                                    : 'Dealer terpilih: $selectedDealerName',
                             hintStyle: TextStyle(
-                              color: selectedDealer == null ? Colors.grey.shade500 : Colors.green.shade600,
+                              color:
+                                  selectedDealer == null
+                                      ? Colors.grey.shade500
+                                      : Colors.green.shade600,
                               fontSize: 14,
                             ),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.zero,
                           ),
-                          style: TextStyle(
-                            color: dropdownLight,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: dropdownLight, fontSize: 14),
                           onTap: () {
                             if (!isDealerSearchExpanded) {
                               setState(() {
@@ -750,18 +789,27 @@ class _DirectVisitState extends State<DirectVisit> {
                               });
                             }
                           },
-                          validator: (v) =>
-                          _hasInteractWithDealer && selectedDealer == null
-                              ? 'Harap Pilih Dealer'
-                              : null,
+                          validator:
+                              (v) =>
+                                  _hasInteractWithDealer &&
+                                          selectedDealer == null
+                                      ? 'Harap Pilih Dealer'
+                                      : null,
                         ),
                       ),
                       if (selectedDealer != null)
                         IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey.shade600, size: 18),
+                          icon: Icon(
+                            Icons.clear,
+                            color: Colors.grey.shade600,
+                            size: 18,
+                          ),
                           onPressed: _clearDealerSelection,
                           padding: EdgeInsets.zero,
-                          constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                          constraints: BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
                         ),
                       if (isLoadingDealer)
                         SizedBox(
@@ -769,7 +817,9 @@ class _DirectVisitState extends State<DirectVisit> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.blue,
+                            ),
                           ),
                         ),
                     ],
@@ -785,92 +835,121 @@ class _DirectVisitState extends State<DirectVisit> {
                         top: BorderSide(color: Colors.grey.shade200),
                       ),
                     ),
-                    child: filteredDealerList.isEmpty
-                        ? Container(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(Icons.search_off, color: Colors.grey.shade400),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _dealerSearchController.text.isEmpty
-                                  ? 'Mulai mengetik untuk mencari dealer...'
-                                  : 'Tidak ada dealer yang cocok dengan "${_dealerSearchController.text}"',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                        : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: filteredDealerList.length,
-                      itemBuilder: (context, index) {
-                        final dealer = filteredDealerList[index];
-                        final code = dealer.code;
-                        final name = dealer.name;
-                        final isSelected = selectedDealer == code;
-
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _selectDealer(code, name),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.blue.shade50
-                                    : Colors.transparent,
-                                border: index < filteredDealerList.length - 1
-                                    ? Border(bottom: BorderSide(color: Colors.grey.shade100))
-                                    : null,
-                              ),
+                    child:
+                        filteredDealerList.isEmpty
+                            ? Container(
+                              padding: const EdgeInsets.all(16),
                               child: Row(
                                 children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? Colors.blue : Colors.grey.shade300,
-                                      shape: BoxShape.circle,
-                                    ),
+                                  Icon(
+                                    Icons.search_off,
+                                    color: Colors.grey.shade400,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          name,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.blue.shade700 : dropdownLight,
-                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                            fontSize: 14,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        if (code.isNotEmpty)
-                                          Text(
-                                            'Kode: $code',
-                                            style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                      ],
+                                    child: Text(
+                                      _dealerSearchController.text.isEmpty
+                                          ? 'Mulai mengetik untuk mencari dealer...'
+                                          : 'Tidak ada dealer yang cocok dengan "${_dealerSearchController.text}"',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
+                                ],
+                              ),
+                            )
+                            : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filteredDealerList.length,
+                              itemBuilder: (context, index) {
+                                final dealer = filteredDealerList[index];
+                                final code = dealer.code;
+                                final name = dealer.name;
+                                final isSelected = selectedDealer == code;
+
+                                return Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _selectDealer(code, name),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isSelected
+                                                ? Colors.blue.shade50
+                                                : Colors.transparent,
+                                        border:
+                                            index <
+                                                    filteredDealerList.length -
+                                                        1
+                                                ? Border(
+                                                  bottom: BorderSide(
+                                                    color: Colors.grey.shade100,
+                                                  ),
+                                                )
+                                                : null,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  isSelected
+                                                      ? Colors.blue
+                                                      : Colors.grey.shade300,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  name,
+                                                  style: TextStyle(
+                                                    color:
+                                                        isSelected
+                                                            ? Colors
+                                                                .blue
+                                                                .shade700
+                                                            : dropdownLight,
+                                                    fontWeight:
+                                                        isSelected
+                                                            ? FontWeight.w600
+                                                            : FontWeight.normal,
+                                                    fontSize: 14,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                if (code.isNotEmpty)
+                                                  Text(
+                                                    'Kode: $code',
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (isSelected)
+                                            Icon(
+                                              Icons.check_circle,
+                                              color: Colors.blue,
+                                              size: 20,
+                                            ),
                                         ],
                                       ),
                                     ),
@@ -1778,7 +1857,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                   ),
                                 ),
                               ),
-                          items: _buildJabatanSFIDropdownItems(),
+                              items: _buildJabatanSFIDropdownItems(),
                               onChanged:
                                   (v) => setState(() {
                                     selectedJabatanSFI = v;
@@ -1843,9 +1922,7 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                           items:
-                              areaList.isEmpty
-                                  ? []
-                                  : _buildAreaDropdownItems(),
+                              areaList.isEmpty ? [] : _buildAreaDropdownItems(),
                           onChanged:
                               areaList.isEmpty
                                   ? null
@@ -1985,7 +2062,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                   ),
                                 ),
                               ),
-                          items: _buildProdukDropdownItems(),
+                              items: _buildProdukDropdownItems(),
                               onChanged:
                                   (val) => setState(() {
                                     selectedProductCode = val;
@@ -2062,7 +2139,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                   ),
                                 ),
                               ),
-                          items: _buildVisitTypeDropdownItems(),
+                              items: _buildVisitTypeDropdownItems(),
                               onChanged:
                                   (val) => setState(() {
                                     selectedVisitType = val;
@@ -2107,7 +2184,7 @@ class _DirectVisitState extends State<DirectVisit> {
                                   ),
                                 ),
                               ),
-                          items: _buildTujuanVisitDropdownItems(),
+                              items: _buildTujuanVisitDropdownItems(),
                               onChanged:
                                   (val) => setState(() {
                                     selectedTujuanVisit = val;
