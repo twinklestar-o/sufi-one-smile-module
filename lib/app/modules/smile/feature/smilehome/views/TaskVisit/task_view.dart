@@ -100,7 +100,7 @@ class TaskView extends StatelessWidget {
               _buildDisplayField('Dealer', visit.dealerCode ?? "-"),
             ]),
 
-            // 2. Data Visit
+            // 2. Data Visit (digabung dengan Diskusi, Problem, Follow-Up, dan Description)
             _buildCardSection([
               _buildSectionHeader('Data Visit'),
               _buildDisplayField('Tipe Visit', visit.tipeVisit ?? "-"),
@@ -109,6 +109,10 @@ class TaskView extends StatelessWidget {
               _buildDisplayField('Sampai Tanggal', _formatTanggal(visit.sampaiTanggal)),
               _buildDisplayField('Tanggal Selesai', _formatTanggal(visit.tanggalSelesai)),
               _buildDisplayField('Nama PIC', visit.namaPic ?? "-"),
+              _buildDisplayField('Theme of Discussion', visit.themeOfDiscussion ?? "-", isLongText: true),
+              _buildDisplayField('Problem', visit.problem ?? "-", isLongText: true),
+              _buildDisplayField('Follow-Up', visit.followUp ?? "-", isLongText: true),
+              _buildDisplayField('Description', visit.description ?? "-", isLongText: true),
             ]),
 
             // 3. Main Person
@@ -120,26 +124,11 @@ class TaskView extends StatelessWidget {
 
             // 4. Foto
             _buildCardSection([
-              _buildPhotoSection('Pilih Foto', visit.photo1, visit.photo2),
+              _buildPhotoSection('Foto', visit.photo1, visit.photo2),
             ]),
 
-            // 5. Lokasi
+            // 5. Lokasi (tanpa tombol Ambil Lokasi)
             _buildCardSection([
-              ElevatedButton.icon(
-                icon: const Icon(Icons.location_on),
-                label: const Text('Ambil Lokasi'),
-                onPressed: () {
-                  Get.snackbar('Info', 'Fitur Ambil Lokasi belum diimplementasikan.');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF0048A7),
-                  side: const BorderSide(color: Color(0xFF0048A7)),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: 16),
               _buildSectionHeader('Informasi Lokasi'),
               Row(
                 children: [
@@ -150,22 +139,8 @@ class TaskView extends StatelessWidget {
               ),
             ]),
 
-            // 6. Diskusi dan Masalah
-            _buildCardSection([
-              _buildSectionHeader('Theme of Discussion'),
-              _buildDisplayField('Theme of Discussion', visit.themeOfDiscussion ?? "-", isLongText: true),
-              const SizedBox(height: 16),
-              _buildSectionHeader('Problem'),
-              _buildDisplayField('Problem', visit.problem ?? "-", isLongText: true),
-              const SizedBox(height: 16),
-              _buildSectionHeader('Follow-Up'),
-              _buildDisplayField('Follow-Up', visit.followUp ?? "-", isLongText: true),
-              const SizedBox(height: 16),
-              _buildSectionHeader('Description'),
-              _buildDisplayField('Description', visit.description ?? "-", isLongText: true),
-            ]),
 
-            // 7. Tombol Edit Saja
+            // 6. Tombol Edit Saja
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

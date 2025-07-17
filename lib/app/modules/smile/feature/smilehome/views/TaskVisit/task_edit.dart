@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../controllers/task_edit_controller.dart';
-import '../../controllers/task_visit_controller.dart';
 import '../../../../models/visit.dart';
+import 'dart:io';
+import 'package:geolocator/geolocator.dart';
 
 class TaskEdit extends GetView<TaskEditController> {
   const TaskEdit({super.key});
@@ -43,23 +45,13 @@ class TaskEdit extends GetView<TaskEditController> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('res/images/car.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 _buildSectionTitle('Data Dealer'),
                 _buildTextField('Jabatan Saya', 'jabatanSaya', data),
                 _buildTextField('Area', 'areaCode', data),
                 _buildTextField('Cabang', 'branchCode', data),
                 _buildTextField('Produk', 'productCode', data),
                 _buildTextField('Dealer', 'dealerCode', data),
+
                 const SizedBox(height: 16),
                 _buildSectionTitle('Data Visit'),
                 _buildTextField('Tipe visit', 'tipeVisit', data),
@@ -72,30 +64,38 @@ class TaskEdit extends GetView<TaskEditController> {
                 _buildTextField('Problem', 'problem', data),
                 _buildTextField('Follow Up', 'followUp', data),
                 _buildTextField('Description', 'description', data),
-                const SizedBox(height: 16),
-                _buildSectionTitle('Status Kunjungan'),
-                DropdownButtonFormField<String>(
-                  value: data['status'],
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'Terlaksana', child: Text('Terlaksana')),
-                    DropdownMenuItem(value: 'Dibatalkan', child: Text('Dibatalkan')),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      data['status'] = value;
-                    }
-                  },
-                ),
+
                 const SizedBox(height: 16),
                 _buildSectionTitle('Main Person'),
                 _buildTextField('Jabatan PIC', 'mainJabatan', data),
                 _buildTextField('Nama PIC', 'mainNamaPic', data),
                 _buildTextField('Nomor Telepon PIC', 'mainNoTelp', data),
                 _buildTextField('Lokasi PIC', 'mainLokasi', data),
+
+                const SizedBox(height: 16),
+                _buildSectionTitle('Foto'),
+                Row(
+                  children: [
+                    _buildImagePicker('photo1'),
+                    const SizedBox(width: 16),
+                    _buildImagePicker('photo2'),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+                _buildSectionTitle('Ambil Lokasi'),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+                    data['latitude'] = position.latitude.toString();
+                    data['longitude'] = position.longitude.toString();
+                  },
+                  icon: const Icon(Icons.location_on),
+                  label: const Text("Ambil Lokasi Saat Ini"),
+                ),
+                const SizedBox(height: 12),
+                _buildTextField('Latitude', 'latitude', data),
+                _buildTextField('Longitude', 'longitude', data),
               ],
             );
           }),
@@ -136,7 +136,6 @@ class TaskEdit extends GetView<TaskEditController> {
       text: date != null ? DateFormat('yyyy-MM-dd').format(date) : '',
     );
 
-
     ever(data, (_) {
       if (dateController.text != (data[key] ?? '')) {
         dateController.text = data[key] ?? '';
@@ -168,6 +167,35 @@ class TaskEdit extends GetView<TaskEditController> {
             validator: (value) => (value?.isEmpty ?? true) ? 'Field cannot be empty' : null,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(String key) {
+    final RxMap<String, dynamic> data = controller.editedData;
+    final imagePath = data[key];
+    return Expanded(
+      child: GestureDetector(
+        onTap: () async {
+          final picker = ImagePicker();
+          final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+          if (pickedFile != null) {
+            data[key] = pickedFile.path;
+          }
+        },
+        child: Container(
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(8),
+            image: imagePath != null && imagePath != ''
+                ? DecorationImage(image: FileImage(File(imagePath)), fit: BoxFit.cover)
+                : null,
+          ),
+          child: imagePath == null || imagePath == ''
+              ? const Center(child: Icon(Icons.add_a_photo))
+              : null,
+        ),
       ),
     );
   }
