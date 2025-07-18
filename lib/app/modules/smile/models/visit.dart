@@ -20,6 +20,7 @@ class Visit {
   final double? latitude;
   final double? longitude;
   final List<dynamic>? mainPersons;
+  final int? status; // Tambahkan field status
 
   Visit({
     this.id,
@@ -43,6 +44,7 @@ class Visit {
     this.latitude,
     this.longitude,
     this.mainPersons,
+    this.status, // Tambahkan parameter status (nullable)
   });
 
   factory Visit.fromJson(Map<String, dynamic> json) {
@@ -78,6 +80,55 @@ class Visit {
           ? double.tryParse(json['longitude'].toString())
           : null,
       mainPersons: json['main_persons'],
+      status: json['status'] != null
+          ? int.tryParse(json['status'].toString())
+          : null, // Tambahkan parsing status
     );
   }
+
+  // Tambahkan method toJson jika diperlukan
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'jabatan_saya': jabatanSaya,
+      'area_code': areaCode,
+      'branch_code': branchCode,
+      'product_code': productCode,
+      'dealer_code': dealerCode,
+      'tipe_visit': tipeVisit,
+      'tujuan_visit': tujuanVisit,
+      'dari_tanggal': dariTanggal?.toIso8601String(),
+      'sampai_tanggal': sampaiTanggal?.toIso8601String(),
+      'tanggal_selesai': tanggalSelesai?.toIso8601String(),
+      'nama_pic': namaPic,
+      'theme_of_discussion': themeOfDiscussion,
+      'problem': problem,
+      'follow_up': followUp,
+      'description': description,
+      'photo1_path': photo1,
+      'photo2_path': photo2,
+      'latitude': latitude,
+      'longitude': longitude,
+      'main_persons': mainPersons,
+      'status': status,
+    };
+  }
+
+  // Helper method untuk mendapatkan status sebagai string
+  String get statusText {
+    switch (status) {
+      case 0:
+        return 'Planning';
+      case 1:
+        return 'Selesai';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  // Helper method untuk check apakah status planning
+  bool get isPlanning => status == 0;
+
+  // Helper method untuk check apakah status selesai
+  bool get isCompleted => status == 1;
 }

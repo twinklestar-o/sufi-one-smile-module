@@ -82,6 +82,8 @@ class _DirectVisitState extends State<DirectVisit> {
   String? selectedDealer;
   String? selectedDealerName;
   String? selectedVisitType;
+  String? selectedStatus = 'Planning'; // Default ke Planning
+
 
   bool _hasInteractedWithJabatanSFI = false;
   bool _hasInteractWithArea = false;
@@ -91,6 +93,7 @@ class _DirectVisitState extends State<DirectVisit> {
   bool _hasInteractWithVisitType = false;
   bool _hasInteractWithTujuanVisit = false;
   bool _isLoadingCollections = false;
+  bool _hasInteractWithStatus = false;
 
   bool isPhoto1Uploaded = false;
   bool isPhoto2Uploaded = false;
@@ -584,6 +587,25 @@ class _DirectVisitState extends State<DirectVisit> {
         })
         .whereType<DropdownMenuItem<String>>()
         .toList();
+  }
+
+  List<DropdownMenuItem<String>> _buildStatusDropdownItems() {
+    return [
+      DropdownMenuItem<String>(
+        value: 'Planning',
+        child: Text(
+          'PLANNING',
+          style: TextStyle(color: dropdownLight),
+        ),
+      ),
+      DropdownMenuItem<String>(
+        value: 'Selesai',
+        child: Text(
+          'SELESAI',
+          style: TextStyle(color: dropdownLight),
+        ),
+      ),
+    ];
   }
 
   void _activateDealerSearch() {
@@ -1740,6 +1762,7 @@ class _DirectVisitState extends State<DirectVisit> {
         mainPersons: mainPersons,
         latitude: selectedLatitude,
         longitude: selectedLongitude,
+        status: selectedStatus == 'Planning' ? 0 : 1,
       );
 
       final newVisit = Visit(
@@ -1763,6 +1786,7 @@ class _DirectVisitState extends State<DirectVisit> {
         latitude: selectedLatitude,
         longitude: selectedLongitude,
         mainPersons: mainPersons,
+        status: selectedStatus == 'Planning' ? 0 : 1,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2253,6 +2277,7 @@ class _DirectVisitState extends State<DirectVisit> {
                           ),
                           'tanggalSelesai',
                         ),
+
                         const SizedBox(height: 12),
                         _buildFieldLabel('Nama PIC'),
                         TextFormField(
@@ -2854,6 +2879,128 @@ class _DirectVisitState extends State<DirectVisit> {
                             ),
                           ),
                         ],
+                      ),
+                      // TAMBAHAN STATUS DI SINI
+                      const SizedBox(height: 16),
+                      Divider(
+                        color: Colors.grey.shade300,
+                        thickness: 1,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(Icons.flag, color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Status Visit',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: dropdownLight,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: selectedStatus,
+                        hint: Text(
+                          '-- Pilih Status --',
+                          style: TextStyle(color: dropdownLight),
+                        ),
+                        icon: const Icon(Icons.expand_more),
+                        iconEnabledColor: dropdownLight,
+                        style: const TextStyle(color: dropdownLight),
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: dropdownLightNF,
+                              width: 1.0,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: dropdownLightF,
+                              width: 2.0,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: _buildStatusDropdownItems(),
+                        onChanged: (val) => setState(() {
+                          selectedStatus = val;
+                          _hasInteractWithStatus = true;
+                        }),
+                        onTap: () {
+                          setState(() {
+                            _hasInteractWithStatus = true;
+                          });
+                        },
+                        validator: (v) => _hasInteractWithStatus && v == null
+                            ? 'Harap Pilih Status'
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: selectedStatus == 'Planning'
+                              ? Colors.orange.shade50
+                              : selectedStatus == 'Selesai'
+                              ? Colors.green.shade50
+                              : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: selectedStatus == 'Planning'
+                                ? Colors.orange.shade200
+                                : selectedStatus == 'Selesai'
+                                ? Colors.green.shade200
+                                : Colors.grey.shade200,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              selectedStatus == 'Planning'
+                                  ? Icons.schedule
+                                  : selectedStatus == 'Selesai'
+                                  ? Icons.check_circle
+                                  : Icons.help_outline,
+                              size: 16,
+                              color: selectedStatus == 'Planning'
+                                  ? Colors.orange.shade600
+                                  : selectedStatus == 'Selesai'
+                                  ? Colors.green.shade600
+                                  : Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              selectedStatus == 'Planning'
+                                  ? 'Status: Planning'
+                                  : selectedStatus == 'Selesai'
+                                  ? 'Status: Selesai'
+                                  : 'Status: Belum dipilih',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: selectedStatus == 'Planning'
+                                    ? Colors.orange.shade700
+                                    : selectedStatus == 'Selesai'
+                                    ? Colors.green.shade700
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
