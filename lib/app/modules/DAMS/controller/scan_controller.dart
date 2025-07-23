@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sufi_one/app/Auth/views/login_view.dart';
 import 'package:sufi_one/app/modules/DAMS/model/asset.dart';
@@ -66,7 +67,11 @@ class ScanController extends GetxController {
     }
   }
 
-  Future<void> updateAssetAndDetail(Asset asset, AssetDetail detail) async {
+  Future<void> updateAssetAndDetail(
+    Asset asset,
+    AssetDetail detail,
+    File? imageFile,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -76,49 +81,52 @@ class ScanController extends GetxController {
         return;
       }
 
-      final body = {
-        "KODE_ASET": asset.kodeAset,
-        "DIVISION": asset.division ?? '',
-        "FLOOR": asset.floor ?? '',
-        "ITEM": detail.item ?? '',
-        "TANGGAL_PEMBELIAN":
-            detail.tanggalPembelian != null
-                ? DateFormat('yyyy-MM-dd').format(detail.tanggalPembelian!)
-                : '',
-        "COST_AC": detail.costAc != null ? detail.costAc.toString() : '0',
-        "BOK_VAL": detail.bokVal != null ? detail.bokVal.toString() : '0',
-        "NAMA_USER_ASET": detail.username ?? '',
-        "KETERANGAN": detail.description?.trim() ?? '-',
-        "STATUS_ASET": detail.status ?? '',
-        "CONDITION": detail.condition ?? '',
-        "STATUS_USER": detail.username ?? '',
-        "POSITION": detail.position ?? '',
-        "LOC_ROOM": detail.locRoom ?? '',
-        "GROUP": detail.group ?? '',
-      };
+      final uri = Uri.parse(Url + 'asset-branches');
 
-      final response = await http.put(
-        Uri.parse(Url + 'asset-branches'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(body),
-      );
+      final request =
+          http.MultipartRequest('POST', uri)
+            ..headers['Authorization'] = 'Bearer $token'
+            ..fields['_method'] = 'PUT'
+            ..fields.addAll({
+              "KODE_ASET": asset.kodeAset,
+              "DIVISION": asset.division ?? '',
+              "FLOOR": asset.floor ?? '',
+              "ITEM": detail.item ?? '',
+              "TANGGAL_PEMBELIAN":
+                  detail.tanggalPembelian != null
+                      ? DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(detail.tanggalPembelian!)
+                      : '',
+              "COST_AC": detail.costAc ?? '0',
+              "BOK_VAL": detail.bokVal ?? '0',
+              "NAMA_USER_ASET": detail.username ?? '',
+              "KETERANGAN": detail.addRemark ?? '-',
+              "STATUS_ASET": detail.status ?? '',
+              "CONDITION": detail.condition ?? '',
+              "STATUS_USER": detail.username ?? '',
+              "POSITION": detail.position ?? '',
+              "LOC_ROOM": detail.locRoom ?? '',
+              "GROUP": detail.group ?? '',
+            });
 
-      print('===[DEBUG] BODY UPDATE==');
-      print(jsonEncode(body));
-      print('Response Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      if (imageFile != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'IMG',
+            imageFile.path,
+            filename: path.basename(imageFile.path),
+          ),
+        );
+      }
 
-      final responseData = jsonDecode(response.body);
+      final response = await request.send();
+      final responseBody = await http.Response.fromStream(response);
+
+      print('[DEBUG] Response Code: ${response.statusCode}');
+      print('[DEBUG] Response Body: ${responseBody.body}');
 
       if (response.statusCode == 200) {
-        // Update new token if exists
-        if (responseData['token'] != null) {
-          await prefs.setString('token', responseData['token']);
-        }
-
         Get.snackbar(
           'Sukses',
           'Data aset berhasil diperbarui',
@@ -126,34 +134,17 @@ class ScanController extends GetxController {
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
-        return;
       } else {
-        final errorMessage =
-            responseData['message'] ??
-            'Gagal memperbarui aset. Status code: ${response.statusCode}';
-        throw Exception(errorMessage);
+        throw Exception('Gagal: ${responseBody.body}');
       }
     } catch (e) {
-      String errorMessage = 'Terjadi kesalahan';
-
-      if (e is SocketException) {
-        errorMessage = 'Tidak ada koneksi internet';
-      } else if (e.toString().contains('401')) {
-        errorMessage = 'Sesi telah berakhir, silakan login kembali';
-        Get.offAll(() => LoginPage());
-      } else {
-        errorMessage = e.toString().replaceAll('Exception: ', '');
-      }
-
       Get.snackbar(
         'Error',
-        errorMessage,
+        'Terjadi kesalahan: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-    } finally {
-      isLoading.value = false;
     }
   }
 

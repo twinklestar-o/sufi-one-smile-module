@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,8 @@ import 'package:sufi_one/app/modules/DAMS/model/lokasi_user.dart';
 import 'package:sufi_one/app/modules/DAMS/model/posisi_user.dart';
 import 'package:sufi_one/app/modules/DAMS/model/status_asset.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
 import 'package:sufi_one/app/modules/DAMS/model/status_user_asset.dart';
 import 'package:sufi_one/app/modules/DAMS/repository/divisi_user_repository.dart';
 import 'package:sufi_one/app/modules/DAMS/repository/kondisi_asset_repository.dart';
@@ -512,7 +515,11 @@ class _AssetFormPageState extends State<AssetFormPage> {
         lastUpdate: DateTime.now(),
       );
 
-      await _scanController.updateAssetAndDetail(updatedAsset, updatedDetail);
+      await _scanController.updateAssetAndDetail(
+        updatedAsset,
+        updatedDetail,
+        _photo1,
+      );
 
       if (mounted) {
         Get.back();
