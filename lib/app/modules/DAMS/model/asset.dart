@@ -333,6 +333,7 @@ class AssetDetail {
   final DateTime? tglTerima;
   final String? dailyUser;
   final String? noTiket;
+  final String? imageUrl;
   final String? usernameStatus;
 
   AssetDetail({
@@ -411,6 +412,7 @@ class AssetDetail {
     this.dailyUser,
     this.noTiket,
     this.usernameStatus,
+    this.imageUrl,
   });
 
   factory AssetDetail.fromJson(Map<String, dynamic> json) {

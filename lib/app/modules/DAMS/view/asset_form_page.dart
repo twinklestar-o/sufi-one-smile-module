@@ -6,8 +6,21 @@ import 'package:sufi_one/app/modules/DAMS/controller/scan_controller.dart';
 import 'package:sufi_one/app/modules/DAMS/dams_route.dart';
 import 'package:sufi_one/app/modules/DAMS/model/asset.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as path;
+import 'package:sufi_one/app/modules/DAMS/model/divisi_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/kondisi_asset.dart';
+import 'package:sufi_one/app/modules/DAMS/model/lantai_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/lokasi_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/posisi_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/status_asset.dart';
+import 'package:provider/provider.dart';
+import 'package:sufi_one/app/modules/DAMS/model/status_user_asset.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/divisi_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/kondisi_asset_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/lantai_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/lokasi_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/posisi_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/status_asset_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/status_user_asset_repository.dart';
 
 class AssetFormPage extends StatefulWidget {
   final String kodeAset;
@@ -22,6 +35,8 @@ class AssetFormPage extends StatefulWidget {
 class _AssetFormPageState extends State<AssetFormPage> {
   final ScanController _scanController = Get.find();
   late Future<Asset> _futureAsset;
+
+  String? _errorMessage;
   Asset? _editedAsset;
   AssetDetail? _editedAssetDetail;
   bool _isLoading = false;
@@ -29,6 +44,15 @@ class _AssetFormPageState extends State<AssetFormPage> {
   bool _hasLoaded = false;
   bool isPhoto1Uploaded = false;
   File? _photo1;
+  String? _photo1Url;
+
+  late Future<List<StatusAsset>> _statusAssetFuture;
+  late Future<List<KondisiAsset>> _kondisiAssetFuture;
+  late Future<List<StatusUserAsset>> _statusUserAssetFuture;
+  late Future<List<PosisiUser>> _posisiUserFuture;
+  late Future<List<DivisiUser>> _divisiUserFuture;
+  late Future<List<LokasiUser>> _lokasiUserFuture;
+  late Future<List<LantaiUser>> _lantaiUserFuture;
 
   final _formKey = GlobalKey<FormState>();
   final _namaAssetController = TextEditingController();
@@ -37,18 +61,8 @@ class _AssetFormPageState extends State<AssetFormPage> {
   final _nilaiBukuController = TextEditingController();
   final _namaUserAssetController = TextEditingController();
   final _keteranganController = TextEditingController();
-  final _statusAssetController = TextEditingController();
-  final _kondisiAssetController = TextEditingController();
-  final _statusUserAssetController = TextEditingController();
-  final _posisiUserController = TextEditingController();
-  final _divisiUserController = TextEditingController();
-  final _lokasiUserController = TextEditingController();
-  final _lantaiUserController = TextEditingController();
-  final _gambarController = TextEditingController();
-
   final _lokasiController = TextEditingController();
   final _branchIdController = TextEditingController();
-  final _divisionController = TextEditingController();
   final _personalLocController = TextEditingController();
   final _deptController = TextEditingController();
   final _roomController = TextEditingController();
@@ -58,10 +72,26 @@ class _AssetFormPageState extends State<AssetFormPage> {
   static const Color textButton = Color(0xFF8BADCA);
   static const Color headerBlue = Color(0xFF1521A4);
 
-  final List<String> _statusOptions = ['Exist', 'Not Exist'];
-  final List<String> _conditionOptions = ['Good', 'Broken'];
+  List<String> _statusOptions = [];
   String? _selectedStatus;
+
+  List<String> _conditionOptions = [];
   String? _selectedCondition;
+
+  List<String> _statusUserAssetOptions = [];
+  String? _selectedStatusUserAsset;
+
+  List<String> _posisiUserOptions = [];
+  String? _selectedPosisiUser;
+
+  List<String> _divisiUserOptions = [];
+  String? _selectedDivisiUser;
+
+  List<String> _lokasiUserOptions = [];
+  String? _selectedLokasiUser;
+
+  List<String> _lantaiUserOptions = [];
+  String? _selectedLantaiUser;
 
   @override
   void initState() {
@@ -69,12 +99,225 @@ class _AssetFormPageState extends State<AssetFormPage> {
     if (!_hasLoaded) {
       if (widget.initialAsset != null) {
         _editedAsset = widget.initialAsset;
-        _initializeControllers(widget.initialAsset!);
         _futureAsset = Future.value(widget.initialAsset);
+        _initializeControllers(widget.initialAsset!);
       } else {
         _futureAsset = _fetchAssetData();
       }
+
+      _loadStatusAsset();
+      _loadKondisiAsset();
+      _loadStatusUserAsset();
+      _loadPosisiUser();
+      _loadDivisiUser();
+      _loadLokasiUser();
+      _loadLantaiUser();
+
       _hasLoaded = true;
+    }
+  }
+
+  Future<void> _loadStatusAsset() async {
+    final repository = Provider.of<StatusAssetRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllStatusAsset();
+      if (!mounted) return;
+      setState(() {
+        _statusAssetFuture = Future.value(localData);
+        _statusOptions = localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.status != null &&
+            _statusOptions.contains(_editedAsset!.detail!.status)) {
+          _selectedStatus = _editedAsset!.detail!.status;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data status asset kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data status asset: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadKondisiAsset() async {
+    final repository = Provider.of<KondisiAssetRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllKondisiAsset();
+      if (!mounted) return;
+      setState(() {
+        _kondisiAssetFuture = Future.value(localData);
+        _conditionOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.condition != null &&
+            _conditionOptions.contains(_editedAsset!.detail!.condition)) {
+          _selectedCondition = _editedAsset!.detail!.condition;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data kondisi asset kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data kondisi asset: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadStatusUserAsset() async {
+    final repository = Provider.of<StatusUserAssetRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllStatusUserAsset();
+      if (!mounted) return;
+      setState(() {
+        _statusUserAssetFuture = Future.value(localData);
+        _statusUserAssetOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.username != null &&
+            _statusUserAssetOptions.contains(_editedAsset!.detail!.username)) {
+          _selectedStatusUserAsset = _editedAsset!.detail!.username;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty
+                ? 'Data status user asset kosong (offline)'
+                : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data status user asset: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadPosisiUser() async {
+    final repository = Provider.of<PosisiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllPosisiUser();
+      if (!mounted) return;
+      setState(() {
+        _posisiUserFuture = Future.value(localData);
+        _posisiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.position != null &&
+            _posisiUserOptions.contains(_editedAsset!.detail!.position)) {
+          _selectedPosisiUser = _editedAsset!.detail!.position;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data posisi user kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data posisi user: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadDivisiUser() async {
+    final repository = Provider.of<DivisiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllDivisiUser();
+      if (!mounted) return;
+      setState(() {
+        _divisiUserFuture = Future.value(localData);
+        _divisiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.branchName != null &&
+            _divisiUserOptions.contains(_editedAsset!.branchName)) {
+          _selectedDivisiUser = _editedAsset!.branchName;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data divisi kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data divisi user: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLokasiUser() async {
+    final repository = Provider.of<LokasiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllLokasiUser();
+      if (!mounted) return;
+      setState(() {
+        _lokasiUserFuture = Future.value(localData);
+        _lokasiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.locRoom != null &&
+            _lokasiUserOptions.contains(_editedAsset!.detail!.locRoom)) {
+          _selectedLokasiUser = _editedAsset!.detail!.locRoom;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data lokasi user kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data lokasi user: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLantaiUser() async {
+    final repository = Provider.of<LantaiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllLantaiUser();
+      if (!mounted) return;
+      setState(() {
+        _lantaiUserFuture = Future.value(localData);
+        _lantaiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.floor != null &&
+            _lantaiUserOptions.contains(_editedAsset!.floor)) {
+          _selectedLantaiUser = _editedAsset!.floor;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data lantai kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data lantai: $e';
+        _isLoading = false;
+      });
     }
   }
 
@@ -82,6 +325,13 @@ class _AssetFormPageState extends State<AssetFormPage> {
     try {
       final asset = await _scanController.getAssetByKodeAset(widget.kodeAset);
       _initializeControllers(asset);
+      setState(() {
+        _editedAsset = asset;
+        _photo1Url = asset.detail?.imageUrl;
+        if (_photo1Url != null && _photo1Url!.isNotEmpty) {
+          isPhoto1Uploaded = true;
+        }
+      });
       return asset;
     } catch (e) {
       Get.snackbar(
@@ -100,41 +350,35 @@ class _AssetFormPageState extends State<AssetFormPage> {
     _editedAssetDetail = asset.detail;
 
     _namaAssetController.text = asset.detail?.item ?? '';
-    if (asset.detail?.tanggalPembelian != null) {
-      _tanggalBeliController.text = DateFormat(
-        'dd/MM/yyyy',
-      ).format(asset.detail!.tanggalPembelian!);
-    }
-    if (asset.detail?.costAc != null && asset.detail!.costAc!.isNotEmpty) {
-      _hargaBeliController.text = _formatCurrency(
-        double.tryParse(asset.detail!.costAc!) ?? 0,
-      );
-    }
-    if (asset.detail?.bokVal != null && asset.detail!.bokVal!.isNotEmpty) {
-      _nilaiBukuController.text = _formatCurrency(
-        double.tryParse(asset.detail!.bokVal!) ?? 0,
-      );
-    }
+    _tanggalBeliController.text =
+        asset.detail?.tanggalPembelian != null
+            ? DateFormat('dd/MM/yyyy').format(asset.detail!.tanggalPembelian!)
+            : '';
+    _hargaBeliController.text =
+        asset.detail?.costAc != null
+            ? _formatCurrency(double.tryParse(asset.detail!.costAc!) ?? 0)
+            : '';
+    _nilaiBukuController.text =
+        asset.detail?.bokVal != null
+            ? _formatCurrency(double.tryParse(asset.detail!.bokVal!) ?? 0)
+            : '';
     _namaUserAssetController.text = asset.detail?.username ?? '';
     _keteranganController.text = asset.detail?.addRemark ?? '';
-    _selectedStatus = asset.detail?.status;
-    _selectedCondition = asset.detail?.condition;
-    _statusAssetController.text = asset.detail?.status ?? '';
-    _kondisiAssetController.text = asset.detail?.condition ?? '';
-    _statusUserAssetController.text = asset.detail?.username ?? '';
-    _posisiUserController.text = asset.detail?.position ?? '';
-    _divisiUserController.text = asset.branchName ?? '';
-    _lokasiUserController.text = asset.detail?.locRoom ?? '';
-    _lantaiUserController.text = asset.floor ?? '';
-    _gambarController.text = asset.lokasi ?? '';
-    _lokasiController.text = asset.lokasi;
-    _branchIdController.text = asset.branchId;
-    _divisionController.text = asset.division ?? '';
+    _lokasiController.text = asset.lokasi ?? '';
+    _branchIdController.text = asset.branchId ?? '';
     _personalLocController.text = asset.personalLoc ?? '';
     _deptController.text = asset.dept ?? '';
     _roomController.text = asset.room ?? '';
     _floorController.text = asset.floor ?? '';
     _groupController.text = asset.detail?.group ?? '';
+
+    _selectedStatus = asset.detail?.status;
+    _selectedStatusUserAsset = asset.detail?.username;
+    _selectedCondition = asset.detail?.condition;
+    _selectedDivisiUser = asset.division;
+    _selectedPosisiUser = asset.detail?.position;
+    _selectedLokasiUser = asset.detail?.locRoom;
+    _selectedLantaiUser = asset.floor;
   }
 
   String _formatCurrency(double amount) {
@@ -174,21 +418,61 @@ class _AssetFormPageState extends State<AssetFormPage> {
   }
 
   Future<void> _saveChanges() async {
-    if (_editedAsset == null) return;
+    if (!_formKey.currentState!.validate() || _editedAsset == null) return;
 
     setState(() => _isSaving = true);
 
     try {
-      // Gunakan nilai dari controller atau nilai aslinya jika tidak diubah
+      String? uploadedPhotoUrl = _photo1Url;
+      // if (_photo1 != null) {
+      //   final request = http.MultipartRequest(
+      //     'POST',
+      //     Uri.parse(
+      //       'http://your-api-url/api/direct-visits/${widget.kodeAset}/photo',
+      //     ),
+      //   );
+      //   request.files.add(
+      //     await http.MultipartFile.fromPath(
+      //       'photo1',
+      //       _photo1!.path,
+      //       filename: path.basename(_photo1!.path),
+      //     ),
+      //   );
+
+      //   final response = await request.send();
+      //   if (response.statusCode == 200 || response.statusCode == 201) {
+      //     final responseData = await response.stream.bytesToString();
+      //     uploadedPhotoUrl =
+      //         jsonDecode(responseData)['photo_url'] ?? _photo1Url;
+      //   } else {
+      //     throw Exception('Failed to upload photo: ${response.statusCode}');
+      //   }
+      // }
+
       final updatedAsset = _editedAsset!.copyWith(
-        division:
-            _divisionController.text.isNotEmpty
-                ? _divisionController.text
-                : _editedAsset!.division,
-        floor:
-            _lantaiUserController.text.isNotEmpty
-                ? _lantaiUserController.text
-                : _editedAsset!.floor,
+        division: _selectedDivisiUser ?? _editedAsset!.division,
+        floor: _selectedLantaiUser ?? _editedAsset!.floor,
+        lokasi: _selectedLantaiUser ?? _editedAsset!.lokasi,
+        // lokasi:
+        //     _lokasiController.text.isNotEmpty
+        //         ? _lokasiController.text
+        //         : _editedAsset!.lokasi,
+        branchId:
+            _branchIdController.text.isNotEmpty
+                ? _branchIdController.text
+                : _editedAsset!.branchId,
+        personalLoc:
+            _personalLocController.text.isNotEmpty
+                ? _personalLocController.text
+                : _editedAsset!.personalLoc,
+        dept:
+            _deptController.text.isNotEmpty
+                ? _deptController.text
+                : _editedAsset!.dept,
+        room:
+            _roomController.text.isNotEmpty
+                ? _roomController.text
+                : _editedAsset!.room,
         lastUpdate: DateTime.now(),
       );
 
@@ -203,65 +487,31 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 : _editedAssetDetail!.tanggalPembelian,
         costAc:
             _hargaBeliController.text.isNotEmpty
-                ? _hargaBeliController.text.replaceAll(RegExp(r'[^0-9]'), '')
+                ? _parseCurrency(_hargaBeliController.text)?.toString() ??
+                    _editedAssetDetail!.costAc
                 : _editedAssetDetail!.costAc,
         bokVal:
             _nilaiBukuController.text.isNotEmpty
-                ? _nilaiBukuController.text.replaceAll(RegExp(r'[^0-9]'), '')
+                ? _parseCurrency(_nilaiBukuController.text)?.toString() ??
+                    _editedAssetDetail!.bokVal
                 : _editedAssetDetail!.bokVal,
-        username:
-            _namaUserAssetController.text.isNotEmpty
-                ? _namaUserAssetController.text
-                : _editedAssetDetail!.username,
-        description:
+        username: _selectedStatusUserAsset ?? _editedAssetDetail!.username,
+        addRemark:
             _keteranganController.text.isNotEmpty
                 ? _keteranganController.text
-                : _editedAssetDetail!.description,
+                : _editedAssetDetail!.addRemark,
         status: _selectedStatus ?? _editedAssetDetail!.status,
         condition: _selectedCondition ?? _editedAssetDetail!.condition,
-        position:
-            _posisiUserController.text.isNotEmpty
-                ? _posisiUserController.text
-                : _editedAssetDetail!.position,
-        locRoom:
-            _lokasiUserController.text.isNotEmpty
-                ? _lokasiUserController.text
-                : _editedAssetDetail!.locRoom,
+        position: _selectedPosisiUser ?? _editedAssetDetail!.position,
+        locRoom: _selectedLokasiUser ?? _editedAssetDetail!.locRoom,
         group:
             _groupController.text.isNotEmpty
                 ? _groupController.text
                 : _editedAssetDetail!.group,
+        //imageUrl: uploadedPhotoUrl ?? _editedAssetDetail!.imageUrl,
         lastUpdate: DateTime.now(),
       );
 
-      // Prepare multipart request for photo upload
-      if (_photo1 != null) {
-        final request = http.MultipartRequest(
-          'POST', // Use POST or PUT depending on your API endpoint
-          Uri.parse(
-            'http://your-api-url/api/direct-visits/${widget.kodeAset}/photo',
-          ), // Adjust URL to your endpoint
-        );
-
-        // Add photo file
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'photo1', // Match the field name expected by the PHP controller
-            _photo1!.path,
-            filename: path.basename(_photo1!.path),
-          ),
-        );
-
-        // Add authentication headers if required (e.g., Bearer token)
-        // request.headers['Authorization'] = 'Bearer ${yourToken}';
-
-        final response = await request.send();
-        if (response.statusCode != 200 && response.statusCode != 201) {
-          throw Exception('Failed to upload photo: ${response.statusCode}');
-        }
-      }
-
-      // Update asset and detail
       await _scanController.updateAssetAndDetail(updatedAsset, updatedDetail);
 
       if (mounted) {
@@ -278,7 +528,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
       if (mounted) {
         Get.snackbar(
           'Error',
-          e.toString(),
+          'Failed to save changes: ${e.toString()}',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,
@@ -496,7 +746,10 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedStatus,
+              value:
+                  _statusOptions.contains(_selectedStatus)
+                      ? _selectedStatus
+                      : null,
               items:
                   _statusOptions.map((status) {
                     return DropdownMenuItem<String>(
@@ -518,7 +771,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 fillColor: Colors.grey[100],
               ),
               validator: (value) {
-                if (value == null) {
+                if (value == null || !_statusOptions.contains(value)) {
                   return 'Pilih status asset yang valid';
                 }
                 return null;
@@ -526,7 +779,10 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedCondition,
+              value:
+                  _conditionOptions.contains(_selectedCondition)
+                      ? _selectedCondition
+                      : null,
               items:
                   _conditionOptions.map((condition) {
                     return DropdownMenuItem<String>(
@@ -548,15 +804,31 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 fillColor: Colors.grey[100],
               ),
               validator: (value) {
-                if (value == null) {
+                if (value == null || !_conditionOptions.contains(value)) {
                   return 'Pilih kondisi asset yang valid';
                 }
                 return null;
               },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _statusUserAssetController,
+            DropdownButtonFormField<String>(
+              value:
+                  _statusUserAssetOptions.contains(_selectedStatusUserAsset)
+                      ? _selectedStatusUserAsset
+                      : null,
+              items:
+                  _statusUserAssetOptions.map((statusUserAsset) {
+                    return DropdownMenuItem<String>(
+                      value: statusUserAsset,
+                      child: Text(statusUserAsset),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedStatusUserAsset = value;
+                  _namaUserAssetController.text = value ?? '';
+                });
+              },
               decoration: InputDecoration(
                 labelText: 'Status User Asset',
                 border: OutlineInputBorder(
@@ -565,10 +837,31 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
+              validator: (value) {
+                if (value == null || !_statusUserAssetOptions.contains(value)) {
+                  return 'Pilih status user asset yang valid';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _posisiUserController,
+            DropdownButtonFormField<String>(
+              value:
+                  _posisiUserOptions.contains(_selectedPosisiUser)
+                      ? _selectedPosisiUser
+                      : null,
+              items:
+                  _posisiUserOptions.map((posisiUser) {
+                    return DropdownMenuItem<String>(
+                      value: posisiUser,
+                      child: Text(posisiUser),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedPosisiUser = value;
+                });
+              },
               decoration: InputDecoration(
                 labelText: 'Posisi User',
                 border: OutlineInputBorder(
@@ -577,10 +870,31 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
+              validator: (value) {
+                if (value == null || !_posisiUserOptions.contains(value)) {
+                  return 'Pilih posisi user yang valid';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _divisionController,
+            DropdownButtonFormField<String>(
+              value:
+                  _divisiUserOptions.contains(_selectedDivisiUser)
+                      ? _selectedDivisiUser
+                      : null,
+              items:
+                  _divisiUserOptions.map((divisiUser) {
+                    return DropdownMenuItem<String>(
+                      value: divisiUser,
+                      child: Text(divisiUser),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedDivisiUser = value;
+                });
+              },
               decoration: InputDecoration(
                 labelText: 'Divisi User',
                 border: OutlineInputBorder(
@@ -589,10 +903,31 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
+              validator: (value) {
+                if (value == null || !_divisiUserOptions.contains(value)) {
+                  return 'Pilih divisi user yang valid';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _lokasiController,
+            DropdownButtonFormField<String>(
+              value:
+                  _lokasiUserOptions.contains(_selectedLokasiUser)
+                      ? _selectedLokasiUser
+                      : null,
+              items:
+                  _lokasiUserOptions.map((lokasiUser) {
+                    return DropdownMenuItem<String>(
+                      value: lokasiUser,
+                      child: Text(lokasiUser),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedLokasiUser = value;
+                });
+              },
               decoration: InputDecoration(
                 labelText: 'Lokasi User',
                 border: OutlineInputBorder(
@@ -601,10 +936,31 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
+              validator: (value) {
+                if (value == null || !_lokasiUserOptions.contains(value)) {
+                  return 'Pilih lokasi user yang valid';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _lantaiUserController,
+            DropdownButtonFormField<String>(
+              value:
+                  _lantaiUserOptions.contains(_selectedLantaiUser)
+                      ? _selectedLantaiUser
+                      : null,
+              items:
+                  _lantaiUserOptions.map((lantaiUser) {
+                    return DropdownMenuItem<String>(
+                      value: lantaiUser,
+                      child: Text(lantaiUser),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedLantaiUser = value;
+                });
+              },
               decoration: InputDecoration(
                 labelText: 'Lantai User',
                 border: OutlineInputBorder(
@@ -613,18 +969,12 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _gambarController,
-              decoration: InputDecoration(
-                labelText: 'Gambar',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
+              validator: (value) {
+                if (value == null || !_lantaiUserOptions.contains(value)) {
+                  return 'Pilih lantai user yang valid';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             Card(
@@ -667,11 +1017,14 @@ class _AssetFormPageState extends State<AssetFormPage> {
     return Column(
       children: [
         Text(
-          file == null ? 'Pilih Foto' : 'Foto Terunggah',
+          file == null && _photo1Url == null ? 'Pilih Foto' : 'Foto Terunggah',
           style: TextStyle(
             color: headerBlue,
             fontSize: 16,
-            fontWeight: file == null ? FontWeight.normal : FontWeight.bold,
+            fontWeight:
+                (file != null || _photo1Url != null)
+                    ? FontWeight.bold
+                    : FontWeight.normal,
           ),
         ),
         const SizedBox(height: 12),
@@ -721,7 +1074,25 @@ class _AssetFormPageState extends State<AssetFormPage> {
   }
 
   Widget _photoPreviewSection() {
-    if (_photo1 == null) {
+    Widget imageWidget;
+    if (_photo1 != null) {
+      imageWidget = Image.file(
+        _photo1!,
+        fit: BoxFit.cover,
+        height: 350,
+        width: double.infinity,
+      );
+    } else if (_photo1Url != null && _photo1Url!.isNotEmpty) {
+      imageWidget = Image.network(
+        _photo1Url!,
+        fit: BoxFit.cover,
+        height: 350,
+        width: double.infinity,
+        errorBuilder:
+            (context, error, stackTrace) =>
+                const Icon(Icons.broken_image, size: 100, color: Colors.grey),
+      );
+    } else {
       return const SizedBox.shrink();
     }
 
@@ -743,17 +1114,12 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => _showFullScreenImage(context, _photo1!),
+              onTap: () => _showFullScreenImage(context, _photo1, _photo1Url),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Stack(
                   children: [
-                    Image.file(
-                      _photo1!,
-                      fit: BoxFit.cover,
-                      height: 350,
-                      width: double.infinity,
-                    ),
+                    imageWidget,
                     Positioned(
                       right: 10,
                       bottom: 10,
@@ -770,7 +1136,11 @@ class _AssetFormPageState extends State<AssetFormPage> {
                           ],
                         ),
                         onPressed:
-                            () => _showFullScreenImage(context, _photo1!),
+                            () => _showFullScreenImage(
+                              context,
+                              _photo1,
+                              _photo1Url,
+                            ),
                       ),
                     ),
                   ],
@@ -823,7 +1193,25 @@ class _AssetFormPageState extends State<AssetFormPage> {
     );
   }
 
-  void _showFullScreenImage(BuildContext context, File photo) {
+  void _showFullScreenImage(
+    BuildContext context,
+    File? photo,
+    String? photoUrl,
+  ) {
+    Widget imageWidget;
+    if (photo != null) {
+      imageWidget = Image.file(photo);
+    } else if (photoUrl != null && photoUrl.isNotEmpty) {
+      imageWidget = Image.network(
+        photoUrl,
+        errorBuilder:
+            (context, error, stackTrace) =>
+                const Icon(Icons.broken_image, size: 100, color: Colors.grey),
+      );
+    } else {
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -832,7 +1220,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
               backgroundColor: Colors.black,
               body: Stack(
                 children: [
-                  Center(child: InteractiveViewer(child: Image.file(photo))),
+                  Center(child: InteractiveViewer(child: imageWidget)),
                   Positioned(
                     top: 40,
                     right: 20,
@@ -875,30 +1263,6 @@ class _AssetFormPageState extends State<AssetFormPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
   @override
   void dispose() {
     _namaAssetController.dispose();
@@ -907,17 +1271,8 @@ class _AssetFormPageState extends State<AssetFormPage> {
     _nilaiBukuController.dispose();
     _namaUserAssetController.dispose();
     _keteranganController.dispose();
-    _statusAssetController.dispose();
-    _kondisiAssetController.dispose();
-    _statusUserAssetController.dispose();
-    _posisiUserController.dispose();
-    _divisiUserController.dispose();
-    _lokasiUserController.dispose();
-    _lantaiUserController.dispose();
-    _gambarController.dispose();
     _lokasiController.dispose();
     _branchIdController.dispose();
-    _divisionController.dispose();
     _personalLocController.dispose();
     _deptController.dispose();
     _roomController.dispose();
