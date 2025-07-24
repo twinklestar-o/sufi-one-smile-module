@@ -23,7 +23,7 @@ class HistoryController extends GetxController {
       }
 
       final response = await http.get(
-        Uri.parse('${Url}asset-branches'),
+        Uri.parse(Url + 'asset-branches'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',

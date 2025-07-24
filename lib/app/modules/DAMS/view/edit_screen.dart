@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/DAMS/controller/history_controller.dart';
+import 'package:sufi_one/app/modules/DAMS/model/asset.dart';
+import 'package:sufi_one/app/modules/DAMS/model/divisi_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/kondisi_asset.dart';
+import 'package:sufi_one/app/modules/DAMS/model/lantai_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/lokasi_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/posisi_user.dart';
+import 'package:sufi_one/app/modules/DAMS/model/status_asset.dart';
+import 'package:sufi_one/app/modules/DAMS/model/status_user_asset.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/divisi_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/kondisi_asset_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/lantai_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/lokasi_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/posisi_user_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/status_asset_repository.dart';
+import 'package:sufi_one/app/modules/DAMS/repository/status_user_asset_repository.dart';
 
 class EditScreen extends StatefulWidget {
   final String assetId;
@@ -20,7 +36,10 @@ class _EditScreenState extends State<EditScreen> {
   final HistoryController _controller = Get.find();
   bool _isLoading = false;
   bool _isSaving = false;
+  String? _errorMessage;
 
+  Asset? _editedAsset;
+  AssetDetail? _editedAssetDetail;
   // Controllers
   final _trxNoController = TextEditingController();
   final _userController = TextEditingController();
@@ -33,17 +52,54 @@ class _EditScreenState extends State<EditScreen> {
   final _remarkController = TextEditingController();
   final _dateController = TextEditingController();
 
+  late Future<List<StatusAsset>> _statusAssetFuture;
+  late Future<List<KondisiAsset>> _kondisiAssetFuture;
+  late Future<List<StatusUserAsset>> _statusUserAssetFuture;
+  late Future<List<PosisiUser>> _posisiUserFuture;
+  late Future<List<DivisiUser>> _divisiUserFuture;
+  late Future<List<LokasiUser>> _lokasiUserFuture;
+  late Future<List<LantaiUser>> _lantaiUserFuture;
+
   // Dropdown options
-  final List<String> _statusOptions = ['Exist', 'Not Exist', 'Broken'];
-  final List<String> _conditionOptions = ['Good', 'Bad', 'Repair'];
+  List<String> _statusOptions = [];
   String? _selectedStatus;
+
+  List<String> _conditionOptions = [];
   String? _selectedCondition;
+
+  List<String> _statusUserAssetOptions = [];
+  String? _selectedStatusUserAsset;
+
+  List<String> _posisiUserOptions = [];
+  String? _selectedPosisiUser;
+
+  List<String> _divisiUserOptions = [];
+  String? _selectedDivisiUser;
+
+  List<String> _lokasiUserOptions = [];
+  String? _selectedLokasiUser;
+
+  List<String> _lantaiUserOptions = [];
+  String? _selectedLantaiUser;
 
   @override
   void initState() {
     super.initState();
     print('Initial data: ${widget.initialData}'); // Debug initial data
     _initializeFormData();
+    if (!_isLoading) {
+      // Initialize _editedAsset from initialData if needed
+      _editedAsset = Asset.fromJson(
+        widget.initialData,
+      ); // Adjust based on Asset model
+      _loadStatusAsset();
+      _loadKondisiAsset();
+      _loadStatusUserAsset();
+      _loadPosisiUser();
+      _loadDivisiUser();
+      _loadLokasiUser();
+      _loadLantaiUser();
+    }
   }
 
   void _initializeFormData() {
@@ -59,7 +115,10 @@ class _EditScreenState extends State<EditScreen> {
     _remarkController.text = widget.initialData['remark'] ?? '';
     _selectedStatus = widget.initialData['status'];
     _selectedCondition = widget.initialData['kondisi'];
-
+    _selectedDivisiUser = widget.initialData['divisi'];
+    _selectedPosisiUser = widget.initialData['posisi'];
+    _selectedLokasiUser = widget.initialData['lokasi'];
+    _selectedLantaiUser = widget.initialData['lantai'];
     if (widget.initialData['crdt'] != null) {
       _dateController.text = _formatDate(widget.initialData['crdt']);
     }
@@ -90,6 +149,243 @@ class _EditScreenState extends State<EditScreen> {
     if (picked != null) {
       setState(() {
         _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
+  Future<void> _loadStatusAsset() async {
+    final repository = Provider.of<StatusAssetRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllStatusAsset();
+      if (!mounted) return;
+      setState(() {
+        _statusOptions = localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.status != null &&
+            _statusOptions.contains(_editedAsset!.detail!.status)) {
+          _selectedStatus = _editedAsset!.detail!.status;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data status asset kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data status asset: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadKondisiAsset() async {
+    final repository = Provider.of<KondisiAssetRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllKondisiAsset();
+      if (!mounted) return;
+      setState(() {
+        _kondisiAssetFuture = Future.value(localData);
+        _conditionOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.condition != null &&
+            _conditionOptions.contains(_editedAsset!.detail!.condition)) {
+          _selectedCondition = _editedAsset!.detail!.condition;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data kondisi asset kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data kondisi asset: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadStatusUserAsset() async {
+    final repository = Provider.of<StatusUserAssetRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllStatusUserAsset();
+      if (!mounted) return;
+      setState(() {
+        _statusUserAssetFuture = Future.value(localData);
+        _statusUserAssetOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.username != null &&
+            _statusUserAssetOptions.contains(_editedAsset!.detail!.username)) {
+          _selectedStatusUserAsset = _editedAsset!.detail!.username;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty
+                ? 'Data status user asset kosong (offline)'
+                : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data status user asset: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadPosisiUser() async {
+    final repository = Provider.of<PosisiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllPosisiUser();
+      if (!mounted) return;
+      setState(() {
+        _posisiUserFuture = Future.value(localData);
+        _posisiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.position != null &&
+            _posisiUserOptions.contains(_editedAsset!.detail!.position)) {
+          _selectedPosisiUser = _editedAsset!.detail!.position;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data posisi user kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data posisi user: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadDivisiUser() async {
+    final repository = Provider.of<DivisiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllDivisiUser();
+      if (!mounted) return;
+
+      // Ambil semua nama divisi dari DB
+      final loadedOptions =
+          localData.map((e) => e.name ?? '-').toSet().toList();
+
+      // Debug semua data yang masuk ke list dropdown
+      print('>>> [DEBUG] _divisiUserOptions loaded from DB:');
+      for (var item in loadedOptions) {
+        print('- "$item"');
+      }
+
+      // Debug branch name dari asset yang sedang diedit
+      print(
+        '>>> [DEBUG] _editedAsset.branchName: "${_editedAsset?.branchName}"',
+      );
+
+      // Coba cocokkan secara manual (abaikan huruf besar kecil dan spasi)
+      String? matched;
+      if (_editedAsset?.branchName != null) {
+        matched = loadedOptions.firstWhere(
+          (e) =>
+              e.trim().toLowerCase() ==
+              _editedAsset!.branchName!.trim().toLowerCase(),
+          orElse: () => '',
+        );
+        if (matched.isEmpty) {
+          print(
+            '>>> [WARNING] Tidak ada match yang cocok untuk _editedAsset.branchName.',
+          );
+        } else {
+          print('>>> [DEBUG] Match ditemukan: "$matched"');
+        }
+      }
+
+      setState(() {
+        _divisiUserFuture = Future.value(localData);
+        _divisiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.branchName != null &&
+            _divisiUserOptions.contains(_editedAsset!.branchName)) {
+          _selectedDivisiUser = _editedAsset!.branchName;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data divisi kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data divisi user: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLokasiUser() async {
+    final repository = Provider.of<LokasiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllLokasiUser();
+      if (!mounted) return;
+      setState(() {
+        _lokasiUserFuture = Future.value(localData);
+        _lokasiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.detail?.locRoom != null &&
+            _lokasiUserOptions.contains(_editedAsset!.detail!.locRoom)) {
+          _selectedLokasiUser = _editedAsset!.detail!.locRoom;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data lokasi user kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data lokasi user: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLantaiUser() async {
+    final repository = Provider.of<LantaiUserRepository>(
+      context,
+      listen: false,
+    );
+    try {
+      final localData = await repository.dbHelper.getAllLantaiUser();
+      if (!mounted) return;
+      setState(() {
+        _lantaiUserFuture = Future.value(localData);
+        _lantaiUserOptions =
+            localData.map((e) => e.name ?? '-').toSet().toList();
+        if (_editedAsset?.floor != null &&
+            _lantaiUserOptions.contains(_editedAsset!.floor)) {
+          _selectedLantaiUser = _editedAsset!.floor;
+        }
+        _isLoading = false;
+        _errorMessage =
+            localData.isEmpty ? 'Data lantai kosong (offline)' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Gagal memuat data lantai: $e';
+        _isLoading = false;
       });
     }
   }
@@ -216,12 +512,19 @@ class _EditScreenState extends State<EditScreen> {
 
                       // Status and Condition
                       DropdownButtonFormField<String>(
-                        value: _selectedStatus,
+                        isExpanded: true,
+                        value:
+                            _statusOptions.contains(_selectedStatus)
+                                ? _selectedStatus
+                                : null,
                         items:
                             _statusOptions.map((status) {
-                              return DropdownMenuItem(
+                              return DropdownMenuItem<String>(
                                 value: status,
-                                child: Text(status),
+                                child: Text(
+                                  status,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
                         onChanged: (value) {
@@ -230,19 +533,37 @@ class _EditScreenState extends State<EditScreen> {
                           });
                         },
                         decoration: InputDecoration(
-                          labelText: 'Status*',
-                          border: OutlineInputBorder(),
+                          labelText: 'Status Asset',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
-                        validator: (value) => value == null ? 'Required' : null,
+                        validator: (value) {
+                          if (value == null ||
+                              !_statusOptions.contains(value)) {
+                            return 'Pilih status asset yang valid';
+                          }
+                          return null;
+                        },
                       ),
+
                       SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _selectedCondition,
+                        isExpanded: true,
+                        value:
+                            _conditionOptions.contains(_selectedCondition)
+                                ? _selectedCondition
+                                : null,
                         items:
                             _conditionOptions.map((condition) {
-                              return DropdownMenuItem(
+                              return DropdownMenuItem<String>(
                                 value: condition,
-                                child: Text(condition),
+                                child: Text(
+                                  condition,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
                         onChanged: (value) {
@@ -251,10 +572,20 @@ class _EditScreenState extends State<EditScreen> {
                           });
                         },
                         decoration: InputDecoration(
-                          labelText: 'Kondisi*',
-                          border: OutlineInputBorder(),
+                          labelText: 'Kondisi Asset',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
-                        validator: (value) => value == null ? 'Required' : null,
+                        validator: (value) {
+                          if (value == null ||
+                              !_conditionOptions.contains(value)) {
+                            return 'Pilih kondisi asset yang valid';
+                          }
+                          return null;
+                        },
                       ),
                       SizedBox(height: 16),
 
@@ -278,37 +609,157 @@ class _EditScreenState extends State<EditScreen> {
                       ),
                       SizedBox(height: 16),
 
-                      // Location Information
-                      TextFormField(
-                        controller: _positionController,
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value:
+                            _posisiUserOptions.contains(_selectedPosisiUser)
+                                ? _selectedPosisiUser
+                                : null,
+                        items:
+                            _posisiUserOptions.map((posisiUser) {
+                              return DropdownMenuItem<String>(
+                                value: posisiUser,
+                                child: Text(
+                                  posisiUser,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPosisiUser = value;
+                          });
+                        },
                         decoration: InputDecoration(
-                          labelText: 'Posisi',
-                          border: OutlineInputBorder(),
+                          labelText: 'Posisi User',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
+                        validator: (value) {
+                          if (value == null ||
+                              !_posisiUserOptions.contains(value)) {
+                            return 'Pilih posisi user yang valid';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value:
+                            _divisiUserOptions.contains(_selectedDivisiUser)
+                                ? _selectedDivisiUser
+                                : null,
+                        items:
+                            _divisiUserOptions.map((divisiUser) {
+                              return DropdownMenuItem<String>(
+                                value: divisiUser,
+                                child: Text(
+                                  divisiUser,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedDivisiUser = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Divisi User',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        validator: (value) {
+                          if (value == null ||
+                              !_divisiUserOptions.contains(value)) {
+                            return 'Pilih divisi user yang valid';
+                          }
+                          return null;
+                        },
                       ),
                       SizedBox(height: 16),
-                      TextFormField(
-                        controller: _divisionController,
-                        decoration: InputDecoration(
-                          labelText: 'Divisi',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      TextFormField(
-                        controller: _locationController,
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value:
+                            _lokasiUserOptions.contains(_selectedLokasiUser)
+                                ? _selectedLokasiUser
+                                : null,
+                        items:
+                            _lokasiUserOptions.map((lokasiUser) {
+                              return DropdownMenuItem<String>(
+                                value: lokasiUser,
+                                child: Text(
+                                  lokasiUser,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedLokasiUser = value;
+                          });
+                        },
                         decoration: InputDecoration(
                           labelText: 'Lokasi',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
+                        validator: (value) {
+                          if (value == null ||
+                              !_lokasiUserOptions.contains(value)) {
+                            return 'Pilih lokasi user yang valid';
+                          }
+                          return null;
+                        },
                       ),
                       SizedBox(height: 16),
-                      TextFormField(
-                        controller: _floorController,
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value:
+                            _lantaiUserOptions.contains(_selectedLantaiUser)
+                                ? _selectedLantaiUser
+                                : null,
+                        items:
+                            _lantaiUserOptions.map((lantaiUser) {
+                              return DropdownMenuItem<String>(
+                                value: lantaiUser,
+                                child: Text(
+                                  lantaiUser,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedLantaiUser = value;
+                          });
+                        },
                         decoration: InputDecoration(
                           labelText: 'Lantai',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
+                        validator: (value) {
+                          if (value == null ||
+                              !_lantaiUserOptions.contains(value)) {
+                            return 'Pilih lantai yang valid';
+                          }
+                          return null;
+                        },
                       ),
                       SizedBox(height: 16),
 
