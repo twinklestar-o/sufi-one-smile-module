@@ -20,6 +20,8 @@ class StokopnameImage {
     );
   }
 
+  get imageUrl => null;
+
   Map<String, dynamic> toJson() {
     return {
       'no_stokopname': noStokopname,

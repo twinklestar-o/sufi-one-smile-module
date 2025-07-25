@@ -84,7 +84,6 @@ class _DirectVisitState extends State<DirectVisit> {
   String? selectedVisitType;
   String? selectedStatus = 'Planning'; // Default ke Planning
 
-
   bool _hasInteractedWithJabatanSFI = false;
   bool _hasInteractWithArea = false;
   bool _hasInteractWithCabang = false;
@@ -593,17 +592,11 @@ class _DirectVisitState extends State<DirectVisit> {
     return [
       DropdownMenuItem<String>(
         value: 'Planning',
-        child: Text(
-          'PLANNING',
-          style: TextStyle(color: dropdownLight),
-        ),
+        child: Text('PLANNING', style: TextStyle(color: dropdownLight)),
       ),
       DropdownMenuItem<String>(
         value: 'Selesai',
-        child: Text(
-          'SELESAI',
-          style: TextStyle(color: dropdownLight),
-        ),
+        child: Text('SELESAI', style: TextStyle(color: dropdownLight)),
       ),
     ];
   }
@@ -2882,10 +2875,7 @@ class _DirectVisitState extends State<DirectVisit> {
                       ),
                       // TAMBAHAN STATUS DI SINI
                       const SizedBox(height: 16),
-                      Divider(
-                        color: Colors.grey.shade300,
-                        thickness: 1,
-                      ),
+                      Divider(color: Colors.grey.shade300, thickness: 1),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -2935,35 +2925,43 @@ class _DirectVisitState extends State<DirectVisit> {
                           fillColor: Colors.white,
                         ),
                         items: _buildStatusDropdownItems(),
-                        onChanged: (val) => setState(() {
-                          selectedStatus = val;
-                          _hasInteractWithStatus = true;
-                        }),
+                        onChanged:
+                            (val) => setState(() {
+                              selectedStatus = val;
+                              _hasInteractWithStatus = true;
+                            }),
                         onTap: () {
                           setState(() {
                             _hasInteractWithStatus = true;
                           });
                         },
-                        validator: (v) => _hasInteractWithStatus && v == null
-                            ? 'Harap Pilih Status'
-                            : null,
+                        validator:
+                            (v) =>
+                                _hasInteractWithStatus && v == null
+                                    ? 'Harap Pilih Status'
+                                    : null,
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: selectedStatus == 'Planning'
-                              ? Colors.orange.shade50
-                              : selectedStatus == 'Selesai'
-                              ? Colors.green.shade50
-                              : Colors.grey.shade50,
+                          color:
+                              selectedStatus == 'Planning'
+                                  ? Colors.orange.shade50
+                                  : selectedStatus == 'Selesai'
+                                  ? Colors.green.shade50
+                                  : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: selectedStatus == 'Planning'
-                                ? Colors.orange.shade200
-                                : selectedStatus == 'Selesai'
-                                ? Colors.green.shade200
-                                : Colors.grey.shade200,
+                            color:
+                                selectedStatus == 'Planning'
+                                    ? Colors.orange.shade200
+                                    : selectedStatus == 'Selesai'
+                                    ? Colors.green.shade200
+                                    : Colors.grey.shade200,
                           ),
                         ),
                         child: Row(
@@ -2976,11 +2974,12 @@ class _DirectVisitState extends State<DirectVisit> {
                                   ? Icons.check_circle
                                   : Icons.help_outline,
                               size: 16,
-                              color: selectedStatus == 'Planning'
-                                  ? Colors.orange.shade600
-                                  : selectedStatus == 'Selesai'
-                                  ? Colors.green.shade600
-                                  : Colors.grey.shade600,
+                              color:
+                                  selectedStatus == 'Planning'
+                                      ? Colors.orange.shade600
+                                      : selectedStatus == 'Selesai'
+                                      ? Colors.green.shade600
+                                      : Colors.grey.shade600,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -2992,11 +2991,12 @@ class _DirectVisitState extends State<DirectVisit> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: selectedStatus == 'Planning'
-                                    ? Colors.orange.shade700
-                                    : selectedStatus == 'Selesai'
-                                    ? Colors.green.shade700
-                                    : Colors.grey.shade600,
+                                color:
+                                    selectedStatus == 'Planning'
+                                        ? Colors.orange.shade700
+                                        : selectedStatus == 'Selesai'
+                                        ? Colors.green.shade700
+                                        : Colors.grey.shade600,
                               ),
                             ),
                           ],

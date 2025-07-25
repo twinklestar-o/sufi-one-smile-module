@@ -114,23 +114,22 @@ class HistoryStockPage extends StatelessWidget {
     );
   }
 
-  // In the _onViewPressed method:
   void _onViewPressed(HistoryStockOpname item) async {
     try {
       final detail = await controller.getStockDetail(item.id);
-      Get.to(() => ViewScreen(data: detail));
+      if (detail != null && detail['data'] != null) {
+        Get.to(() => ViewScreen(data: detail['data']));
+      } else {
+        Get.snackbar('Error', 'Data asset tidak tersedia');
+      }
     } catch (e) {
       Get.snackbar('Error', e.toString());
     }
   }
 
-  // In the _onEditPressed method:
   void _onEditPressed(HistoryStockOpname item) async {
     try {
-      // First get the detailed data
       final detail = await controller.getStockDetail(item.id);
-
-      // Then navigate to edit screen with the data
       Get.to(() => EditScreen(assetId: item.id, initialData: detail));
     } catch (e) {
       Get.snackbar(

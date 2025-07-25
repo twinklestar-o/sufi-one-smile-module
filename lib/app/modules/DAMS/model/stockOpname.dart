@@ -4,13 +4,14 @@ class HistoryStockOpname {
   final String item;
   final String uscrt;
   final String crdt;
-
+  final String? imageUrl;
   HistoryStockOpname({
     required this.id,
     required this.trxNo,
     required this.item,
     required this.uscrt,
     required this.crdt,
+    this.imageUrl,
   });
 
   factory HistoryStockOpname.fromJson(Map<String, dynamic> json) {
@@ -20,6 +21,7 @@ class HistoryStockOpname {
       item: json['item'] ?? '',
       uscrt: json['uscrt'] ?? '',
       crdt: json['crdt'] ?? '',
+      imageUrl: json['image_url'],
     );
   }
 }

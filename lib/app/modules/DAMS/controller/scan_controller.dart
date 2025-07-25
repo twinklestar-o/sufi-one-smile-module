@@ -55,7 +55,7 @@ class ScanController extends GetxController {
 
   Future<List<HistoryStockOpname>> fetchHistoryStock(String token) async {
     final response = await http.get(
-      Uri.parse(Url + 'asset-branches'), // Fixed: Added Url prefix
+      Uri.parse(Url + 'asset-branches'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 

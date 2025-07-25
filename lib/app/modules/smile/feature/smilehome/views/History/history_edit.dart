@@ -43,13 +43,27 @@ class HistoryEdit extends GetView<HistoryEditController> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('Data Dealer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                Text(
+                  'Data Dealer',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
                 _buildTextField('Jabatan Saya', 'jabatan', data),
                 _buildTextField('Area', 'area', data),
                 _buildTextField('Cabang', 'cabang', data),
                 _buildTextField('Produk', 'produk', data),
                 const SizedBox(height: 16),
-                Text('Data Visit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                Text(
+                  'Data Visit',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
                 _buildTextField('Tipe visit', 'type', data),
                 _buildTextField('Tujuan visit', 'activity', data),
                 _buildTextField('Dari tanggal', 'date_start', data),
@@ -67,23 +81,34 @@ class HistoryEdit extends GetView<HistoryEditController> {
     );
   }
 
-  Widget _buildTextField(String label, String key, RxMap<String, dynamic> data) {
+  Widget _buildTextField(
+    String label,
+    String key,
+    RxMap<String, dynamic> data,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.black54, fontSize: 14)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.black54, fontSize: 14),
+          ),
           const SizedBox(height: 4),
           TextFormField(
             initialValue: data[key] ?? '',
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onChanged: (value) => data[key] = value,
-            validator: (value) => value?.isEmpty ?? true ? 'Field cannot be empty' : null,
+            validator:
+                (value) =>
+                    value?.isEmpty ?? true ? 'Field cannot be empty' : null,
           ),
         ],
       ),

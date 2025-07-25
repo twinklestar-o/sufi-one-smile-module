@@ -427,39 +427,11 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
     try {
       String? uploadedPhotoUrl = _photo1Url;
-      // if (_photo1 != null) {
-      //   final request = http.MultipartRequest(
-      //     'POST',
-      //     Uri.parse(
-      //       'http://your-api-url/api/direct-visits/${widget.kodeAset}/photo',
-      //     ),
-      //   );
-      //   request.files.add(
-      //     await http.MultipartFile.fromPath(
-      //       'photo1',
-      //       _photo1!.path,
-      //       filename: path.basename(_photo1!.path),
-      //     ),
-      //   );
-
-      //   final response = await request.send();
-      //   if (response.statusCode == 200 || response.statusCode == 201) {
-      //     final responseData = await response.stream.bytesToString();
-      //     uploadedPhotoUrl =
-      //         jsonDecode(responseData)['photo_url'] ?? _photo1Url;
-      //   } else {
-      //     throw Exception('Failed to upload photo: ${response.statusCode}');
-      //   }
-      // }
 
       final updatedAsset = _editedAsset!.copyWith(
         division: _selectedDivisiUser ?? _editedAsset!.division,
         floor: _selectedLantaiUser ?? _editedAsset!.floor,
         lokasi: _selectedLantaiUser ?? _editedAsset!.lokasi,
-        // lokasi:
-        //     _lokasiController.text.isNotEmpty
-        //         ? _lokasiController.text
-        //         : _editedAsset!.lokasi,
         branchId:
             _branchIdController.text.isNotEmpty
                 ? _branchIdController.text
@@ -753,6 +725,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               value:
                   _statusOptions.contains(_selectedStatus)
                       ? _selectedStatus
@@ -761,7 +734,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                   _statusOptions.map((status) {
                     return DropdownMenuItem<String>(
                       value: status,
-                      child: Text(status),
+                      child: Text(status, overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
               onChanged: (value) {
@@ -786,6 +759,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               value:
                   _conditionOptions.contains(_selectedCondition)
                       ? _selectedCondition
@@ -794,7 +768,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                   _conditionOptions.map((condition) {
                     return DropdownMenuItem<String>(
                       value: condition,
-                      child: Text(condition),
+                      child: Text(condition, overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
               onChanged: (value) {
@@ -819,6 +793,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               value:
                   _statusUserAssetOptions.contains(_selectedStatusUserAsset)
                       ? _selectedStatusUserAsset
@@ -827,7 +802,10 @@ class _AssetFormPageState extends State<AssetFormPage> {
                   _statusUserAssetOptions.map((statusUserAsset) {
                     return DropdownMenuItem<String>(
                       value: statusUserAsset,
-                      child: Text(statusUserAsset),
+                      child: Text(
+                        statusUserAsset,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
               onChanged: (value) {
@@ -853,6 +831,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               value:
                   _posisiUserOptions.contains(_selectedPosisiUser)
                       ? _selectedPosisiUser
@@ -861,7 +840,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                   _posisiUserOptions.map((posisiUser) {
                     return DropdownMenuItem<String>(
                       value: posisiUser,
-                      child: Text(posisiUser),
+                      child: Text(posisiUser, overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
               onChanged: (value) {
@@ -886,6 +865,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               value:
                   _divisiUserOptions.contains(_selectedDivisiUser)
                       ? _selectedDivisiUser
@@ -894,7 +874,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                   _divisiUserOptions.map((divisiUser) {
                     return DropdownMenuItem<String>(
                       value: divisiUser,
-                      child: Text(divisiUser),
+                      child: Text(divisiUser, overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
               onChanged: (value) {
@@ -919,6 +899,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               value:
                   _lokasiUserOptions.contains(_selectedLokasiUser)
                       ? _selectedLokasiUser
@@ -927,7 +908,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                   _lokasiUserOptions.map((lokasiUser) {
                     return DropdownMenuItem<String>(
                       value: lokasiUser,
-                      child: Text(lokasiUser),
+                      child: Text(lokasiUser, overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
               onChanged: (value) {
@@ -952,6 +933,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               value:
                   _lantaiUserOptions.contains(_selectedLantaiUser)
                       ? _selectedLantaiUser
@@ -960,7 +942,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                   _lantaiUserOptions.map((lantaiUser) {
                     return DropdownMenuItem<String>(
                       value: lantaiUser,
-                      child: Text(lantaiUser),
+                      child: Text(lantaiUser, overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
               onChanged: (value) {

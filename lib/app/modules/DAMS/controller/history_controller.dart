@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sufi_one/app/modules/DAMS/model/stock_opname_image.dart';
 import '../model/stockOpname.dart';
 import '../../../../src/constants/constants.dart';
 
@@ -9,6 +10,8 @@ class HistoryController extends GetxController {
   var isLoading = true.obs;
   var historyList = <HistoryStockOpname>[].obs;
   var errorMessage = ''.obs;
+  RxString? _photo1Url = RxString("null");
+  String? selectedId;
 
   Future<void> fetchHistoryStock() async {
     try {
@@ -51,6 +54,10 @@ class HistoryController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
+      if (token == null || token.isEmpty) {
+        throw Exception('Token tidak tersedia');
+      }
+
       final response = await http.get(
         Uri.parse('${Url}asset-branches/$id'),
         headers: {
@@ -60,12 +67,18 @@ class HistoryController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final body = json.decode(response.body);
+        if (body['success'] == true && body['data'] != null) {
+          return body;
+        } else {
+          throw Exception(body['message'] ?? 'Data tidak ditemukan');
+        }
       } else {
-        throw Exception('Failed to load detail: ${response.statusCode}');
+        throw Exception('HTTP ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error: ${e.toString()}');
+      print('Error fetching detail: $e');
+      return {}; // Jangan return null
     }
   }
 
