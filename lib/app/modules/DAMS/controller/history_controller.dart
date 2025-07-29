@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sufi_one/app/modules/DAMS/model/stock_opname_image.dart';
 import '../model/stockOpname.dart';
 import '../../../../src/constants/constants.dart';
 
@@ -12,7 +11,6 @@ class HistoryController extends GetxController {
   var isLoading = true.obs;
   var historyList = <HistoryStockOpname>[].obs;
   var errorMessage = ''.obs;
-  RxString? _photo1Url = RxString("null");
   String? selectedId;
 
   Future<void> fetchHistoryStock() async {
@@ -96,20 +94,25 @@ class HistoryController extends GetxController {
 
       if (token == null) throw Exception('Token not available');
 
-      final uri = Uri.parse('${Url}asset-branches/$id');
+      final uri = Uri.parse('${Url}asset-branches/update/$id');
 
       final request =
           http.MultipartRequest('POST', uri)
             ..headers.addAll({
               'Authorization': 'Bearer $token',
-              'Accept':
-                  'application/json', // ✅ Memastikan Laravel kembalikan JSON
+              'Accept': 'application/json',
             })
-            ..fields['_method'] =
-                'PUT' // ✅ Laravel menerima ini sebagai PUT
-            ..fields.addAll(data); // ✅ Semua data dikirim sebagai field
+            ..fields['_method'] = 'PUT';
 
-      if (imageFile != null) {
+      // Filter dan tambahkan hanya field yang tidak kosong
+      data.forEach((key, value) {
+        if (value.trim().isNotEmpty) {
+          request.fields[key] = value;
+        }
+      });
+
+      // Tambahkan file jika ada
+      if (imageFile != null && await imageFile.exists()) {
         final fileStream = await http.MultipartFile.fromPath(
           'IMG',
           imageFile.path,
@@ -121,7 +124,7 @@ class HistoryController extends GetxController {
       final responseBody = await response.stream.bytesToString();
 
       print('STATUS: ${response.statusCode}');
-      print('BODY: $responseBody');
+      print('RESPONSE BODY: $responseBody');
 
       if (response.statusCode == 200) {
         return true;

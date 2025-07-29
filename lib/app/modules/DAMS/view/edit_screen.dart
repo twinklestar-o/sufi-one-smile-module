@@ -393,36 +393,53 @@ class _EditScreenState extends State<EditScreen> {
         throw Exception('Staging asset or KODE_ASET is missing');
       }
 
+      // Format tanggal ke yyyy-MM-dd (agar Laravel bisa parsing)
+      final originalDate = _dateController.text;
+      String formattedDate = '';
+      try {
+        if (originalDate.isNotEmpty) {
+          final parsed = DateFormat('dd/MM/yyyy').parseStrict(originalDate);
+          formattedDate = DateFormat('yyyy-MM-dd').format(parsed);
+        } else {
+          formattedDate =
+              stagingAsset['crdt']?.toString().split(' ')?.first ?? '';
+        }
+      } catch (e) {
+        throw Exception(
+          'Format tanggal tidak valid. Gunakan format dd/MM/yyyy',
+        );
+      }
+
+      // Data yang akan dikirim ke API
       final updateDataRaw = {
         'KODE_ASET': stagingAsset['kode_asset'],
-        'TANGGAL_PEMBELIAN':
-            _dateController.text.isNotEmpty
-                ? _dateController.text
-                : (stagingAsset['crdt']?.toString().split(' ')?.first ?? ''),
+        'TANGGAL_PEMBELIAN': formattedDate,
         'COST_AC': _costController.text,
         'BOK_VAL': _bookValueController.text,
         'NAMA_USER_ASET': _userController.text,
         'KETERANGAN': _remarkController.text,
-        'STATUS_ASET': _selectedStatus,
-        'CONDITION': _selectedCondition,
+        'STATUS_ASET': _selectedStatus ?? '',
+        'CONDITION': _selectedCondition ?? '',
         'POSITION': _positionController.text,
         'DIVISION': _divisionController.text,
         'LOC_ROOM': _locationController.text,
         'FLOOR': _floorController.text,
       };
 
+      // Bersihkan nilai null dan ubah ke string
       final updateData = updateDataRaw.map(
-        (key, value) => MapEntry(key, value?.toString() ?? ''),
+        (key, value) => MapEntry(key, value?.toString().trim() ?? ''),
       );
 
-      print('updateDataRaw: $updateDataRaw');
-      print('updateData (final): $updateData');
-      print('Data yang akan dikirim: $updateData');
+      // Debug print sebelum kirim
+      print('Data yang akan dikirim ke backend:');
+      updateData.forEach((key, val) => print('$key: $val'));
 
+      // Panggil API update
       bool success = await _controller.updateStockOpname(
         id: widget.assetId,
         data: updateData,
-        imageFile: _selectedImage, // null jika tidak ada gambar baru
+        imageFile: _selectedImage,
       );
 
       if (success) {
@@ -436,9 +453,10 @@ class _EditScreenState extends State<EditScreen> {
         );
       }
     } catch (e) {
+      print('Error saat update: $e');
       Get.snackbar(
         'Error',
-        e.toString(),
+        e.toString().replaceFirst('Exception: ', ''),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -887,22 +905,6 @@ class _EditScreenState extends State<EditScreen> {
                         maxLines: 3,
                       ),
                       SizedBox(height: 24),
-
-                      // Save Button
-                      ElevatedButton(
-                        onPressed: _saveChanges,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 50),
-                          backgroundColor: EditScreen.headerBlue,
-                        ),
-                        child:
-                            _isSaving
-                                ? CircularProgressIndicator(color: Colors.white)
-                                : Text(
-                                  'Simpan Perubahan',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                      ),
                     ],
                   ),
                 ),

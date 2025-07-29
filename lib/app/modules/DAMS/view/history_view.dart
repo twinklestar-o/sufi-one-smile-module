@@ -12,7 +12,14 @@ class HistoryStockPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("History Stock Opname"), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          'History Stock Opname',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: EditScreen.headerBlue,
+        foregroundColor: Colors.white,
+      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return Center(child: CircularProgressIndicator());
