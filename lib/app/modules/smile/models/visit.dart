@@ -11,6 +11,7 @@ class Visit {
   final DateTime? sampaiTanggal;
   final DateTime? tanggalSelesai;
   final String? namaPic;
+  final String? telpPic;
   final String? themeOfDiscussion;
   final String? problem;
   final String? followUp;
@@ -35,6 +36,7 @@ class Visit {
     this.sampaiTanggal,
     this.tanggalSelesai,
     this.namaPic,
+    this.telpPic,
     this.themeOfDiscussion,
     this.problem,
     this.followUp,
@@ -101,6 +103,7 @@ class Visit {
       'sampai_tanggal': sampaiTanggal?.toIso8601String(),
       'tanggal_selesai': tanggalSelesai?.toIso8601String(),
       'nama_pic': namaPic,
+      'telp_pic': telpPic,
       'theme_of_discussion': themeOfDiscussion,
       'problem': problem,
       'follow_up': followUp,

@@ -96,10 +96,10 @@ class TaskEditController extends GetxController {
         problem: editedData['problem'],
         followUp: editedData['followUp'],
         description: editedData['description'],
-        photo1: null,
-        photo2: null,
-        latitude: null,
-        longitude: null,
+        photo1: editedData['photo1'],
+        photo2: editedData['photo2'],
+        latitude: double.tryParse(editedData['latitude']?.toString() ?? ''),
+        longitude: double.tryParse(editedData['longitude']?.toString() ?? ''),
         mainPersons: [
           {
             'jabatan': editedData['mainJabatan'],

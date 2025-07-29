@@ -118,8 +118,16 @@ class TaskView extends StatelessWidget {
             // 3. Main Person
             _buildCardSection([
               _buildSectionHeader('Main Person'),
-              _buildDisplayField('Jabatan', visit.jabatanSaya ?? "-"),
-              _buildDisplayField('Nama PIC', visit.namaPic ?? "-"),
+              ...?visit.mainPersons?.map((person) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDisplayField('Jabatan', person['jabatan'] ?? "-"),
+                  _buildDisplayField('Nama PIC', person['nama'] ?? "-"),
+                  _buildDisplayField('No Telp', person['no_telp'] ?? "-"),
+
+                  const SizedBox(height: 16),
+                ],
+              )),
             ]),
 
             // 4. Foto
@@ -140,7 +148,14 @@ class TaskView extends StatelessWidget {
             ]),
 
 
-            // 6. Tombol Edit Saja
+            // 6. Status
+            _buildCardSection([
+              _buildSectionHeader('Status Visit'),
+              _buildDisplayField('Status', visit.statusText),
+            ]),
+
+
+            // 7. Tombol Edit
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -162,12 +177,13 @@ class TaskView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-
           ],
         ),
       ),
     );
   }
+
+
 
   // ✅ Tambahan fungsi untuk menampilkan preview foto
   Widget _buildPhotoPreview(String? photoPath, String label) {
