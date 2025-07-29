@@ -123,14 +123,24 @@ class HistoryStockPage extends StatelessWidget {
         Get.snackbar('Error', 'Data asset tidak tersedia');
       }
     } catch (e) {
-      Get.snackbar('Error', e.toString());
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
   void _onEditPressed(HistoryStockOpname item) async {
     try {
       final detail = await controller.getStockDetail(item.id);
-      Get.to(() => EditScreen(assetId: item.id, initialData: detail));
+      if (detail != null && detail['data'] != null) {
+        Get.to(() => EditScreen(assetId: item.id, initialData: detail['data']));
+      } else {
+        Get.snackbar('Error', 'Data asset tidak tersedia');
+      }
     } catch (e) {
       Get.snackbar(
         'Error',

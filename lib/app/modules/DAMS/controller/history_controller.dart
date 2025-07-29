@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -85,7 +87,8 @@ class HistoryController extends GetxController {
   // Method to update data
   Future<bool> updateStockOpname({
     required String id,
-    required Map<String, dynamic> data,
+    required Map<String, String> data,
+    File? imageFile,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -93,19 +96,37 @@ class HistoryController extends GetxController {
 
       if (token == null) throw Exception('Token not available');
 
-      final response = await http.put(
-        Uri.parse('${Url}asset-branches/$id'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(data),
-      );
+      final uri = Uri.parse('${Url}asset-branches/$id');
+
+      final request =
+          http.MultipartRequest('POST', uri)
+            ..headers.addAll({
+              'Authorization': 'Bearer $token',
+              'Accept':
+                  'application/json', // ✅ Memastikan Laravel kembalikan JSON
+            })
+            ..fields['_method'] =
+                'PUT' // ✅ Laravel menerima ini sebagai PUT
+            ..fields.addAll(data); // ✅ Semua data dikirim sebagai field
+
+      if (imageFile != null) {
+        final fileStream = await http.MultipartFile.fromPath(
+          'IMG',
+          imageFile.path,
+        );
+        request.files.add(fileStream);
+      }
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      print('STATUS: ${response.statusCode}');
+      print('BODY: $responseBody');
 
       if (response.statusCode == 200) {
         return true;
       } else {
-        final error = json.decode(response.body);
+        final error = json.decode(responseBody);
         throw Exception(error['message'] ?? 'Update failed');
       }
     } catch (e) {

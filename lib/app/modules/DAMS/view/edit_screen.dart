@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sufi_one/app/modules/DAMS/controller/history_controller.dart';
@@ -22,6 +24,7 @@ import 'package:sufi_one/app/modules/DAMS/repository/status_user_asset_repositor
 class EditScreen extends StatefulWidget {
   final String assetId;
   final Map<String, dynamic> initialData;
+
   static const Color headerBlue = Color(0xFF1521A4);
 
   const EditScreen({Key? key, required this.assetId, required this.initialData})
@@ -34,12 +37,17 @@ class EditScreen extends StatefulWidget {
 class _EditScreenState extends State<EditScreen> {
   final _formKey = GlobalKey<FormState>();
   final HistoryController _controller = Get.find();
+
   bool _isLoading = false;
   bool _isSaving = false;
   String? _errorMessage;
 
   Asset? _editedAsset;
   AssetDetail? _editedAssetDetail;
+  String? _imageUrl;
+  File? _selectedImage;
+  String? _selectedImageUrl;
+
   // Controllers
   final _trxNoController = TextEditingController();
   final _userController = TextEditingController();
@@ -86,9 +94,9 @@ class _EditScreenState extends State<EditScreen> {
   void initState() {
     super.initState();
     print('Initial data: ${widget.initialData}'); // Debug initial data
+    _imageUrl = widget.initialData['stock_opname_image']?['full_image_url'];
     _initializeFormData();
     if (!_isLoading) {
-      // Initialize _editedAsset from initialData if needed
       _editedAsset = Asset.fromJson(
         widget.initialData,
       ); // Adjust based on Asset model
@@ -103,24 +111,32 @@ class _EditScreenState extends State<EditScreen> {
   }
 
   void _initializeFormData() {
-    _trxNoController.text = widget.initialData['trx_no'] ?? '';
-    _userController.text = widget.initialData['username'] ?? '';
-    _costController.text = widget.initialData['cost']?.toString() ?? '';
+    _trxNoController.text = widget.initialData['staging_asset']['trx_no'] ?? '';
+    _userController.text =
+        widget.initialData['staging_asset']['username'] ?? '';
+    _costController.text =
+        widget.initialData['staging_asset']['cost']?.toString() ?? '';
     _bookValueController.text =
-        widget.initialData['book_value']?.toString() ?? '';
-    _positionController.text = widget.initialData['posisi'] ?? '';
-    _divisionController.text = widget.initialData['divisi'] ?? '';
-    _locationController.text = widget.initialData['lokasi'] ?? '';
-    _floorController.text = widget.initialData['lantai'] ?? '';
-    _remarkController.text = widget.initialData['remark'] ?? '';
-    _selectedStatus = widget.initialData['status'];
-    _selectedCondition = widget.initialData['kondisi'];
-    _selectedDivisiUser = widget.initialData['divisi'];
-    _selectedPosisiUser = widget.initialData['posisi'];
-    _selectedLokasiUser = widget.initialData['lokasi'];
-    _selectedLantaiUser = widget.initialData['lantai'];
-    if (widget.initialData['crdt'] != null) {
-      _dateController.text = _formatDate(widget.initialData['crdt']);
+        widget.initialData['staging_asset']['book_value']?.toString() ?? '';
+    _positionController.text =
+        widget.initialData['staging_asset']['posisi'] ?? '';
+    _divisionController.text =
+        widget.initialData['staging_asset']['divisi'] ?? '';
+    _locationController.text =
+        widget.initialData['staging_asset']['lokasi'] ?? '';
+    _floorController.text = widget.initialData['staging_asset']['lantai'] ?? '';
+    _remarkController.text =
+        widget.initialData['staging_asset']['remark'] ?? '';
+    _selectedStatus = widget.initialData['staging_asset']['status'];
+    _selectedCondition = widget.initialData['staging_asset']['kondisi'];
+    _selectedDivisiUser = widget.initialData['staging_asset']['divisi'];
+    _selectedPosisiUser = widget.initialData['staging_asset']['posisi'];
+    _selectedLokasiUser = widget.initialData['staging_asset']['lokasi'];
+    _selectedLantaiUser = widget.initialData['staging_asset']['lantai'];
+    if (widget.initialData['staging_asset']['crdt'] != null) {
+      _dateController.text = _formatDate(
+        widget.initialData['staging_asset']['crdt'],
+      );
     }
   }
 
@@ -149,6 +165,16 @@ class _EditScreenState extends State<EditScreen> {
     if (picked != null) {
       setState(() {
         _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
       });
     }
   }
@@ -277,40 +303,6 @@ class _EditScreenState extends State<EditScreen> {
     try {
       final localData = await repository.dbHelper.getAllDivisiUser();
       if (!mounted) return;
-
-      // Ambil semua nama divisi dari DB
-      final loadedOptions =
-          localData.map((e) => e.name ?? '-').toSet().toList();
-
-      // Debug semua data yang masuk ke list dropdown
-      print('>>> [DEBUG] _divisiUserOptions loaded from DB:');
-      for (var item in loadedOptions) {
-        print('- "$item"');
-      }
-
-      // Debug branch name dari asset yang sedang diedit
-      print(
-        '>>> [DEBUG] _editedAsset.branchName: "${_editedAsset?.branchName}"',
-      );
-
-      // Coba cocokkan secara manual (abaikan huruf besar kecil dan spasi)
-      String? matched;
-      if (_editedAsset?.branchName != null) {
-        matched = loadedOptions.firstWhere(
-          (e) =>
-              e.trim().toLowerCase() ==
-              _editedAsset!.branchName!.trim().toLowerCase(),
-          orElse: () => '',
-        );
-        if (matched.isEmpty) {
-          print(
-            '>>> [WARNING] Tidak ada match yang cocok untuk _editedAsset.branchName.',
-          );
-        } else {
-          print('>>> [DEBUG] Match ditemukan: "$matched"');
-        }
-      }
-
       setState(() {
         _divisiUserFuture = Future.value(localData);
         _divisiUserOptions =
@@ -396,12 +388,17 @@ class _EditScreenState extends State<EditScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final updateData = {
-        'KODE_ASET': widget.initialData['kode_asset'],
+      final stagingAsset = widget.initialData['staging_asset'];
+      if (stagingAsset == null || stagingAsset['kode_asset'] == null) {
+        throw Exception('Staging asset or KODE_ASET is missing');
+      }
+
+      final updateDataRaw = {
+        'KODE_ASET': stagingAsset['kode_asset'],
         'TANGGAL_PEMBELIAN':
             _dateController.text.isNotEmpty
                 ? _dateController.text
-                : widget.initialData['crdt'],
+                : (stagingAsset['crdt']?.toString().split(' ')?.first ?? ''),
         'COST_AC': _costController.text,
         'BOK_VAL': _bookValueController.text,
         'NAMA_USER_ASET': _userController.text,
@@ -414,11 +411,18 @@ class _EditScreenState extends State<EditScreen> {
         'FLOOR': _floorController.text,
       };
 
+      final updateData = updateDataRaw.map(
+        (key, value) => MapEntry(key, value?.toString() ?? ''),
+      );
+
+      print('updateDataRaw: $updateDataRaw');
+      print('updateData (final): $updateData');
       print('Data yang akan dikirim: $updateData');
 
-      final success = await _controller.updateStockOpname(
+      bool success = await _controller.updateStockOpname(
         id: widget.assetId,
         data: updateData,
+        imageFile: _selectedImage, // null jika tidak ada gambar baru
       );
 
       if (success) {
@@ -440,9 +444,74 @@ class _EditScreenState extends State<EditScreen> {
         colorText: Colors.white,
       );
     } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  void _showFullScreenImage(BuildContext context) {
+    if (_selectedImage != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => Scaffold(
+                backgroundColor: Colors.black,
+                body: Stack(
+                  children: [
+                    Center(
+                      child: InteractiveViewer(
+                        child: Image.file(_selectedImage!, fit: BoxFit.contain),
+                      ),
+                    ),
+                    Positioned(
+                      top: 40,
+                      right: 20,
+                      child: IconButton(
+                        icon: Icon(Icons.close, color: Colors.white, size: 30),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        ),
+      );
+    } else if (_imageUrl != null && _imageUrl!.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => Scaffold(
+                backgroundColor: Colors.black,
+                body: Stack(
+                  children: [
+                    Center(
+                      child: InteractiveViewer(
+                        child: Image.network(
+                          _imageUrl!,
+                          fit: BoxFit.contain,
+                          errorBuilder:
+                              (context, error, stackTrace) => Icon(
+                                Icons.broken_image,
+                                color: Colors.white,
+                                size: 80,
+                              ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 40,
+                      right: 20,
+                      child: IconButton(
+                        icon: Icon(Icons.close, color: Colors.white, size: 30),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        ),
+      );
     }
   }
 
@@ -471,7 +540,54 @@ class _EditScreenState extends State<EditScreen> {
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Image Section
+                      if (_selectedImage != null ||
+                          (_imageUrl != null && _imageUrl!.isNotEmpty))
+                        Center(
+                          child: GestureDetector(
+                            onTap: () => _showFullScreenImage(context),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child:
+                                  _selectedImage != null
+                                      ? Image.file(
+                                        _selectedImage!,
+                                        height: 200,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                      : Image.network(
+                                        _imageUrl!,
+                                        height: 200,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Icon(
+                                                  Icons.broken_image,
+                                                  size: 80,
+                                                  color: Colors.grey,
+                                                ),
+                                      ),
+                            ),
+                          ),
+                        ),
+                      SizedBox(height: 16),
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: Icon(Icons.image),
+                          label: Text('Pilih Gambar Baru'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: EditScreen.headerBlue,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+
                       // Basic Information
                       TextFormField(
                         controller: _trxNoController,
@@ -548,7 +664,6 @@ class _EditScreenState extends State<EditScreen> {
                           return null;
                         },
                       ),
-
                       SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
@@ -646,7 +761,6 @@ class _EditScreenState extends State<EditScreen> {
                           return null;
                         },
                       ),
-
                       SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
