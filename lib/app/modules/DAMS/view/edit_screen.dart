@@ -115,9 +115,26 @@ class _EditScreenState extends State<EditScreen> {
     _userController.text =
         widget.initialData['staging_asset']['username'] ?? '';
     _costController.text =
-        widget.initialData['staging_asset']['cost']?.toString() ?? '';
+        widget.initialData['staging_asset']['cost'] != null
+            ? _formatCurrency(
+              double.tryParse(
+                    widget.initialData['staging_asset']['cost'].toString(),
+                  ) ??
+                  0,
+            )
+            : '';
+
     _bookValueController.text =
-        widget.initialData['staging_asset']['book_value']?.toString() ?? '';
+        widget.initialData['staging_asset']['book_value'] != null
+            ? _formatCurrency(
+              double.tryParse(
+                    widget.initialData['staging_asset']['book_value']
+                        .toString(),
+                  ) ??
+                  0,
+            )
+            : '';
+
     _positionController.text =
         widget.initialData['staging_asset']['posisi'] ?? '';
     _divisionController.text =
@@ -414,8 +431,15 @@ class _EditScreenState extends State<EditScreen> {
       final updateDataRaw = {
         'KODE_ASET': stagingAsset['kode_asset'],
         'TANGGAL_PEMBELIAN': formattedDate,
-        'COST_AC': _costController.text,
-        'BOK_VAL': _bookValueController.text,
+        'COST_AC':
+            _costController.text.isNotEmpty
+                ? _parseCurrency(_costController.text)?.toString() ?? ''
+                : '',
+        'BOK_VAL':
+            _bookValueController.text.isNotEmpty
+                ? _parseCurrency(_bookValueController.text)?.toString() ?? ''
+                : '',
+
         'NAMA_USER_ASET': _userController.text,
         'KETERANGAN': _remarkController.text,
         'STATUS_ASET': _selectedStatus ?? '',
@@ -910,6 +934,19 @@ class _EditScreenState extends State<EditScreen> {
                 ),
               ),
     );
+  }
+
+  double? _parseCurrency(String value) {
+    return double.tryParse(value.replaceAll('.', '').replaceAll(',', ''));
+  }
+
+  String _formatCurrency(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp',
+      decimalDigits: 0,
+    );
+    return formatter.format(value);
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sufi_one/app/modules/public/home_routes.dart';
 import 'package:sufi_one/src/constants/constants.dart';
 
 class LoginController extends GetxController {
@@ -54,7 +55,7 @@ class LoginController extends GetxController {
             'Login successful',
             snackPosition: SnackPosition.BOTTOM,
           );
-          Get.offNamed('/public/home');
+          Get.offNamed(HomeRoutes.homepage);
         } else {
           Get.snackbar(
             'Error',
