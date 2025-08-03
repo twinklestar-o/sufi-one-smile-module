@@ -108,6 +108,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
             onChanged: (value) => data[key] = value,
             validator:
                 (value) =>
+//abc//
                     value?.isEmpty ?? true ? 'Field cannot be empty' : null,
           ),
         ],
