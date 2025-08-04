@@ -87,9 +87,15 @@ class HistoryVisitController extends GetxController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is List<dynamic>) {
-          historyData.assignAll(
-            data.map((json) => Visit.fromJson(json)).toList(),
-          );
+          final visits = data.map((json) => Visit.fromJson(json)).toList();
+          // Urutkan data berdasarkan tanggal selesai (terbaru di atas)
+          visits.sort((a, b) {
+            if (a.tanggalSelesai == null && b.tanggalSelesai == null) return 0;
+            if (a.tanggalSelesai == null) return 1;
+            if (b.tanggalSelesai == null) return -1;
+            return b.tanggalSelesai!.compareTo(a.tanggalSelesai!);
+          });
+          historyData.assignAll(visits);
           if (historyData.isEmpty) {
             errorMessage.value = 'Data riwayat kunjungan kosong';
             print('Peringatan: Data riwayat kunjungan kosong'); // Logging

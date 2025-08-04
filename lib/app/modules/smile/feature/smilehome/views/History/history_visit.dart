@@ -34,7 +34,10 @@ class HistoryVisit extends GetView<HistoryVisitController> {
         children: [
           // Container untuk field pencarian di bawah header, diposisikan di tengah
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -52,7 +55,10 @@ class HistoryVisit extends GetView<HistoryVisitController> {
                 controller: searchController,
                 style: const TextStyle(color: Colors.black87, fontSize: 14),
                 decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   hintText: 'Cari...',
                   hintStyle: TextStyle(color: Colors.grey),
                   prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey),
@@ -91,7 +97,9 @@ class HistoryVisit extends GetView<HistoryVisitController> {
                 );
               }
               if (controller.filteredHistoryData.isEmpty) {
-                return const Center(child: Text('Tidak ada data riwayat kunjungan tersedia'));
+                return const Center(
+                  child: Text('Tidak ada data riwayat kunjungan tersedia'),
+                );
               }
               return RefreshIndicator(
                 onRefresh: controller.refreshData,
@@ -112,12 +120,32 @@ class HistoryVisit extends GetView<HistoryVisitController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 4),
+                            Text('Jabatan: ${data.jabatanSaya ?? '-'}'),
+                            Text('Area: ${data.areaCode ?? '-'}'),
+                            Text('Produk: ${data.productCode ?? '-'}'),
                             Text('PIC: ${data.namaPic ?? '-'}'),
                             Text('Tipe Visit: ${data.tipeVisit ?? '-'}'),
                             Text('Tujuan: ${data.tujuanVisit ?? '-'}'),
                             Text(
-                              'Tanggal: ${data.dariTanggal?.toIso8601String().split('T')[0] ?? '-'}',
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              'Dari Tanggal: ${data.dariTanggal?.toIso8601String().split('T')[0] ?? '-'}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              'Sampai Tanggal: ${data.sampaiTanggal?.toIso8601String().split('T')[0] ?? '-'}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              'Tanggal Selesai: ${data.tanggalSelesai?.toIso8601String().split('T')[0] ?? '-'}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
@@ -127,13 +155,21 @@ class HistoryVisit extends GetView<HistoryVisitController> {
                             _menuCard(
                               icon: Icons.visibility,
                               label: 'View',
-                              onTap: () => Get.toNamed('/public/smile/history_view', arguments: data.toJson()),
+                              onTap:
+                                  () => Get.toNamed(
+                                    '/public/smile/history_view',
+                                    arguments: data.toJson(),
+                                  ),
                             ),
                             const SizedBox(width: 8),
                             _menuCard(
                               icon: Icons.edit,
                               label: 'Edit',
-                              onTap: () => Get.toNamed('/public/smile/history_edit', arguments: data.toJson()),
+                              onTap:
+                                  () => Get.toNamed(
+                                    '/public/smile/history_edit',
+                                    arguments: data.toJson(),
+                                  ),
                             ),
                           ],
                         ),
@@ -149,7 +185,11 @@ class HistoryVisit extends GetView<HistoryVisitController> {
     );
   }
 
-  Widget _menuCard({required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _menuCard({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return OutlinedButton(
       onPressed: onTap,
       child: Row(
@@ -162,9 +202,7 @@ class HistoryVisit extends GetView<HistoryVisitController> {
       ),
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: Colors.blue),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
     );

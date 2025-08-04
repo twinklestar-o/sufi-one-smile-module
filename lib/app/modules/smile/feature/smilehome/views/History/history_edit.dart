@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/history_edit_controller.dart';
@@ -12,60 +13,36 @@ class HistoryEdit extends GetView<HistoryEditController> {
   @override
   Widget build(BuildContext context) {
     // Inisialisasi data dari Get.arguments
-    final Visit initialData = Visit.fromJson(Get.arguments as Map<String, dynamic>);
-    final matchedJabatanSFI = controller.jabatanSFIList.firstWhereOrNull((j) => j.name == initialData.jabatanSaya);
-    if (matchedJabatanSFI != null) {
-      controller.selectedJabatanSFIName.value = matchedJabatanSFI.kode;
-      print('Initialized jabatan: ${matchedJabatanSFI.kode} - ${matchedJabatanSFI.name}');
-    } else {
-      print('No matching jabatan for kode: ${initialData.jabatanSaya}');
-    }
-    final matchedArea = controller.areaList.firstWhereOrNull((a) => a.code == initialData.areaCode);
-    if (matchedArea != null) {
-      controller.selectedAreaName.value = matchedArea.code;
-      print('Initialized area: ${matchedArea.code} - ${matchedArea.name}');
-    } else {
-      print('No matching area for code: ${initialData.areaCode}');
-    }
-    final matchedBranch = controller.branchList.firstWhereOrNull((a) => a.code == initialData.branchCode);
-    if (matchedBranch != null) {
-      controller.selectedBranchName.value = matchedBranch.code;
-      print('Initialized branch: ${matchedBranch.code} - ${matchedBranch.name}');
-    } else {
-      print('No matching branch for code: ${initialData.branchCode}');
-    }
-    final matchedProduct = controller.productList.firstWhereOrNull((a) => a.code == initialData.productCode);
-    if (matchedProduct != null) {
-      controller.selectedProductName.value = matchedProduct.code;
-      print('Initialized product: ${matchedProduct.code} - ${matchedProduct.name}');
-    } else {
-      print('No matching product for code: ${initialData.productCode}');
-    }
-    final matchedType = controller.typeList.firstWhereOrNull((t) => t.kode == initialData.tipeVisit);
-    if (matchedType != null) {
-      controller.selectedTypeName.value = matchedType.kode;
-      print('Initialized type: ${matchedType.kode} - ${matchedType.name}');
-    } else {
-      print('No matching type for code: ${initialData.tipeVisit}');
-    }
-    final matchedPurpose = controller.purposeList.firstWhereOrNull((p) => p.kode == initialData.tujuanVisit);
-    if (matchedPurpose != null) {
-      controller.selectedPurposeName.value = matchedPurpose.kode;
-      print('Initialized purpose: ${matchedPurpose.kode} - ${matchedPurpose.name}');
-    } else {
-      print('No matching purpose for code: ${initialData.tujuanVisit}');
-    }
+    final Visit initialData = Visit.fromJson(
+      Get.arguments as Map<String, dynamic>,
+    );
 
     // Inisialisasi TextEditingController di controller
     controller.initializeControllers(initialData);
 
+    // Inisialisasi dropdown setelah controller diinisialisasi
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await controller.loadAllData();
+      controller.initializeDropdowns(initialData);
+    });
+
     // State untuk tanggal
-    final Rx<DateTime?> selectedDariTanggal = Rx<DateTime?>(initialData.dariTanggal);
-    final Rx<DateTime?> selectedSampaiTanggal = Rx<DateTime?>(initialData.sampaiTanggal);
-    final Rx<DateTime?> selectedTanggalSelesai = Rx<DateTime?>(initialData.tanggalSelesai);
+    final Rx<DateTime?> selectedDariTanggal = Rx<DateTime?>(
+      initialData.dariTanggal,
+    );
+    final Rx<DateTime?> selectedSampaiTanggal = Rx<DateTime?>(
+      initialData.sampaiTanggal,
+    );
+    final Rx<DateTime?> selectedTanggalSelesai = Rx<DateTime?>(
+      initialData.tanggalSelesai,
+    );
 
     // Fungsi untuk memilih tanggal
-    Future<void> selectDate(BuildContext context, String fieldType, Rx<DateTime?> selectedDate) async {
+    Future<void> selectDate(
+      BuildContext context,
+      String fieldType,
+      Rx<DateTime?> selectedDate,
+    ) async {
       DateTime initialDate = DateTime.now();
       DateTime firstDate = DateTime(2000);
       DateTime lastDate = DateTime(2100);
@@ -76,11 +53,15 @@ class HistoryEdit extends GetView<HistoryEditController> {
           lastDate = DateTime.now();
           break;
         case 'sampaiTanggal':
-          initialDate = selectedSampaiTanggal.value ?? (selectedDariTanggal.value ?? DateTime.now());
+          initialDate =
+              selectedSampaiTanggal.value ??
+              (selectedDariTanggal.value ?? DateTime.now());
           firstDate = selectedDariTanggal.value ?? DateTime(2000);
           break;
         case 'tanggalSelesai':
-          initialDate = selectedTanggalSelesai.value ?? (selectedDariTanggal.value ?? DateTime.now());
+          initialDate =
+              selectedTanggalSelesai.value ??
+              (selectedDariTanggal.value ?? DateTime.now());
           firstDate = selectedDariTanggal.value ?? DateTime(2000);
           lastDate = selectedSampaiTanggal.value ?? DateTime(2100);
           break;
@@ -101,16 +82,23 @@ class HistoryEdit extends GetView<HistoryEditController> {
         if (fieldType == 'dariTanggal' && picked.isAfter(DateTime.now())) {
           isValid = false;
           errorMessage = 'Dari Tanggal tidak boleh melebihi hari ini';
-        } else if (fieldType == 'sampaiTanggal' && selectedDariTanggal.value != null && picked.isBefore(selectedDariTanggal.value!)) {
+        } else if (fieldType == 'sampaiTanggal' &&
+            selectedDariTanggal.value != null &&
+            picked.isBefore(selectedDariTanggal.value!)) {
           isValid = false;
-          errorMessage = 'Sampai Tanggal harus setelah atau sama dengan Dari Tanggal';
+          errorMessage =
+              'Sampai Tanggal harus setelah atau sama dengan Dari Tanggal';
         } else if (fieldType == 'tanggalSelesai') {
-          if (selectedDariTanggal.value != null && picked.isBefore(selectedDariTanggal.value!)) {
+          if (selectedDariTanggal.value != null &&
+              picked.isBefore(selectedDariTanggal.value!)) {
             isValid = false;
-            errorMessage = 'Tanggal Selesai harus setelah atau sama dengan Dari Tanggal';
-          } else if (selectedSampaiTanggal.value != null && picked.isAfter(selectedSampaiTanggal.value!)) {
+            errorMessage =
+                'Tanggal Selesai harus setelah atau sama dengan Dari Tanggal';
+          } else if (selectedSampaiTanggal.value != null &&
+              picked.isAfter(selectedSampaiTanggal.value!)) {
             isValid = false;
-            errorMessage = 'Tanggal Selesai harus sebelum atau sama dengan Sampai Tanggal';
+            errorMessage =
+                'Tanggal Selesai harus sebelum atau sama dengan Sampai Tanggal';
           }
         }
 
@@ -118,395 +106,1146 @@ class HistoryEdit extends GetView<HistoryEditController> {
           selectedDate.value = picked;
           switch (fieldType) {
             case 'dariTanggal':
-              controller.dariTanggalController.text = DateFormat('dd MMM yyyy').format(picked);
-              if (selectedSampaiTanggal.value != null && selectedSampaiTanggal.value!.isBefore(picked)) {
+              controller.dariTanggalController.text = DateFormat(
+                'dd MMM yyyy',
+              ).format(picked);
+              if (selectedSampaiTanggal.value != null &&
+                  selectedSampaiTanggal.value!.isBefore(picked)) {
                 selectedSampaiTanggal.value = null;
                 controller.sampaiTanggalController.text = '';
               }
-              if (selectedTanggalSelesai.value != null && selectedTanggalSelesai.value!.isBefore(picked)) {
+              if (selectedTanggalSelesai.value != null &&
+                  selectedTanggalSelesai.value!.isBefore(picked)) {
                 selectedTanggalSelesai.value = null;
                 controller.tanggalSelesaiController.text = '';
               }
               break;
             case 'sampaiTanggal':
-              controller.sampaiTanggalController.text = DateFormat('dd MMM yyyy').format(picked);
-              if (selectedTanggalSelesai.value != null && selectedTanggalSelesai.value!.isAfter(picked)) {
+              controller.sampaiTanggalController.text = DateFormat(
+                'dd MMM yyyy',
+              ).format(picked);
+              if (selectedTanggalSelesai.value != null &&
+                  selectedTanggalSelesai.value!.isAfter(picked)) {
                 selectedTanggalSelesai.value = null;
                 controller.tanggalSelesaiController.text = '';
               }
               break;
             case 'tanggalSelesai':
-              controller.tanggalSelesaiController.text = DateFormat('dd MMM yyyy').format(picked);
+              controller.tanggalSelesaiController.text = DateFormat(
+                'dd MMM yyyy',
+              ).format(picked);
               break;
           }
         } else {
-          Get.snackbar('Error', errorMessage ?? 'Tanggal tidak valid', snackPosition: SnackPosition.BOTTOM);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage!), backgroundColor: Colors.red),
+          );
         }
       }
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        print('Tombol Back perangkat ditekan');
-        return true;
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF1A28C4),
-          title: const Text(
-            'Edit Visit Dealer',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              print('Tombol Back diklik');
-              if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
-                Get.back();
-              } else if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                Get.back();
-                Get.snackbar('Peringatan', 'Tidak dapat kembali: Tidak ada halaman sebelumnya',
-                    snackPosition: SnackPosition.BOTTOM);
-              }
-            },
-          ),
-          actions: [
-            Obx(() => IconButton(
-              icon: controller.isLoading.value
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Icon(Icons.save, color: Colors.white),
-              onPressed: controller.isLoading.value
-                  ? null
-                  : () {
-                print('Tombol Simpan diklik');
-                print('Status isLoading: ${controller.isLoading.value}');
-                if (controller.formKey.currentState!.validate()) {
-                  print('Form valid, menyimpan data...');
-                  try {
-                    final updatedData = Visit(
-                      jabatanSaya: controller.getSelectedJabatanCode(),
-                      areaCode: controller.getSelectedAreaCode(),
-                      branchCode: controller.cabangController.text,
-                      productCode: controller.produkController.text,
-                      tipeVisit: controller.tipeVisitController.text,
-                      tujuanVisit: controller.tujuanVisitController.text,
-                      dariTanggal: selectedDariTanggal.value,
-                      sampaiTanggal: selectedSampaiTanggal.value,
-                      tanggalSelesai: selectedTanggalSelesai.value,
-                      namaPic: controller.picController.text,
-                      themeOfDiscussion: controller.discussionController.text,
-                      problem: controller.problemController.text,
-                      description: controller.pelaksanaanController.text,
-                      photo1: initialData.photo1,
-                      latitude: initialData.latitude,
-                      longitude: initialData.longitude,
-                    );
-                    print('Data yang akan disimpan: ${updatedData.toJson()}');
-                    controller.saveEditedData(updatedData.toJson()).then((_) {
-                      Get.snackbar('Sukses', 'Data berhasil disimpan',
-                          snackPosition: SnackPosition.BOTTOM);
-                      Get.back();
-                    }).catchError((e) {
-                      print('Error menyimpan data: $e');
-                      Get.snackbar('Error', 'Gagal menyimpan data: $e',
-                          snackPosition: SnackPosition.BOTTOM);
-                    });
-                  } catch (e) {
-                    print('Error parsing data: $e');
-                    Get.snackbar('Error', 'Gagal memproses data: $e',
-                        snackPosition: SnackPosition.BOTTOM);
-                  }
-                } else {
-                  print('Validasi form gagal');
-                  Get.snackbar('Peringatan', 'Harap lengkapi semua field wajib',
-                      snackPosition: SnackPosition.BOTTOM);
-                }
-              },
-            )),
-          ],
+    // Define custom colors - sama persis dengan direct_visit.dart
+    const Color headerBlue = Color(0xFF1521A4);
+    const Color dropdownLight = Color(0xFF272728);
+    const Color dropdownLightNF = Color(0xFFCCCCCC);
+    const Color dropdownLightF = Color(0xFFAFA1CF);
+    const Color textButton = Color(0xFF8BADCA);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDFDFF),
+      appBar: AppBar(
+        backgroundColor: headerBlue,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
         ),
-        body: Form(
-          key: controller.formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+        title: const Text(
+          'Form direct visit',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: controller.formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: initialData.photo1 != null && initialData.photo1!.isNotEmpty
-                          ? NetworkImage(initialData.photo1!)
-                          : const AssetImage('res/images/baleno.jpg') as ImageProvider,
-                      fit: BoxFit.cover,
-                      onError: (exception, stackTrace) {
-                        print('Error memuat gambar: $exception\nStackTrace: $stackTrace');
-                      },
+                // Card Jabatan Saya - sama persis dengan direct_visit.dart
+                Card(
+                  color: const Color(0xFFFDFDFF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Text(
+                            'Jabatan Saya',
+                            style: TextStyle(fontSize: 22, color: headerBlue),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Jabatan'),
+                        Obx(
+                          () =>
+                              controller.isLoadingJabatanSFI.value
+                                  ? const CircularProgressIndicator()
+                                  : controller.jabatanSFIList.isEmpty
+                                  ? const Center(
+                                    child: Text(
+                                      'Tidak ada data jabatan tersedia',
+                                    ),
+                                  )
+                                  : DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        controller.jabatanSFIList
+                                                    .where(
+                                                      (item) =>
+                                                          item.kode ==
+                                                          controller
+                                                              .selectedJabatanSFIName
+                                                              .value,
+                                                    )
+                                                    .length ==
+                                                1
+                                            ? controller
+                                                .selectedJabatanSFIName
+                                                .value
+                                            : null,
+
+                                    hint: Text(
+                                      '-- Pilih Jabatan --',
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                    icon: const Icon(Icons.expand_more),
+                                    iconEnabledColor: dropdownLight,
+                                    style: TextStyle(color: dropdownLight),
+                                    decoration: const InputDecoration(
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Color(0xFFCCCCCC),
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightF,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                    items:
+                                        controller.jabatanSFIList.map((
+                                          jabatan,
+                                        ) {
+                                          return DropdownMenuItem<String>(
+                                            value: jabatan.kode,
+                                            child: Text(jabatan.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      controller.selectedJabatanSFIName.value =
+                                          value ?? '';
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Harap pilih jabatan'
+                                                : null,
+                                  ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Data Dealer',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Jabatan',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-                const SizedBox(height: 4),
-                Obx(() => controller.isLoadingJabatanSFI.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.jabatanSFIList.isEmpty
-                    ? const Center(child: Text('Tidak ada data jabatan tersedia'))
-                    : DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: controller.selectedJabatanSFIName.value.isNotEmpty
-                      ? controller.selectedJabatanSFIName.value
-                      : null,
-                  hint: const Text('-- Pilih Jabatan --'),
-                  items: controller.jabatanSFIList.map((jabatan) {
-                    return DropdownMenuItem<String>(
-                      value: jabatan.kode,
-                      child: Text(jabatan.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    controller.selectedJabatanSFIName.value = value ?? '';
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+
+                // Card Data Dealer - sama persis dengan direct_visit.dart
+                Card(
+                  color: const Color(0xFFFDFDFF),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            'Data Dealer',
+                            style: TextStyle(fontSize: 22, color: headerBlue),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Area'),
+                        Obx(
+                          () =>
+                              controller.isLoadingArea.value
+                                  ? const CircularProgressIndicator()
+                                  : controller.areaList.isEmpty
+                                  ? const Center(
+                                    child: Text('Tidak ada data area tersedia'),
+                                  )
+                                  : DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        controller
+                                                    .selectedAreaName
+                                                    .value
+                                                    .isNotEmpty &&
+                                                controller.areaList.any(
+                                                  (item) =>
+                                                      item.code ==
+                                                      controller
+                                                          .selectedAreaName
+                                                          .value,
+                                                )
+                                            ? controller.selectedAreaName.value
+                                            : null,
+                                    hint: Text(
+                                      '-- Pilih Area --',
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                    icon: const Icon(Icons.expand_more),
+                                    iconEnabledColor: dropdownLight,
+                                    style: const TextStyle(
+                                      color: dropdownLight,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightNF,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightF,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                    items:
+                                        controller.areaList.map((area) {
+                                          return DropdownMenuItem<String>(
+                                            value: area.code,
+                                            child: Text(area.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      controller.selectedAreaName.value =
+                                          value ?? '';
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Harap pilih area'
+                                                : null,
+                                  ),
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Cabang'),
+                        Obx(
+                          () =>
+                              controller.isLoadingBranch.value
+                                  ? const CircularProgressIndicator()
+                                  : controller.branchList.isEmpty
+                                  ? const Center(
+                                    child: Text(
+                                      'Tidak ada data cabang tersedia',
+                                    ),
+                                  )
+                                  : DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        controller
+                                                    .selectedBranchName
+                                                    .value
+                                                    .isNotEmpty &&
+                                                controller.branchList.any(
+                                                  (item) =>
+                                                      item.code ==
+                                                      controller
+                                                          .selectedBranchName
+                                                          .value,
+                                                )
+                                            ? controller
+                                                .selectedBranchName
+                                                .value
+                                            : null,
+                                    hint: Text(
+                                      '-- Pilih Cabang --',
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                    icon: const Icon(Icons.expand_more),
+                                    iconEnabledColor: dropdownLight,
+                                    style: const TextStyle(
+                                      color: dropdownLight,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightNF,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightF,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                    items:
+                                        controller.branchList.map((branch) {
+                                          return DropdownMenuItem<String>(
+                                            value: branch.code,
+                                            child: Text(branch.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      controller.selectedBranchName.value =
+                                          value ?? '';
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Harap pilih cabang'
+                                                : null,
+                                  ),
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Produk'),
+                        Obx(
+                          () =>
+                              controller.isLoadingProduct.value
+                                  ? const CircularProgressIndicator()
+                                  : controller.productList.isEmpty
+                                  ? const Center(
+                                    child: Text(
+                                      'Tidak ada data Product tersedia',
+                                    ),
+                                  )
+                                  : DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        controller
+                                                    .selectedProductName
+                                                    .value
+                                                    .isNotEmpty &&
+                                                controller.productList.any(
+                                                  (item) =>
+                                                      item.code ==
+                                                      controller
+                                                          .selectedProductName
+                                                          .value,
+                                                )
+                                            ? controller
+                                                .selectedProductName
+                                                .value
+                                            : null,
+                                    hint: Text(
+                                      '-- Pilih Produk --',
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                    icon: const Icon(Icons.expand_more),
+                                    iconEnabledColor: dropdownLight,
+                                    style: const TextStyle(
+                                      color: dropdownLight,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightNF,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightF,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                    items:
+                                        controller.productList.map((product) {
+                                          return DropdownMenuItem<String>(
+                                            value: product.code,
+                                            child: Text(product.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      controller.selectedProductName.value =
+                                          value ?? '';
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Harap pilih Product'
+                                                : null,
+                                  ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Dealer Search Section - sama persis dengan direct_visit.dart
+                        _buildFieldLabel('Dealer'),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: controller.dealerController,
+                                readOnly: true,
+                                decoration: InputDecoration(
+                                  hintText: 'Pilih dealer terlebih dahulu',
+                                  hintStyle: TextStyle(color: dropdownLight),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: dropdownLightNF,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: dropdownLightF,
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                // TODO: Implement dealer search functionality
+                                Get.snackbar(
+                                  'Info',
+                                  'Fitur pencarian dealer akan segera tersedia',
+                                );
+                              },
+                              icon: const Icon(Icons.search, size: 16),
+                              label: const Text('Cari Dealer'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.info, color: Colors.blue, size: 16),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Klik tombol "Cari Dealer" untuk memulai pencarian',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Harap pilih jabatan' : null,
-                )),
-
-                const SizedBox(height: 8),
-                const Text(
-                  'Area',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
                 ),
-                const SizedBox(height: 4),
-                Obx(() => controller.isLoadingArea.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.areaList.isEmpty
-                    ? const Center(child: Text('Tidak ada data area tersedia'))
-                    : DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: controller.selectedAreaName.value.isNotEmpty
-                      ? controller.selectedAreaName.value
-                      : null,
-                  hint: const Text('-- Pilih Area --'),
-                  items: controller.areaList.map((area) {
-                    return DropdownMenuItem<String>(
-                      value: area.code,
-                      child: Text(area.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    controller.selectedAreaName.value = value ?? '';
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+
+                // Card Data Visit - sama persis dengan direct_visit.dart
+                Card(
+                  color: const Color(0xFFFDFDFF),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            'Data Visit',
+                            style: TextStyle(fontSize: 22, color: headerBlue),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Tipe Visit'),
+                        Obx(
+                          () =>
+                              controller.isLoadingType.value
+                                  ? const CircularProgressIndicator()
+                                  : controller.typeList.isEmpty
+                                  ? const Center(
+                                    child: Text('Tidak ada data Type tersedia'),
+                                  )
+                                  : DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        controller
+                                                    .selectedTypeName
+                                                    .value
+                                                    .isNotEmpty &&
+                                                controller.typeList.any(
+                                                  (item) =>
+                                                      item.name ==
+                                                      controller
+                                                          .selectedTypeName
+                                                          .value,
+                                                )
+                                            ? controller.selectedTypeName.value
+                                            : null,
+                                    hint: Text(
+                                      '-- Pilih Tipe Visit --',
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                    icon: const Icon(Icons.expand_more),
+                                    iconEnabledColor: dropdownLight,
+                                    style: const TextStyle(
+                                      color: dropdownLight,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightNF,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightF,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                    items:
+                                        controller.typeList.map((type) {
+                                          return DropdownMenuItem<String>(
+                                            value: type.kode,
+                                            child: Text(type.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      controller.selectedTypeName.value =
+                                          value ?? '';
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Harap Pilih Tipe Visit'
+                                                : null,
+                                  ),
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Tujuan Visit'),
+                        Obx(
+                          () =>
+                              controller.isLoadingPurpose.value
+                                  ? const CircularProgressIndicator()
+                                  : controller.purposeList.isEmpty
+                                  ? const Center(
+                                    child: Text(
+                                      'Tidak ada data Purpose tersedia',
+                                    ),
+                                  )
+                                  : DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        controller.purposeList
+                                                    .where(
+                                                      (item) =>
+                                                          item.kode
+                                                              .toString() ==
+                                                          controller
+                                                              .selectedPurposeName
+                                                              .value
+                                                              .toString(),
+                                                    )
+                                                    .length ==
+                                                1
+                                            ? controller
+                                                .selectedPurposeName
+                                                .value
+                                                .toString()
+                                            : null,
+
+                                    hint: Text(
+                                      '-- Pilih Tujuan Visit --',
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                    icon: const Icon(Icons.expand_more),
+                                    iconEnabledColor: dropdownLight,
+                                    style: const TextStyle(
+                                      color: dropdownLight,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightNF,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: dropdownLightF,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                    items:
+                                        controller.purposeList.map((purpose) {
+                                          return DropdownMenuItem<String>(
+                                            value: purpose.kode,
+                                            child: Text(purpose.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      controller.selectedPurposeName.value =
+                                          value ?? '';
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Harap Pilih Tujuan Visit'
+                                                : null,
+                                  ),
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Dari Tanggal'),
+                        _buildDateField(
+                          selectedDariTanggal.value,
+                          () => selectDate(
+                            context,
+                            'dariTanggal',
+                            selectedDariTanggal,
+                          ),
+                          'dariTanggal',
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Sampai Tanggal'),
+                        _buildDateField(
+                          selectedSampaiTanggal.value,
+                          () => selectDate(
+                            context,
+                            'sampaiTanggal',
+                            selectedSampaiTanggal,
+                          ),
+                          'sampaiTanggal',
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Tanggal Selesai'),
+                        _buildDateField(
+                          selectedTanggalSelesai.value,
+                          () => selectDate(
+                            context,
+                            'tanggalSelesai',
+                            selectedTanggalSelesai,
+                          ),
+                          'tanggalSelesai',
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Nama PIC'),
+                        TextFormField(
+                          controller: controller.picController,
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 50,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan nama PIC',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 1.5,
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 3.0,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                          ),
+                          keyboardType: TextInputType.text,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                          ],
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Nama PIC wajib diisi'
+                                      : null,
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Theme of Discussion'),
+                        TextFormField(
+                          controller: controller.discussionController,
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan tema diskusi',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                          ),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Tema diskusi wajib diisi'
+                                      : null,
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Problem'),
+                        TextFormField(
+                          controller: controller.problemController,
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan Problem',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                          ),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Problem wajib diisi'
+                                      : null,
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Follow-Up'),
+                        TextFormField(
+                          controller: controller.followUpController,
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan Follow-Up',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                          ),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Follow-Up wajib diisi'
+                                      : null,
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Description'),
+                        TextFormField(
+                          controller: controller.pelaksanaanController,
+                          style: TextStyle(color: dropdownLight, fontSize: 16),
+                          maxLength: 1000,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          minLines: 3,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan deskripsi',
+                            hintStyle: TextStyle(color: dropdownLightNF),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightNF,
+                                width: 0.5,
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: dropdownLightF,
+                                width: 2.0,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                          ),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty
+                                      ? 'Deskripsi wajib diisi'
+                                      : null,
+                        ),
+                      ],
                     ),
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Harap pilih area' : null,
-                )),
-
-                const SizedBox(height: 8),
-                const Text(
-                  'Cabang',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
                 ),
-                const SizedBox(height: 4),
-                Obx(() => controller.isLoadingBranch.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.branchList.isEmpty
-                    ? const Center(child: Text('Tidak ada data cabang tersedia'))
-                    : DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: controller.selectedBranchName.value.isNotEmpty
-                      ? controller.selectedBranchName.value
-                      : null,
-                  hint: const Text('-- Pilih Cabang --'),
-                  items: controller.branchList.map((branch) {
-                    return DropdownMenuItem<String>(
-                      value: branch.code,
-                      child: Text(branch.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    controller.selectedBranchName.value = value ?? '';
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+
+                // Card Main Person - sama persis dengan direct_visit.dart
+                Card(
+                  color: const Color(0xFFFDFDFF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            'Main Person',
+                            style: TextStyle(fontSize: 22, color: headerBlue),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Jabatan'),
+                        Obx(
+                          () =>
+                              controller.isLoadingJabatan.value
+                                  ? const CircularProgressIndicator()
+                                  : controller.jabatanList.isEmpty
+                                  ? const Center(
+                                    child: Text(
+                                      'Tidak ada data jabatan tersedia',
+                                    ),
+                                  )
+                                  : DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        controller
+                                                .selectedJabatanName
+                                                .value
+                                                .isNotEmpty
+                                            ? controller
+                                                .selectedJabatanName
+                                                .value
+                                            : null,
+                                    hint: Text(
+                                      '-- Pilih Jabatan --',
+                                      style: TextStyle(color: dropdownLight),
+                                    ),
+                                    icon: const Icon(Icons.expand_more),
+                                    iconEnabledColor: dropdownLight,
+                                    style: TextStyle(color: dropdownLight),
+                                    decoration: const InputDecoration(
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Color(0xFFCCCCCC),
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                    items:
+                                        controller.jabatanList.map((jabatan) {
+                                          return DropdownMenuItem<String>(
+                                            value: jabatan.kode,
+                                            child: Text(jabatan.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      controller.selectedJabatanName.value =
+                                          value ?? '';
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Harap Pilih Jabatan'
+                                                : null,
+                                  ),
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('Nama PIC'),
+                        TextFormField(
+                          controller: controller.mainPersonNameController,
+                          maxLength: 50,
+                          decoration: const InputDecoration(
+                            hintText: 'Masukkan nama PIC',
+                            counterText: null,
+                            enabledBorder: UnderlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.text,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                          ],
+                          validator:
+                              (v) =>
+                                  (v == null || v.isEmpty)
+                                      ? 'Nama wajib diisi'
+                                      : null,
+                        ),
+
+                        const SizedBox(height: 12),
+                        _buildFieldLabel('No Telpon PIC'),
+                        TextFormField(
+                          controller: controller.mainPersonPhoneController,
+                          decoration: const InputDecoration(
+                            hintText: 'Masukkan no. telepon',
+                            enabledBorder: UnderlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          validator: (phone) {
+                            if (phone == null || phone.isEmpty)
+                              return 'Nomor telepon wajib diisi';
+                            if (phone.length < 6)
+                              return 'Nomor telepon tidak valid';
+                            return null;
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: Alignment.center,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // TODO: Implement add main person functionality
+                              Get.snackbar(
+                                'Info',
+                                'Fitur tambah main person akan segera tersedia',
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: textButton),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Text(
+                              'Tambahkan',
+                              style: TextStyle(color: textButton, fontSize: 16),
+                            ),
+                          ),
+                        ),
+
+                        // Main Persons List - Simplified for now
+                        if (controller.mainPersons.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            'Main Persons:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Fitur main persons akan segera tersedia'),
+                        ],
+                      ],
                     ),
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Harap pilih cabang' : null,
-                )),
-
-                const SizedBox(height: 8),
-                const Text(
-                  'Produk',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
                 ),
-                const SizedBox(height: 4),
-                Obx(() => controller.isLoadingProduct.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.productList.isEmpty
-                    ? const Center(child: Text('Tidak ada data Product tersedia'))
-                    : DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: controller.selectedProductName.value.isNotEmpty
-                      ? controller.selectedProductName.value
-                      : null,
-                  hint: const Text('-- Pilih Product --'),
-                  items: controller.productList.map((product) {
-                    return DropdownMenuItem<String>(
-                      value: product.code,
-                      child: Text(product.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    controller.selectedProductName.value = value ?? '';
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  validator: (value) => value == null || value.isEmpty ? 'Harap pilih Product' : null,
-                )),
 
+                const SizedBox(height: 24),
+
+                // Submit Button - sama persis dengan direct_visit.dart
+                Obx(
+                  () => ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: headerBlue,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      textStyle: const TextStyle(fontSize: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed:
+                        controller.isLoading.value
+                            ? null
+                            : () async {
+                              if (controller.formKey.currentState!.validate()) {
+                                try {
+                                  final updatedData = Visit(
+                                    id: initialData.id,
+                                    jabatanSaya:
+                                        controller.getSelectedJabatanCode(),
+                                    areaCode: controller.getSelectedAreaCode(),
+                                    branchCode:
+                                        controller
+                                                .selectedBranchName
+                                                .value
+                                                .isNotEmpty
+                                            ? controller
+                                                .selectedBranchName
+                                                .value
+                                            : controller.cabangController.text,
+                                    productCode:
+                                        controller
+                                                .selectedProductName
+                                                .value
+                                                .isNotEmpty
+                                            ? controller
+                                                .selectedProductName
+                                                .value
+                                            : controller.produkController.text,
+                                    dealerCode:
+                                        controller.dealerController.text,
+                                    tipeVisit:
+                                        controller
+                                                .selectedTypeName
+                                                .value
+                                                .isNotEmpty
+                                            ? controller.selectedTypeName.value
+                                            : controller
+                                                .tipeVisitController
+                                                .text,
+                                    tujuanVisit:
+                                        controller
+                                                .selectedPurposeName
+                                                .value
+                                                .isNotEmpty
+                                            ? controller
+                                                .selectedPurposeName
+                                                .value
+                                            : controller
+                                                .tujuanVisitController
+                                                .text,
+                                    dariTanggal: selectedDariTanggal.value,
+                                    sampaiTanggal: selectedSampaiTanggal.value,
+                                    tanggalSelesai:
+                                        selectedTanggalSelesai.value,
+                                    namaPic: controller.picController.text,
+                                    themeOfDiscussion:
+                                        controller.discussionController.text,
+                                    problem: controller.problemController.text,
+                                    followUp:
+                                        controller.followUpController.text,
+                                    description:
+                                        controller.pelaksanaanController.text,
+                                    photo1: initialData.photo1,
+                                    photo2: initialData.photo2,
+                                    latitude: initialData.latitude,
+                                    longitude: initialData.longitude,
+                                    mainPersons:
+                                        controller.mainPersons.toList(),
+                                  );
+
+                                  print(
+                                    'Data yang akan disimpan: ${updatedData.toJson()}',
+                                  );
+                                  await controller.saveEditedData(
+                                    updatedData.toJson(),
+                                  );
+
+                                  Get.snackbar(
+                                    'Sukses',
+                                    'Data berhasil diperbarui',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: Colors.green,
+                                    colorText: Colors.white,
+                                  );
+                                  Get.back();
+                                } catch (e) {
+                                  print('Error menyimpan data: $e');
+                                  Get.snackbar(
+                                    'Error',
+                                    'Gagal menyimpan data: $e',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                  );
+                                }
+                              } else {
+                                Get.snackbar(
+                                  'Peringatan',
+                                  'Harap lengkapi semua field wajib',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.orange,
+                                  colorText: Colors.white,
+                                );
+                              }
+                            },
+                    child:
+                        controller.isLoading.value
+                            ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : const Text(
+                              'Submit Direct Visit',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Data Visit',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Tipe Visit',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-                const SizedBox(height: 4),
-                Obx(() => controller.isLoadingType.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.typeList.isEmpty
-                    ? const Center(child: Text('Tidak ada data Type tersedia'))
-                    : DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: controller.selectedTypeName.value.isNotEmpty
-                      ? controller.selectedTypeName.value
-                      : null,
-                  hint: const Text('-- Pilih Tipe --'),
-                  items: controller.typeList.map((type) {
-                    return DropdownMenuItem<String>(
-                      value: type.kode,
-                      child: Text(type.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    controller.selectedTypeName.value = value ?? '';
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  validator: (value) => value == null || value.isEmpty ? 'Harap pilih Tipe' : null,
-                )),
-
-                const SizedBox(height: 8),
-                const Text(
-                  'Tujuan Visit',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-                const SizedBox(height: 4),
-                Obx(() => controller.isLoadingPurpose.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.purposeList.isEmpty
-                    ? const Center(child: Text('Tidak ada data Purpose tersedia'))
-                    : DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: controller.selectedPurposeName.value.isNotEmpty
-                      ? controller.selectedPurposeName.value
-                      : null,
-                  hint: const Text('-- Pilih Tujuan --'),
-                  items: controller.purposeList.map((purpose) {
-                    return DropdownMenuItem<String>(
-                      value: purpose.kode,
-                      child: Text(purpose.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    controller.selectedPurposeName.value = value ?? '';
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  validator: (value) => value == null || value.isEmpty ? 'Harap pilih Tujuan' : null,
-                )),
-
-                _buildTextField(
-                  'Dari Tanggal',
-                  controller.dariTanggalController,
-                  readOnly: true,
-                  onTap: () => selectDate(context, 'dariTanggal', selectedDariTanggal),
-                  validator: (value) => selectedDariTanggal.value == null ? 'Dari Tanggal wajib diisi' : null,
-                ),
-                _buildTextField(
-                  'Sampai Tanggal',
-                  controller.sampaiTanggalController,
-                  readOnly: true,
-                  onTap: () => selectDate(context, 'sampaiTanggal', selectedSampaiTanggal),
-                  validator: (value) => selectedSampaiTanggal.value == null ? 'Sampai Tanggal wajib diisi' : null,
-                ),
-                _buildTextField(
-                  'Tanggal Selesai',
-                  controller.tanggalSelesaiController,
-                  readOnly: true,
-                  onTap: () => selectDate(context, 'tanggalSelesai', selectedTanggalSelesai),
-                  validator: (value) => selectedTanggalSelesai.value == null ? 'Tanggal Selesai wajib diisi' : null,
-                ),
-                _buildTextField('Nama PIC', controller.picController, readOnly: false),
-                _buildTextField('Area Code', controller.areaController, readOnly: false), // Perbaikan dari picController
-                _buildTextField('Theme Discussion', controller.discussionController, readOnly: false),
-                _buildTextField('Problem', controller.problemController, readOnly: false),
-                _buildTextField('Keterangan Pelaksanaan', controller.pelaksanaanController, readOnly: false),
               ],
             ),
           ),
@@ -515,39 +1254,59 @@ class HistoryEdit extends GetView<HistoryEditController> {
     );
   }
 
-  Widget _buildTextField(
-      String label,
-      TextEditingController controller, {
-        bool readOnly = false,
-        VoidCallback? onTap,
-        String? Function(String?)? validator,
-      }) {
+  Widget _buildFieldLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.black54, fontSize: 14),
-          ),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: controller,
-            readOnly: readOnly,
-            onTap: onTap,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              suffixIcon: readOnly ? const Icon(Icons.calendar_today, size: 20) : null,
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF272728),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateField(
+    DateTime? selectedDate,
+    VoidCallback onTap,
+    String fieldName,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color:
+                  selectedDate != null
+                      ? const Color(0xFFAFA1CF)
+                      : const Color(0xFFCCCCCC),
+              width: selectedDate != null ? 2.0 : 0.5,
             ),
-            validator: validator ?? (value) => (value == null || value.isEmpty) ? 'Field tidak boleh kosong' : null,
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                selectedDate != null
+                    ? DateFormat('dd MMM yyyy').format(selectedDate)
+                    : '-- Pilih $fieldName --',
+                style: TextStyle(
+                  color:
+                      selectedDate != null
+                          ? const Color(0xFF272728)
+                          : const Color(0xFFCCCCCC),
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            const Icon(Icons.calendar_today, color: Color(0xFF272728)),
+          ],
+        ),
       ),
     );
   }
