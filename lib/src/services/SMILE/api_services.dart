@@ -407,4 +407,148 @@ class ApiServiceSmile {
       return null;
     }
   }
+
+  // Fetch Direct Visits by User ID
+  Future<List<Map<String, dynamic>>> fetchDirectVisitsByUserId() async {
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse(Url + 'direct-visits/my-visits'),
+        headers: _getHeaders(token),
+      );
+
+      print('Direct Visits API Response Status: ${response.statusCode}');
+      print('Direct Visits API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+
+        // Handle different response formats
+        if (decoded is List) {
+          return List<Map<String, dynamic>>.from(decoded);
+        } else if (decoded is Map && decoded.containsKey('data')) {
+          return List<Map<String, dynamic>>.from(decoded['data']);
+        } else {
+          throw Exception('Unexpected direct visits response format');
+        }
+      } else if (response.statusCode == 401) {
+        Get.offAll(() => LoginPage());
+        throw Exception('Sesi telah berakhir, silakan login kembali');
+      } else {
+        throw Exception(
+          'Gagal memuat data direct visits: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('Error fetching direct visits: $e');
+      throw Exception('Error fetching direct visits: $e');
+    }
+  }
+
+  // Fetch All Direct Visits (for admin/supervisor)
+  Future<List<Map<String, dynamic>>> fetchAllDirectVisits() async {
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse(Url + 'direct-visits'),
+        headers: _getHeaders(token),
+      );
+
+      print('All Direct Visits API Response Status: ${response.statusCode}');
+      print('All Direct Visits API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+
+        // Handle different response formats
+        if (decoded is List) {
+          return List<Map<String, dynamic>>.from(decoded);
+        } else if (decoded is Map && decoded.containsKey('data')) {
+          return List<Map<String, dynamic>>.from(decoded['data']);
+        } else {
+          throw Exception('Unexpected all direct visits response format');
+        }
+      } else if (response.statusCode == 401) {
+        Get.offAll(() => LoginPage());
+        throw Exception('Sesi telah berakhir, silakan login kembali');
+      } else {
+        throw Exception(
+          'Gagal memuat semua data direct visits: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('Error fetching all direct visits: $e');
+      throw Exception('Error fetching all direct visits: $e');
+    }
+  }
+
+  // Fetch History Visits (semua data tanpa filter status)
+  Future<List<Map<String, dynamic>>> fetchHistoryVisits() async {
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse(Url + 'direct-visit/history'),
+        headers: _getHeaders(token),
+      );
+
+      print('History Visits API Response Status: ${response.statusCode}');
+      print('History Visits API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+
+        // Handle different response formats
+        if (decoded is List) {
+          return List<Map<String, dynamic>>.from(decoded);
+        } else if (decoded is Map && decoded.containsKey('data')) {
+          return List<Map<String, dynamic>>.from(decoded['data']);
+        } else {
+          throw Exception('Unexpected history visits response format');
+        }
+      } else if (response.statusCode == 401) {
+        Get.offAll(() => LoginPage());
+        throw Exception('Sesi telah berakhir, silakan login kembali');
+      } else {
+        throw Exception(
+          'Gagal memuat data history visits: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('Error fetching history visits: $e');
+      throw Exception('Error fetching history visits: $e');
+    }
+  }
+
+  // Create or Update Direct Visit
+  Future<Map<String, dynamic>> createOrUpdateDirectVisit(
+    Map<String, dynamic> visitData,
+  ) async {
+    try {
+      final token = await _getToken();
+      final response = await http.post(
+        Uri.parse(Url + 'direct-visits'),
+        headers: _getHeaders(token),
+        body: jsonEncode(visitData),
+      );
+
+      print(
+        'Create/Update Direct Visit API Response Status: ${response.statusCode}',
+      );
+      print('Create/Update Direct Visit API Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
+      } else if (response.statusCode == 401) {
+        Get.offAll(() => LoginPage());
+        throw Exception('Sesi telah berakhir, silakan login kembali');
+      } else {
+        throw Exception(
+          'Gagal menyimpan data direct visit: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('Error creating/updating direct visit: $e');
+      throw Exception('Error creating/updating direct visit: $e');
+    }
+  }
 }
