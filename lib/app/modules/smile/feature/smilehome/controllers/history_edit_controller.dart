@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:sufi_one/app/modules/smile/models/jabatanSFI.dart';
@@ -56,6 +57,13 @@ class HistoryEditController extends GetxController {
   final RxList<Jabatan> jabatanList = <Jabatan>[].obs;
   final RxString selectedJabatanName = ''.obs;
 
+  // Tambahkan variabel untuk file gambar
+  final Rx<File?> selectedPhoto1 = Rx<File?>(null);
+  final Rx<File?> selectedPhoto2 = Rx<File?>(null);
+
+  // Main Persons List
+  final RxList<Map<String, String>> mainPersons = <Map<String, String>>[].obs;
+
   final dbHelper = DatabaseHelperSmile.instance;
   final apiService = ApiServiceSmile();
   late final JabatanSFIRepository jabatanSFIRepository;
@@ -84,9 +92,6 @@ class HistoryEditController extends GetxController {
   late TextEditingController mainPersonNameController;
   late TextEditingController mainPersonPhoneController;
 
-  // Main Persons List
-  final RxList<Map<String, String>> mainPersons = <Map<String, String>>[].obs;
-
   @override
   void onInit() {
     super.onInit();
@@ -112,13 +117,7 @@ class HistoryEditController extends GetxController {
       dbHelper: dbHelper,
       apiService: apiService,
     );
-    loadLocalJabatanSFI();
-    loadLocalArea();
-    loadLocalBranch();
-    loadLocalProduct();
-    loadLocalType();
-    loadLocalPurpose();
-    loadLocalJabatan();
+    loadAllData();
   }
 
   Future<void> loadLocalJabatanSFI() async {
@@ -126,7 +125,6 @@ class HistoryEditController extends GetxController {
     try {
       final data = await jabatanSFIRepository.dbHelper.getAllJabatanSFI();
       if (data.isEmpty) {
-        // Jika data lokal kosong, coba ambil dari API
         final apiData = await jabatanSFIRepository.getJabatanSFIs(
           forceRefresh: true,
         );
@@ -152,7 +150,6 @@ class HistoryEditController extends GetxController {
     try {
       final data = await areaRepository.dbHelper.getAllArea();
       if (data.isEmpty) {
-        // Jika data lokal kosong, coba ambil dari API
         final apiData = await areaRepository.getAreas(forceRefresh: true);
         areaList.assignAll(apiData);
       } else {
@@ -176,7 +173,6 @@ class HistoryEditController extends GetxController {
     try {
       final data = await branchRepository.dbHelper.getAllBranch();
       if (data.isEmpty) {
-        // Jika data lokal kosong, coba ambil dari API
         final apiData = await branchRepository.getBranches(forceRefresh: true);
         branchList.assignAll(apiData);
       } else {
@@ -200,7 +196,6 @@ class HistoryEditController extends GetxController {
     try {
       final data = await productRepository.dbHelper.getAllProduct();
       if (data.isEmpty) {
-        // Jika data lokal kosong, coba ambil dari API
         final apiData = await productRepository.getProducts(forceRefresh: true);
         productList.assignAll(apiData);
       } else {
@@ -224,7 +219,6 @@ class HistoryEditController extends GetxController {
     try {
       final data = await typeRepository.dbHelper.getAllType();
       if (data.isEmpty) {
-        // Jika data lokal kosong, coba ambil dari API
         final apiData = await typeRepository.getTypes(forceRefresh: true);
         typeList.assignAll(apiData);
       } else {
@@ -248,7 +242,6 @@ class HistoryEditController extends GetxController {
     try {
       final data = await purposeRepository.dbHelper.getAllPurpose();
       if (data.isEmpty) {
-        // Jika data lokal kosong, coba ambil dari API
         final apiData = await purposeRepository.getPurposes(forceRefresh: true);
         purposeList.assignAll(apiData);
       } else {
@@ -272,7 +265,6 @@ class HistoryEditController extends GetxController {
     try {
       final data = await jabatanRepository.dbHelper.getAllJabatan();
       if (data.isEmpty) {
-        // Jika data lokal kosong, coba ambil dari API
         final apiData = await jabatanRepository.getJabatans(forceRefresh: true);
         jabatanList.assignAll(apiData);
       } else {
@@ -288,6 +280,35 @@ class HistoryEditController extends GetxController {
       );
     } finally {
       isLoadingJabatan.value = false;
+    }
+  }
+
+  Future<void> loadAllData() async {
+    try {
+      await Future.wait([
+        loadLocalJabatanSFI(),
+        loadLocalArea(),
+        loadLocalBranch(),
+        loadLocalProduct(),
+        loadLocalType(),
+        loadLocalPurpose(),
+        loadLocalJabatan(),
+      ]);
+      print('All data loaded. Ready to initialize dropdowns.');
+      print('JabatanSFI: ${jabatanSFIList.length} items');
+      print('Area: ${areaList.length} items');
+      print('Branch: ${branchList.length} items');
+      print('Product: ${productList.length} items');
+      print('Type: ${typeList.length} items');
+      print('Purpose: ${purposeList.length} items');
+      print('Jabatan: ${jabatanList.length} items');
+    } catch (e) {
+      print('Error loading all data: $e');
+      Get.snackbar(
+        'Error',
+        'Gagal memuat semua data: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -339,127 +360,8 @@ class HistoryEditController extends GetxController {
     );
     mainPersonNameController = TextEditingController();
     mainPersonPhoneController = TextEditingController();
-  }
 
-  // Fungsi untuk memuat semua data terlebih dahulu
-  Future<void> loadAllData() async {
-    await Future.wait([
-      loadLocalJabatanSFI(),
-      loadLocalArea(),
-      loadLocalBranch(),
-      loadLocalProduct(),
-      loadLocalType(),
-      loadLocalPurpose(),
-      loadLocalJabatan(),
-    ]);
-
-    print('All data loaded. Initializing dropdowns...');
-    print('JabatanSFI: ${jabatanSFIList.length} items');
-    print('Area: ${areaList.length} items');
-    print('Branch: ${branchList.length} items');
-    print('Product: ${productList.length} items');
-    print('Type: ${typeList.length} items');
-    print('Purpose: ${purposeList.length} items');
-    print('Jabatan: ${jabatanList.length} items');
-  }
-
-  // Fungsi untuk menginisialisasi dropdown setelah data dimuat
-  void initializeDropdowns(Visit initialData) {
-    print('Initializing dropdowns with data: ${initialData.toJson()}');
-    print('Available jabatanSFI: ${jabatanSFIList.length} items');
-    print('Available area: ${areaList.length} items');
-    print('Available branch: ${branchList.length} items');
-    print('Available product: ${productList.length} items');
-    print('Available type: ${typeList.length} items');
-    print('Available purpose: ${purposeList.length} items');
-
-    // Konversi nama → kode jabatan
-    final matchedJabatanSFI = jabatanSFIList.firstWhereOrNull(
-      (j) => j.name == initialData.jabatanSaya,
-    );
-    if (matchedJabatanSFI != null) {
-      selectedJabatanSFIName.value = matchedJabatanSFI.kode;
-      print(
-        'Initialized jabatan: ${matchedJabatanSFI.kode} - ${matchedJabatanSFI.name}',
-      );
-    } else {
-      print('No matching jabatan for name: ${initialData.jabatanSaya}');
-      // Reset jika tidak ada match
-      selectedJabatanSFIName.value = '';
-    }
-
-    // Konversi kode → nama area (area menggunakan code)
-    final matchedArea = areaList.firstWhereOrNull(
-      (a) => a.code == initialData.areaCode,
-    );
-    if (matchedArea != null) {
-      selectedAreaName.value = matchedArea.code;
-      print('Initialized area: ${matchedArea.code} - ${matchedArea.name}');
-    } else {
-      print('No matching area for code: ${initialData.areaCode}');
-      // Reset jika tidak ada match
-      selectedAreaName.value = '';
-    }
-
-    // Konversi kode → nama branch (branch menggunakan code)
-    final matchedBranch = branchList.firstWhereOrNull(
-      (b) => b.code == initialData.branchCode,
-    );
-    if (matchedBranch != null) {
-      selectedBranchName.value = matchedBranch.code;
-      print(
-        'Initialized branch: ${matchedBranch.code} - ${matchedBranch.name}',
-      );
-    } else {
-      print('No matching branch for code: ${initialData.branchCode}');
-      // Reset jika tidak ada match
-      selectedBranchName.value = '';
-    }
-
-    // Konversi kode → nama product (product menggunakan kode)
-    final matchedProduct = productList.firstWhereOrNull(
-      (p) => p.code == initialData.productCode,
-    );
-    if (matchedProduct != null) {
-      selectedProductName.value = matchedProduct.code;
-      print(
-        'Initialized product: ${matchedProduct.code} - ${matchedProduct.name}',
-      );
-    } else {
-      print('No matching product for code: ${initialData.productCode}');
-      // Reset jika tidak ada match
-      selectedProductName.value = '';
-    }
-
-    // Konversi nama → kode type
-    final matchedType = typeList.firstWhereOrNull(
-      (t) => t.name == initialData.tipeVisit,
-    );
-    if (matchedType != null) {
-      selectedTypeName.value = matchedType.kode;
-      print('Initialized type: ${matchedType.kode} - ${matchedType.name}');
-    } else {
-      print('No matching type for name: ${initialData.tipeVisit}');
-      // Reset jika tidak ada match
-      selectedTypeName.value = '';
-    }
-
-    // Konversi nama → kode purpose
-    final matchedPurpose = purposeList.firstWhereOrNull(
-      (p) => p.name == initialData.tujuanVisit,
-    );
-    if (matchedPurpose != null) {
-      selectedPurposeName.value = matchedPurpose.kode;
-      print(
-        'Initialized purpose: ${matchedPurpose.kode} - ${matchedPurpose.name}',
-      );
-    } else {
-      print('No matching purpose for name: ${initialData.tujuanVisit}');
-      // Reset jika tidak ada match
-      selectedPurposeName.value = '';
-    }
-
-    // Load main persons jika ada
+    // Inisialisasi mainPersons dari initialData
     if (initialData.mainPersons != null &&
         initialData.mainPersons!.isNotEmpty) {
       try {
@@ -474,9 +376,124 @@ class HistoryEditController extends GetxController {
           }
         }
         mainPersons.assignAll(persons);
-        print('Loaded ${mainPersons.length} main persons');
+        print(
+          'Initialized ${mainPersons.length} main persons from initialData',
+        );
       } catch (e) {
-        print('Error loading main persons: $e');
+        print('Error initializing main persons: $e');
+      }
+    }
+  }
+
+  void initializeDropdowns(Visit initialData) {
+    print('Initializing dropdowns with data: ${initialData.toJson()}');
+    print('Available jabatanSFI: ${jabatanSFIList.length} items');
+    print('Available area: ${areaList.length} items');
+    print('Available branch: ${branchList.length} items');
+    print('Available product: ${productList.length} items');
+    print('Available type: ${typeList.length} items');
+    print('Available purpose: ${purposeList.length} items');
+    print('Available jabatan: ${jabatanList.length} items');
+
+    // JabatanSFI: Cocokkan berdasarkan kode
+    final matchedJabatanSFI = jabatanSFIList.firstWhereOrNull(
+      (j) => j.kode == initialData.jabatanSaya,
+    );
+    if (matchedJabatanSFI != null) {
+      selectedJabatanSFIName.value = matchedJabatanSFI.kode;
+      print(
+        'Initialized jabatanSFI: ${matchedJabatanSFI.kode} - ${matchedJabatanSFI.name}',
+      );
+    } else {
+      print('No matching jabatanSFI for kode: ${initialData.jabatanSaya}');
+      selectedJabatanSFIName.value = '';
+    }
+
+    // Area: Cocokkan berdasarkan code
+    final matchedArea = areaList.firstWhereOrNull(
+      (a) => a.code == initialData.areaCode,
+    );
+    if (matchedArea != null) {
+      selectedAreaName.value = matchedArea.code;
+      print('Initialized area: ${matchedArea.code} - ${matchedArea.name}');
+    } else {
+      print('No matching area for code: ${initialData.areaCode}');
+      selectedAreaName.value = '';
+    }
+
+    // Branch: Cocokkan berdasarkan code
+    final matchedBranch = branchList.firstWhereOrNull(
+      (b) => b.code == initialData.branchCode,
+    );
+    if (matchedBranch != null) {
+      selectedBranchName.value = matchedBranch.code;
+      print(
+        'Initialized branch: ${matchedBranch.code} - ${matchedBranch.name}',
+      );
+    } else {
+      print('No matching branch for code: ${initialData.branchCode}');
+      selectedBranchName.value = '';
+    }
+
+    // Product: Cocokkan berdasarkan code
+    final matchedProduct = productList.firstWhereOrNull(
+      (p) => p.code == initialData.productCode,
+    );
+    if (matchedProduct != null) {
+      selectedProductName.value = matchedProduct.code;
+      print(
+        'Initialized product: ${matchedProduct.code} - ${matchedProduct.name}',
+      );
+    } else {
+      print('No matching product for code: ${initialData.productCode}');
+      selectedProductName.value = '';
+    }
+
+    // Type: Cocokkan berdasarkan kode
+    final matchedType = typeList.firstWhereOrNull(
+      (t) => t.kode == initialData.tipeVisit,
+    );
+    if (matchedType != null) {
+      selectedTypeName.value = matchedType.kode;
+      print('Initialized type: ${matchedType.kode} - ${matchedType.name}');
+    } else {
+      print('No matching type for kode: ${initialData.tipeVisit}');
+      selectedTypeName.value = '';
+    }
+
+    // Purpose: Cocokkan berdasarkan kode
+    final matchedPurpose = purposeList.firstWhereOrNull(
+      (p) => p.kode == initialData.tujuanVisit,
+    );
+    if (matchedPurpose != null) {
+      selectedPurposeName.value = matchedPurpose.kode;
+      print(
+        'Initialized purpose: ${matchedPurpose.kode} - ${matchedPurpose.name}',
+      );
+    } else {
+      print('No matching purpose for kode: ${initialData.tujuanVisit}');
+      selectedPurposeName.value = '';
+    }
+
+    // Jabatan (Main Person): Cocokkan berdasarkan kode
+    if (initialData.mainPersons != null &&
+        initialData.mainPersons!.isNotEmpty) {
+      final firstPerson = initialData.mainPersons!.firstWhereOrNull(
+        (p) => p is Map<String, dynamic>,
+      );
+      if (firstPerson != null) {
+        final matchedJabatan = jabatanList.firstWhereOrNull(
+          (j) => j.kode == firstPerson['jabatan'],
+        );
+        if (matchedJabatan != null) {
+          selectedJabatanName.value = matchedJabatan.kode;
+          print(
+            'Initialized jabatan (main person): ${matchedJabatan.kode} - ${matchedJabatan.name}',
+          );
+        } else {
+          print('No matching jabatan for kode: ${firstPerson['jabatan']}');
+          selectedJabatanName.value = '';
+        }
       }
     }
   }
@@ -495,26 +512,27 @@ class HistoryEditController extends GetxController {
     return matched?.code ?? '';
   }
 
-  Future<void> saveEditedData(Map<String, dynamic> data) async {
+  Future<void> saveEditedData(
+    Map<String, dynamic> data,
+    File? photo1,
+    File? photo2,
+  ) async {
     isLoading.value = true;
     try {
-      // Ambil ID dari data yang diterima
       final String? id = data['id'];
       if (id == null) {
         throw Exception('ID tidak ditemukan dalam data');
       }
 
-      // Format tanggal untuk API
       String formatDate(dynamic date) {
         if (date == null) return '';
         if (date is String) {
-          // Jika date adalah string, coba parse ke DateTime
           try {
             final parsedDate = DateTime.parse(date);
             return DateFormat('yyyy-MM-dd').format(parsedDate);
           } catch (e) {
             print('Error parsing date string: $date');
-            return date; // Return string as-is jika gagal parse
+            return date;
           }
         } else if (date is DateTime) {
           return DateFormat('yyyy-MM-dd').format(date);
@@ -522,58 +540,71 @@ class HistoryEditController extends GetxController {
         return '';
       }
 
-      // Persiapkan data untuk update dengan semua field yang ada
-      final updateData = {
-        'jabatan_saya': getSelectedJabatanCode(),
-        'area_code': getSelectedAreaCode(),
-        'branch_code':
-            selectedBranchName.value.isNotEmpty
-                ? selectedBranchName.value
-                : cabangController.text,
-        'product_code':
-            selectedProductName.value.isNotEmpty
-                ? selectedProductName.value
-                : produkController.text,
-        'dealer_code': dealerController.text,
-        'tipe_visit':
-            selectedTypeName.value.isNotEmpty
-                ? selectedTypeName.value
-                : tipeVisitController.text,
-        'tujuan_visit':
-            selectedPurposeName.value.isNotEmpty
-                ? selectedPurposeName.value
-                : tujuanVisitController.text,
-        'dari_tanggal': formatDate(data['dari_tanggal']),
-        'sampai_tanggal': formatDate(data['sampai_tanggal']),
-        'tanggal_selesai': formatDate(data['tanggal_selesai']),
-        'nama_pic': picController.text,
-        'theme_of_discussion': discussionController.text,
-        'problem': problemController.text,
-        'follow_up': followUpController.text,
-        'description': pelaksanaanController.text,
-        'photo1_path': data['photo1_path'] ?? '',
-        'photo2_path': data['photo2_path'] ?? '',
-        'latitude': data['latitude']?.toString() ?? '',
-        'longitude': data['longitude']?.toString() ?? '',
-        'main_persons': mainPersons.toList(),
-      };
-
-      print('Data yang akan diupdate: ${jsonEncode(updateData)}');
-
-      final response = await http.put(
+      // Persiapkan request multipart
+      final request = http.MultipartRequest(
+        'PUT',
         Uri.parse('${Url}direct-visit/$id'),
-        headers: {
-          'Authorization': 'Bearer ${GetStorage().read('token')}',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(updateData),
       );
 
+      // Tambahkan header
+      request.headers['Authorization'] = 'Bearer ${GetStorage().read('token')}';
+
+      // Tambahkan field data
+      request.fields['jabatan_saya'] = getSelectedJabatanCode();
+      request.fields['area_code'] = getSelectedAreaCode();
+      request.fields['branch_code'] =
+          selectedBranchName.value.isNotEmpty
+              ? selectedBranchName.value
+              : cabangController.text;
+      request.fields['product_code'] =
+          selectedProductName.value.isNotEmpty
+              ? selectedProductName.value
+              : produkController.text;
+      request.fields['dealer_code'] = dealerController.text;
+      request.fields['tipe_visit'] =
+          selectedTypeName.value.isNotEmpty
+              ? selectedTypeName.value
+              : tipeVisitController.text;
+      request.fields['tujuan_visit'] =
+          selectedPurposeName.value.isNotEmpty
+              ? selectedPurposeName.value
+              : tujuanVisitController.text;
+      request.fields['dari_tanggal'] = formatDate(data['dari_tanggal']);
+      request.fields['sampai_tanggal'] = formatDate(data['sampai_tanggal']);
+      request.fields['tanggal_selesai'] = formatDate(data['tanggal_selesai']);
+      request.fields['nama_pic'] = picController.text;
+      request.fields['theme_of_discussion'] = discussionController.text;
+      request.fields['problem'] = problemController.text;
+      request.fields['follow_up'] = followUpController.text;
+      request.fields['description'] = pelaksanaanController.text;
+      request.fields['latitude'] = data['latitude']?.toString() ?? '';
+      request.fields['longitude'] = data['longitude']?.toString() ?? '';
+      request.fields['main_persons'] = jsonEncode(mainPersons.toList());
+
+      // Tambahkan file gambar jika ada
+      if (photo1 != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('photo1', photo1.path),
+        );
+      }
+      if (photo2 != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('photo2', photo2.path),
+        );
+      }
+
+      print('Mengirim data ke: ${Url}direct-visit/$id');
+      print('Data fields: ${request.fields}');
+      print('Files: ${request.files.length}');
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
       print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Response body: $responseBody');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Data berhasil disimpan: ${response.body}');
+        print('Data dan gambar berhasil disimpan: $responseBody');
       } else {
         throw Exception(
           'Gagal menyimpan data: ${response.statusCode} - ${response.reasonPhrase}',
@@ -600,7 +631,11 @@ class HistoryEditController extends GetxController {
     picController.dispose();
     discussionController.dispose();
     problemController.dispose();
+    followUpController.dispose();
     pelaksanaanController.dispose();
+    dealerController.dispose();
+    mainPersonNameController.dispose();
+    mainPersonPhoneController.dispose();
     super.onClose();
   }
 }

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sufi_one/app/modules/smile/feature/smilehome/controllers/history_edit_controller.dart';
-import 'package:sufi_one/app/modules/smile/models/area.dart';
-import 'package:sufi_one/app/modules/smile/models/purpose.dart';
 import 'package:sufi_one/app/modules/smile/models/visit.dart';
+import 'dart:io';
 
 class HistoryEdit extends GetView<HistoryEditController> {
   const HistoryEdit({super.key});
@@ -20,13 +20,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
     // Inisialisasi TextEditingController di controller
     controller.initializeControllers(initialData);
 
-    // Inisialisasi dropdown setelah controller diinisialisasi
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await controller.loadAllData();
-      controller.initializeDropdowns(initialData);
-    });
-
-    // State untuk tanggal
+    // Inisialisasi state untuk tanggal
     final Rx<DateTime?> selectedDariTanggal = Rx<DateTime?>(
       initialData.dariTanggal,
     );
@@ -36,6 +30,38 @@ class HistoryEdit extends GetView<HistoryEditController> {
     final Rx<DateTime?> selectedTanggalSelesai = Rx<DateTime?>(
       initialData.tanggalSelesai,
     );
+
+    // Inisialisasi state untuk file gambar
+    final Rx<File?> selectedPhoto1 = Rx<File?>(null);
+    final Rx<File?> selectedPhoto2 = Rx<File?>(null);
+
+    // Pastikan semua data dimuat sebelum inisialisasi dropdown
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        // Tunggu hingga semua data dimuat
+        await controller.loadAllData();
+        // Inisialisasi dropdown dengan data yang sesuai
+        controller.initializeDropdowns(initialData);
+      } catch (e) {
+        print('Error loading data: $e');
+        Get.snackbar(
+          'Error',
+          'Gagal memuat data: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    });
+
+    // Fungsi untuk memilih gambar
+    Future<void> pickImage(Rx<File?> selectedPhoto) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        selectedPhoto.value = File(pickedFile.path);
+      }
+    }
 
     // Fungsi untuk memilih tanggal
     Future<void> selectDate(
@@ -161,7 +187,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
           onPressed: () => Get.back(),
         ),
         title: const Text(
-          'Form direct visit',
+          'Edit Visit Dealer',
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
@@ -175,7 +201,330 @@ class HistoryEdit extends GetView<HistoryEditController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Card Jabatan Saya - sama persis dengan direct_visit.dart
+                // Card Data Gambar
+                Card(
+                  color: const Color(0xFFFDFDFF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            'Data Gambar',
+                            style: TextStyle(fontSize: 22, color: headerBlue),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Gambar 1
+                        _buildFieldLabel('Gambar 1'),
+                        Obx(
+                          () => Container(
+                            width: double.infinity,
+                            height: 200,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  spreadRadius: 2,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child:
+                                  selectedPhoto1.value != null
+                                      ? Image.file(
+                                        selectedPhoto1.value!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          print(
+                                            'Error memuat gambar photo1: $error',
+                                          );
+                                          return Container(
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 50,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    'Gambar tidak dapat dimuat',
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                      : (initialData.photo1 != null &&
+                                          initialData.photo1!.isNotEmpty)
+                                      ? Image.network(
+                                        'http://10.0.2.2:8000/storage/${initialData.photo1!}',
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          print(
+                                            'Error memuat gambar photo1: $error',
+                                          );
+                                          return Container(
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 50,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    'Gambar tidak dapat dimuat',
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        loadingBuilder: (
+                                          context,
+                                          child,
+                                          loadingProgress,
+                                        ) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Container(
+                                            color: Colors.grey[200],
+                                            child: const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                      : Container(
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.image_not_supported,
+                                                size: 50,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(height: 8),
+                                              Text(
+                                                'Tidak ada gambar tersedia',
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => pickImage(selectedPhoto1),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          child: const Text('Pilih Gambar 1'),
+                        ),
+                        const SizedBox(height: 16),
+                        // Gambar 2
+                        _buildFieldLabel('Gambar 2'),
+                        Obx(
+                          () => Container(
+                            width: double.infinity,
+                            height: 200,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  spreadRadius: 2,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child:
+                                  selectedPhoto2.value != null
+                                      ? Image.file(
+                                        selectedPhoto2.value!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          print(
+                                            'Error memuat gambar photo2: $error',
+                                          );
+                                          return Container(
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 50,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    'Gambar tidak dapat dimuat',
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                      : (initialData.photo2 != null &&
+                                          initialData.photo2!.isNotEmpty)
+                                      ? Image.network(
+                                        'http://10.0.2.2:8000/storage/${initialData.photo2!}',
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          print(
+                                            'Error memuat gambar photo2: $error',
+                                          );
+                                          return Container(
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 50,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    'Gambar tidak dapat dimuat',
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        loadingBuilder: (
+                                          context,
+                                          child,
+                                          loadingProgress,
+                                        ) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Container(
+                                            color: Colors.grey[200],
+                                            child: const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                      : Container(
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.image_not_supported,
+                                                size: 50,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(height: 8),
+                                              Text(
+                                                'Tidak ada gambar tersedia',
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => pickImage(selectedPhoto2),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          child: const Text('Pilih Gambar 2'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Card Jabatan Saya
                 Card(
                   color: const Color(0xFFFDFDFF),
                   shape: RoundedRectangleBorder(
@@ -207,21 +556,21 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                   : DropdownButtonFormField<String>(
                                     isExpanded: true,
                                     value:
-                                        controller.jabatanSFIList
-                                                    .where(
-                                                      (item) =>
-                                                          item.kode ==
-                                                          controller
-                                                              .selectedJabatanSFIName
-                                                              .value,
-                                                    )
-                                                    .length ==
-                                                1
+                                        controller
+                                                    .selectedJabatanSFIName
+                                                    .value
+                                                    .isNotEmpty &&
+                                                controller.jabatanSFIList.any(
+                                                  (item) =>
+                                                      item.kode ==
+                                                      controller
+                                                          .selectedJabatanSFIName
+                                                          .value,
+                                                )
                                             ? controller
                                                 .selectedJabatanSFIName
                                                 .value
                                             : null,
-
                                     hint: Text(
                                       '-- Pilih Jabatan --',
                                       style: TextStyle(color: dropdownLight),
@@ -232,7 +581,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                     decoration: const InputDecoration(
                                       enabledBorder: UnderlineInputBorder(
                                         borderSide: BorderSide(
-                                          color: Color(0xFFCCCCCC),
+                                          color: dropdownLightNF,
                                           width: 0.5,
                                         ),
                                       ),
@@ -270,7 +619,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                 ),
                 const SizedBox(height: 16),
 
-                // Card Data Dealer - sama persis dengan direct_visit.dart
+                // Card Data Dealer
                 Card(
                   color: const Color(0xFFFDFDFF),
                   child: Padding(
@@ -351,7 +700,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                                 : null,
                                   ),
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Cabang'),
                         Obx(
@@ -423,7 +771,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                                 : null,
                                   ),
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Produk'),
                         Obx(
@@ -495,10 +842,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                                 : null,
                                   ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        // Dealer Search Section - sama persis dengan direct_visit.dart
                         _buildFieldLabel('Dealer'),
                         Row(
                           children: [
@@ -508,7 +852,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                 readOnly: true,
                                 decoration: InputDecoration(
                                   hintText: 'Pilih dealer terlebih dahulu',
-                                  hintStyle: TextStyle(color: dropdownLight),
+                                  hintStyle: TextStyle(color: dropdownLightNF),
                                   enabledBorder: UnderlineInputBorder(
                                     borderSide: BorderSide(
                                       color: dropdownLightNF,
@@ -527,7 +871,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               onPressed: () {
-                                // TODO: Implement dealer search functionality
                                 Get.snackbar(
                                   'Info',
                                   'Fitur pencarian dealer akan segera tersedia',
@@ -568,7 +911,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                 ),
                 const SizedBox(height: 12),
 
-                // Card Data Visit - sama persis dengan direct_visit.dart
+                // Card Data Visit
                 Card(
                   color: const Color(0xFFFDFDFF),
                   child: Padding(
@@ -601,7 +944,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                                     .isNotEmpty &&
                                                 controller.typeList.any(
                                                   (item) =>
-                                                      item.name ==
+                                                      item.kode ==
                                                       controller
                                                           .selectedTypeName
                                                           .value,
@@ -649,7 +992,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                                 : null,
                                   ),
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Tujuan Visit'),
                         Obx(
@@ -665,24 +1007,21 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                   : DropdownButtonFormField<String>(
                                     isExpanded: true,
                                     value:
-                                        controller.purposeList
-                                                    .where(
-                                                      (item) =>
-                                                          item.kode
-                                                              .toString() ==
-                                                          controller
-                                                              .selectedPurposeName
-                                                              .value
-                                                              .toString(),
-                                                    )
-                                                    .length ==
-                                                1
+                                        controller
+                                                    .selectedPurposeName
+                                                    .value
+                                                    .isNotEmpty &&
+                                                controller.purposeList.any(
+                                                  (item) =>
+                                                      item.kode ==
+                                                      controller
+                                                          .selectedPurposeName
+                                                          .value,
+                                                )
                                             ? controller
                                                 .selectedPurposeName
                                                 .value
-                                                .toString()
                                             : null,
-
                                     hint: Text(
                                       '-- Pilih Tujuan Visit --',
                                       style: TextStyle(color: dropdownLight),
@@ -724,7 +1063,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                                 : null,
                                   ),
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Dari Tanggal'),
                         _buildDateField(
@@ -736,7 +1074,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                           ),
                           'dariTanggal',
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Sampai Tanggal'),
                         _buildDateField(
@@ -748,7 +1085,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                           ),
                           'sampaiTanggal',
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Tanggal Selesai'),
                         _buildDateField(
@@ -760,7 +1096,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                           ),
                           'tanggalSelesai',
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Nama PIC'),
                         TextFormField(
@@ -798,7 +1133,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                       ? 'Nama PIC wajib diisi'
                                       : null,
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Theme of Discussion'),
                         TextFormField(
@@ -834,7 +1168,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                       ? 'Tema diskusi wajib diisi'
                                       : null,
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Problem'),
                         TextFormField(
@@ -870,7 +1203,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                       ? 'Problem wajib diisi'
                                       : null,
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Follow-Up'),
                         TextFormField(
@@ -906,7 +1238,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                       ? 'Follow-Up wajib diisi'
                                       : null,
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Description'),
                         TextFormField(
@@ -947,7 +1278,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                   ),
                 ),
 
-                // Card Main Person - sama persis dengan direct_visit.dart
+                // Card Main Person
                 Card(
                   color: const Color(0xFFFDFDFF),
                   shape: RoundedRectangleBorder(
@@ -1020,7 +1351,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                                 : null,
                                   ),
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('Nama PIC'),
                         TextFormField(
@@ -1041,7 +1371,6 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                       ? 'Nama wajib diisi'
                                       : null,
                         ),
-
                         const SizedBox(height: 12),
                         _buildFieldLabel('No Telpon PIC'),
                         TextFormField(
@@ -1062,13 +1391,11 @@ class HistoryEdit extends GetView<HistoryEditController> {
                             return null;
                           },
                         ),
-
                         const SizedBox(height: 16),
                         Align(
                           alignment: Alignment.center,
                           child: OutlinedButton(
                             onPressed: () {
-                              // TODO: Implement add main person functionality
                               Get.snackbar(
                                 'Info',
                                 'Fitur tambah main person akan segera tersedia',
@@ -1086,8 +1413,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                             ),
                           ),
                         ),
-
-                        // Main Persons List - Simplified for now
+                        // Menampilkan daftar main persons
                         if (controller.mainPersons.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           Text(
@@ -1098,16 +1424,38 @@ class HistoryEdit extends GetView<HistoryEditController> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text('Fitur main persons akan segera tersedia'),
+                          Obx(
+                            () => Column(
+                              children:
+                                  controller.mainPersons.map((person) {
+                                    return ListTile(
+                                      title: Text(
+                                        'Nama: ${person['nama'] ?? ''}',
+                                      ),
+                                      subtitle: Text(
+                                        'Jabatan: ${person['jabatan'] ?? ''}\nTelp: ${person['telp'] ?? ''}',
+                                      ),
+                                      trailing: IconButton(
+                                        icon: Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () {
+                                          controller.mainPersons.remove(person);
+                                        },
+                                      ),
+                                    );
+                                  }).toList(),
+                            ),
+                          ),
                         ],
                       ],
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
 
-                // Submit Button - sama persis dengan direct_visit.dart
+                // Submit Button
                 Obx(
                   () => ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -1181,8 +1529,14 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                         controller.followUpController.text,
                                     description:
                                         controller.pelaksanaanController.text,
-                                    photo1: initialData.photo1,
-                                    photo2: initialData.photo2,
+                                    photo1:
+                                        selectedPhoto1.value != null
+                                            ? selectedPhoto1.value!.path
+                                            : initialData.photo1,
+                                    photo2:
+                                        selectedPhoto2.value != null
+                                            ? selectedPhoto2.value!.path
+                                            : initialData.photo2,
                                     latitude: initialData.latitude,
                                     longitude: initialData.longitude,
                                     mainPersons:
@@ -1194,6 +1548,8 @@ class HistoryEdit extends GetView<HistoryEditController> {
                                   );
                                   await controller.saveEditedData(
                                     updatedData.toJson(),
+                                    selectedPhoto1.value,
+                                    selectedPhoto2.value,
                                   );
 
                                   Get.snackbar(
@@ -1237,7 +1593,7 @@ class HistoryEdit extends GetView<HistoryEditController> {
                               ),
                             )
                             : const Text(
-                              'Submit Direct Visit',
+                              'Save',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
