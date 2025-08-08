@@ -26,6 +26,7 @@ import 'package:sufi_one/src/database/SMILE/database_helper.dart';
 
 class HistoryEditController extends GetxController {
   final formKey = GlobalKey<FormState>();
+  final mainPersonFormKey = GlobalKey<FormState>(); // Moved from HistoryEdit
 
   final isLoading = false.obs;
   final isLoadingJabatanSFI = false.obs;
@@ -38,22 +39,16 @@ class HistoryEditController extends GetxController {
 
   final RxList<JabatanSFI> jabatanSFIList = <JabatanSFI>[].obs;
   final RxString selectedJabatanSFIName = ''.obs;
-
   final RxList<Area> areaList = <Area>[].obs;
   final RxString selectedAreaName = ''.obs;
-
   final RxList<Branch> branchList = <Branch>[].obs;
   final RxString selectedBranchName = ''.obs;
-
   final RxList<Product> productList = <Product>[].obs;
   final RxString selectedProductName = ''.obs;
-
   final RxList<Type> typeList = <Type>[].obs;
   final RxString selectedTypeName = ''.obs;
-
   final RxList<Purpose> purposeList = <Purpose>[].obs;
   final RxString selectedPurposeName = ''.obs;
-
   final RxList<Jabatan> jabatanList = <Jabatan>[].obs;
   final RxString selectedJabatanName = ''.obs;
 
@@ -61,11 +56,17 @@ class HistoryEditController extends GetxController {
   final Rx<File?> selectedPhoto1 = Rx<File?>(null);
   final Rx<File?> selectedPhoto2 = Rx<File?>(null);
 
+  // Rx variables for dates (moved from HistoryEdit)
+  final Rx<DateTime?> selectedDariTanggal = Rx<DateTime?>(null);
+  final Rx<DateTime?> selectedSampaiTanggal = Rx<DateTime?>(null);
+  final Rx<DateTime?> selectedTanggalSelesai = Rx<DateTime?>(null);
+
   // Main Persons List
   final RxList<Map<String, String>> mainPersons = <Map<String, String>>[].obs;
 
   final dbHelper = DatabaseHelperSmile.instance;
   final apiService = ApiServiceSmile();
+
   late final JabatanSFIRepository jabatanSFIRepository;
   late final AreaRepository areaRepository;
   late final BranchRepository branchRepository;
@@ -313,6 +314,9 @@ class HistoryEditController extends GetxController {
   }
 
   void initializeControllers(Visit initialData) {
+    print('--- Initializing Controllers with Visit Data ---');
+    print('Raw initialData: ${initialData.toJson()}'); // Print full raw data
+
     areaController = TextEditingController(text: initialData.areaCode ?? '');
     cabangController = TextEditingController(
       text: initialData.branchCode ?? '',
@@ -327,22 +331,19 @@ class HistoryEditController extends GetxController {
       text: initialData.tujuanVisit ?? '',
     );
     dariTanggalController = TextEditingController(
-      text:
-          initialData.dariTanggal != null
-              ? DateFormat('dd MMM yyyy').format(initialData.dariTanggal!)
-              : '',
+      text: initialData.dariTanggal != null
+          ? DateFormat('dd MMM yyyy').format(initialData.dariTanggal!)
+          : '',
     );
     sampaiTanggalController = TextEditingController(
-      text:
-          initialData.sampaiTanggal != null
-              ? DateFormat('dd MMM yyyy').format(initialData.sampaiTanggal!)
-              : '',
+      text: initialData.sampaiTanggal != null
+          ? DateFormat('dd MMM yyyy').format(initialData.sampaiTanggal!)
+          : '',
     );
     tanggalSelesaiController = TextEditingController(
-      text:
-          initialData.tanggalSelesai != null
-              ? DateFormat('dd MMM yyyy').format(initialData.tanggalSelesai!)
-              : '',
+      text: initialData.tanggalSelesai != null
+          ? DateFormat('dd MMM yyyy').format(initialData.tanggalSelesai!)
+          : '',
     );
     picController = TextEditingController(text: initialData.namaPic ?? '');
     discussionController = TextEditingController(
@@ -361,28 +362,45 @@ class HistoryEditController extends GetxController {
     mainPersonNameController = TextEditingController();
     mainPersonPhoneController = TextEditingController();
 
+    // Initialize Rx date variables
+    selectedDariTanggal.value = initialData.dariTanggal;
+    selectedSampaiTanggal.value = initialData.sampaiTanggal;
+    selectedTanggalSelesai.value = initialData.tanggalSelesai;
+
     // Inisialisasi mainPersons dari initialData
-    if (initialData.mainPersons != null &&
-        initialData.mainPersons!.isNotEmpty) {
+    print('Attempting to initialize mainPersons...');
+    print('initialData.mainPersons raw value: ${initialData.mainPersons}');
+    print('initialData.mainPersons runtimeType: ${initialData.mainPersons.runtimeType}');
+
+    if (initialData.mainPersons != null && initialData.mainPersons!.isNotEmpty) {
       try {
         final List<Map<String, String>> persons = [];
         for (var person in initialData.mainPersons!) {
+          print('Processing person: $person, type: ${person.runtimeType}');
           if (person is Map<String, dynamic>) {
             persons.add({
               'jabatan': person['jabatan']?.toString() ?? '',
               'nama': person['nama']?.toString() ?? '',
               'telp': person['telp']?.toString() ?? '',
             });
+            print('Added person: ${persons.last}');
+          } else {
+            print('Warning: Unexpected main person item type: ${person.runtimeType}. Expected Map<String, dynamic>.');
           }
         }
         mainPersons.assignAll(persons);
-        print(
-          'Initialized ${mainPersons.length} main persons from initialData',
-        );
+        print('Initialized ${mainPersons.length} main persons from initialData successfully.');
       } catch (e) {
-        print('Error initializing main persons: $e');
+        print('Error initializing main persons in controller: $e');
+        // Optionally clear mainPersons if an error occurs during parsing
+        mainPersons.clear();
       }
+    } else {
+      print('initialData.mainPersons is null or empty. No main persons to initialize.');
+      mainPersons.clear(); // Ensure it's empty if no data
     }
+    print('Current mainPersons in controller: ${mainPersons.toList()}');
+    print('--- End Initializing Controllers ---');
   }
 
   void initializeDropdowns(Visit initialData) {
@@ -397,7 +415,7 @@ class HistoryEditController extends GetxController {
 
     // JabatanSFI: Cocokkan berdasarkan kode
     final matchedJabatanSFI = jabatanSFIList.firstWhereOrNull(
-      (j) => j.kode == initialData.jabatanSaya,
+          (j) => j.kode == initialData.jabatanSaya,
     );
     if (matchedJabatanSFI != null) {
       selectedJabatanSFIName.value = matchedJabatanSFI.kode;
@@ -411,7 +429,7 @@ class HistoryEditController extends GetxController {
 
     // Area: Cocokkan berdasarkan code
     final matchedArea = areaList.firstWhereOrNull(
-      (a) => a.code == initialData.areaCode,
+          (a) => a.code == initialData.areaCode,
     );
     if (matchedArea != null) {
       selectedAreaName.value = matchedArea.code;
@@ -423,7 +441,7 @@ class HistoryEditController extends GetxController {
 
     // Branch: Cocokkan berdasarkan code
     final matchedBranch = branchList.firstWhereOrNull(
-      (b) => b.code == initialData.branchCode,
+          (b) => b.code == initialData.branchCode,
     );
     if (matchedBranch != null) {
       selectedBranchName.value = matchedBranch.code;
@@ -437,7 +455,7 @@ class HistoryEditController extends GetxController {
 
     // Product: Cocokkan berdasarkan code
     final matchedProduct = productList.firstWhereOrNull(
-      (p) => p.code == initialData.productCode,
+          (p) => p.code == initialData.productCode,
     );
     if (matchedProduct != null) {
       selectedProductName.value = matchedProduct.code;
@@ -451,7 +469,7 @@ class HistoryEditController extends GetxController {
 
     // Type: Cocokkan berdasarkan kode
     final matchedType = typeList.firstWhereOrNull(
-      (t) => t.kode == initialData.tipeVisit,
+          (t) => t.kode == initialData.tipeVisit,
     );
     if (matchedType != null) {
       selectedTypeName.value = matchedType.kode;
@@ -463,7 +481,7 @@ class HistoryEditController extends GetxController {
 
     // Purpose: Cocokkan berdasarkan kode
     final matchedPurpose = purposeList.firstWhereOrNull(
-      (p) => p.kode == initialData.tujuanVisit,
+          (p) => p.kode == initialData.tujuanVisit,
     );
     if (matchedPurpose != null) {
       selectedPurposeName.value = matchedPurpose.kode;
@@ -476,14 +494,15 @@ class HistoryEditController extends GetxController {
     }
 
     // Jabatan (Main Person): Cocokkan berdasarkan kode
-    if (initialData.mainPersons != null &&
-        initialData.mainPersons!.isNotEmpty) {
+    // This part initializes the dropdown for adding *new* main persons,
+    // not for displaying existing ones.
+    if (initialData.mainPersons != null && initialData.mainPersons!.isNotEmpty) {
       final firstPerson = initialData.mainPersons!.firstWhereOrNull(
-        (p) => p is Map<String, dynamic>,
+            (p) => p is Map<String, dynamic>,
       );
       if (firstPerson != null) {
         final matchedJabatan = jabatanList.firstWhereOrNull(
-          (j) => j.kode == firstPerson['jabatan'],
+              (j) => j.kode == firstPerson['jabatan'],
         );
         if (matchedJabatan != null) {
           selectedJabatanName.value = matchedJabatan.kode;
@@ -500,23 +519,128 @@ class HistoryEditController extends GetxController {
 
   String getSelectedJabatanCode() {
     final matched = jabatanSFIList.firstWhereOrNull(
-      (j) => j.kode == selectedJabatanSFIName.value,
+          (j) => j.kode == selectedJabatanSFIName.value,
     );
     return matched?.kode ?? '';
   }
 
   String getSelectedAreaCode() {
     final matched = areaList.firstWhereOrNull(
-      (a) => a.code == selectedAreaName.value,
+          (a) => a.code == selectedAreaName.value,
     );
     return matched?.code ?? '';
   }
 
+  // Function to select date (moved from HistoryEdit)
+  Future<void> selectDate(
+      BuildContext context,
+      String fieldType,
+      ) async {
+    DateTime initialDate = DateTime.now();
+    DateTime firstDate = DateTime(2000);
+    DateTime lastDate = DateTime(2100);
+    Rx<DateTime?> targetRxDate;
+    TextEditingController targetController;
+
+    switch (fieldType) {
+      case 'dariTanggal':
+        targetRxDate = selectedDariTanggal;
+        targetController = dariTanggalController;
+        initialDate = selectedDariTanggal.value ?? DateTime.now();
+        lastDate = DateTime.now();
+        break;
+      case 'sampaiTanggal':
+        targetRxDate = selectedSampaiTanggal;
+        targetController = sampaiTanggalController;
+        initialDate = selectedSampaiTanggal.value ?? (selectedDariTanggal.value ?? DateTime.now());
+        firstDate = selectedDariTanggal.value ?? DateTime(2000);
+        break;
+      case 'tanggalSelesai':
+        targetRxDate = selectedTanggalSelesai;
+        targetController = tanggalSelesaiController;
+        initialDate = selectedTanggalSelesai.value ?? (selectedDariTanggal.value ?? DateTime.now());
+        firstDate = selectedDariTanggal.value ?? DateTime(2000);
+        lastDate = selectedSampaiTanggal.value ?? DateTime(2100);
+        break;
+      default:
+        return;
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      helpText: 'Pilih $fieldType',
+    );
+
+    if (picked != null) {
+      bool isValid = true;
+      String? errorMessage;
+
+      if (fieldType == 'dariTanggal' && picked.isAfter(DateTime.now())) {
+        isValid = false;
+        errorMessage = 'Dari Tanggal tidak boleh melebihi hari ini';
+      } else if (fieldType == 'sampaiTanggal' &&
+          selectedDariTanggal.value != null &&
+          picked.isBefore(selectedDariTanggal.value!)) {
+        isValid = false;
+        errorMessage =
+        'Sampai Tanggal harus setelah atau sama dengan Dari Tanggal';
+      } else if (fieldType == 'tanggalSelesai') {
+        if (selectedDariTanggal.value != null &&
+            picked.isBefore(selectedDariTanggal.value!)) {
+          isValid = false;
+          errorMessage =
+          'Tanggal Selesai harus setelah atau sama dengan Dari Tanggal';
+        } else if (selectedSampaiTanggal.value != null &&
+            picked.isAfter(selectedSampaiTanggal.value!)) {
+          isValid = false;
+          errorMessage =
+          'Tanggal Selesai harus sebelum atau sama dengan Sampai Tanggal';
+        }
+      }
+
+      if (isValid) {
+        targetRxDate.value = picked;
+        targetController.text = DateFormat('dd MMM yyyy').format(picked);
+
+        // Logic to reset dependent dates if they become invalid
+        if (fieldType == 'dariTanggal') {
+          if (selectedSampaiTanggal.value != null &&
+              selectedSampaiTanggal.value!.isBefore(picked)) {
+            selectedSampaiTanggal.value = null;
+            sampaiTanggalController.text = '';
+          }
+          if (selectedTanggalSelesai.value != null &&
+              selectedTanggalSelesai.value!.isBefore(picked)) {
+            selectedTanggalSelesai.value = null;
+            tanggalSelesaiController.text = '';
+          }
+        } else if (fieldType == 'sampaiTanggal') {
+          if (selectedTanggalSelesai.value != null &&
+              selectedTanggalSelesai.value!.isAfter(picked)) {
+            selectedTanggalSelesai.value = null;
+            tanggalSelesaiController.text = '';
+          }
+        }
+      } else {
+        Get.snackbar(
+          'Peringatan',
+          errorMessage!,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+  }
+
   Future<void> saveEditedData(
-    Map<String, dynamic> data,
-    File? photo1,
-    File? photo2,
-  ) async {
+      Map<String, dynamic> data,
+      File? photo1,
+      File? photo2,
+      ) async {
     isLoading.value = true;
     try {
       final String? id = data['id'];
@@ -553,22 +677,22 @@ class HistoryEditController extends GetxController {
       request.fields['jabatan_saya'] = getSelectedJabatanCode();
       request.fields['area_code'] = getSelectedAreaCode();
       request.fields['branch_code'] =
-          selectedBranchName.value.isNotEmpty
-              ? selectedBranchName.value
-              : cabangController.text;
+      selectedBranchName.value.isNotEmpty
+          ? selectedBranchName.value
+          : cabangController.text;
       request.fields['product_code'] =
-          selectedProductName.value.isNotEmpty
-              ? selectedProductName.value
-              : produkController.text;
+      selectedProductName.value.isNotEmpty
+          ? selectedProductName.value
+          : produkController.text;
       request.fields['dealer_code'] = dealerController.text;
       request.fields['tipe_visit'] =
-          selectedTypeName.value.isNotEmpty
-              ? selectedTypeName.value
-              : tipeVisitController.text;
+      selectedTypeName.value.isNotEmpty
+          ? selectedTypeName.value
+          : tipeVisitController.text;
       request.fields['tujuan_visit'] =
-          selectedPurposeName.value.isNotEmpty
-              ? selectedPurposeName.value
-              : tujuanVisitController.text;
+      selectedPurposeName.value.isNotEmpty
+          ? selectedPurposeName.value
+          : tujuanVisitController.text;
       request.fields['dari_tanggal'] = formatDate(data['dari_tanggal']);
       request.fields['sampai_tanggal'] = formatDate(data['sampai_tanggal']);
       request.fields['tanggal_selesai'] = formatDate(data['tanggal_selesai']);
@@ -579,6 +703,8 @@ class HistoryEditController extends GetxController {
       request.fields['description'] = pelaksanaanController.text;
       request.fields['latitude'] = data['latitude']?.toString() ?? '';
       request.fields['longitude'] = data['longitude']?.toString() ?? '';
+
+      // Pastikan mainPersons di-encode ke JSON string
       request.fields['main_persons'] = jsonEncode(mainPersons.toList());
 
       // Tambahkan file gambar jika ada
