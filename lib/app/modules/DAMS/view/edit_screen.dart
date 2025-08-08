@@ -444,10 +444,10 @@ class _EditScreenState extends State<EditScreen> {
         'KETERANGAN': _remarkController.text,
         'STATUS_ASET': _selectedStatus ?? '',
         'CONDITION': _selectedCondition ?? '',
-        'POSITION': _positionController.text,
-        'DIVISION': _divisionController.text,
-        'LOC_ROOM': _locationController.text,
-        'FLOOR': _floorController.text,
+        'POSITION': _selectedPosisiUser ?? '',
+        'DIVISION': _selectedDivisiUser ?? '',
+        'LOC_ROOM': _selectedLokasiUser ?? '',
+        'FLOOR': _selectedLantaiUser ?? '',
       };
 
       // Bersihkan nilai null dan ubah ke string
